@@ -1,0 +1,6 @@
+apiVersion: lib.projectsveltos.io/v1alpha1
+kind: DebuggingConfiguration
+metadata:
+  name: debuggingconfiguration-sample
+spec:
+  # TODO(user): Add fields here
