@@ -36,25 +36,25 @@ var _ = Describe("Set", func() {
 	It("insert adds entry", func() {
 		s := &set.Set{}
 		entry := getEntry()
-		set.Insert(s, entry)
-		Expect(len(set.Items(s))).To(Equal(1))
+		s.Insert(entry)
+		Expect(len(s.Items())).To(Equal(1))
 	})
 
 	It("erase removes entry", func() {
 		s := &set.Set{}
 		entry := getEntry()
-		set.Insert(s, entry)
-		Expect(len(set.Items(s))).To(Equal(1))
-		set.Erase(s, entry)
-		Expect(len(set.Items(s))).To(Equal(0))
+		s.Insert(entry)
+		Expect(len(s.Items())).To(Equal(1))
+		s.Erase(entry)
+		Expect(len(s.Items())).To(Equal(0))
 	})
 
 	It("len returns number of entries in set", func() {
 		s := &set.Set{}
 		for i := 0; i < 10; i++ {
 			entry := getEntry()
-			set.Insert(s, entry)
-			Expect(len(set.Items(s))).To(Equal(i + 1))
+			s.Insert(entry)
+			Expect(len(s.Items())).To(Equal(i + 1))
 		}
 	})
 
@@ -63,23 +63,23 @@ var _ = Describe("Set", func() {
 		numEntries := 10
 		for i := 0; i < numEntries; i++ {
 			entry := getEntry()
-			set.Insert(s, entry)
-			Expect(len(set.Items(s))).To(Equal(i + 1))
+			s.Insert(entry)
+			Expect(len(s.Items())).To(Equal(i + 1))
 		}
 		entry := getEntry()
-		Expect(set.Has(s, entry)).To(BeFalse())
-		set.Insert(s, entry)
-		Expect(len(set.Items(s))).To(Equal(numEntries + 1))
-		Expect(set.Has(s, entry)).To(BeTrue())
+		Expect(s.Has(entry)).To(BeFalse())
+		s.Insert(entry)
+		Expect(len(s.Items())).To(Equal(numEntries + 1))
+		Expect(s.Has(entry)).To(BeTrue())
 	})
 
 	It("items returns all entries in set", func() {
 		s := &set.Set{}
 		entry0 := getEntry()
-		set.Insert(s, entry0)
+		s.Insert(entry0)
 		entry1 := getEntry()
-		set.Insert(s, entry1)
-		entries := set.Items(s)
+		s.Insert(entry1)
+		entries := s.Items()
 		Expect(entries).To(ContainElement(*entry0))
 		Expect(entries).To(ContainElement(*entry1))
 	})

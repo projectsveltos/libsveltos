@@ -30,33 +30,33 @@ func (s *Set) init() {
 	}
 }
 
-// insert adds entry to set
-func (s *Set) insert(entry *libv1alpha1.PolicyRef) {
+// Insert adds entry to set
+func (s *Set) Insert(entry *libv1alpha1.PolicyRef) {
 	s.init()
 	s.data[*entry] = true
 }
 
-// erase removes entry from set
-func (s *Set) erase(entry *libv1alpha1.PolicyRef) {
+// Erase removes entry from set
+func (s *Set) Erase(entry *libv1alpha1.PolicyRef) {
 	s.init()
 	delete(s.data, *entry)
 }
 
-// has returns true if entry is currently part of set
-func (s *Set) has(entry *libv1alpha1.PolicyRef) bool {
+// Has returns true if entry is currently part of set
+func (s *Set) Has(entry *libv1alpha1.PolicyRef) bool {
 	s.init()
 	_, ok := s.data[*entry]
 	return ok
 }
 
-// len returns length of set
-func (s *Set) len() int {
+// Len returns length of set
+func (s *Set) Len() int {
 	return len(s.data)
 }
 
-// items returns a slice with all elements currently in set
-func (s *Set) items() []libv1alpha1.PolicyRef {
-	keys := make([]libv1alpha1.PolicyRef, s.len())
+// Items returns a slice with all elements currently in set
+func (s *Set) Items() []libv1alpha1.PolicyRef {
+	keys := make([]libv1alpha1.PolicyRef, s.Len())
 
 	i := 0
 	for k := range s.data {
@@ -67,11 +67,11 @@ func (s *Set) items() []libv1alpha1.PolicyRef {
 	return keys
 }
 
-// difference returns all elements which are in s but not in b
-func (s *Set) difference(b *Set) []libv1alpha1.PolicyRef {
+// Difference returns all elements which are in s but not in b
+func (s *Set) Difference(b *Set) []libv1alpha1.PolicyRef {
 	results := make([]libv1alpha1.PolicyRef, 0)
 	for entry := range s.data {
-		if !b.has(&entry) {
+		if !b.Has(&entry) {
 			results = append(results, entry)
 		}
 	}
