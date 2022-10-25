@@ -103,7 +103,7 @@ endif
 
 .PHONY: test
 test: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test $(shell go list ./... ) $(TEST_ARGS) -coverprofile cover.out 
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test $(shell go list ./... | grep -v pkg/deployer/fake ) $(TEST_ARGS) -coverprofile cover.out 
 
 ##@ Build
 
