@@ -45,7 +45,7 @@ const (
 	ComponentSveltosManager = Component("SveltosManager")
 
 	// Classifier is the classifier pod
-	CLassifier = Component("CLassifier")
+	Classifier = Component("Classifier")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.
