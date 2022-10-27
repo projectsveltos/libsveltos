@@ -160,4 +160,75 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(err).To(BeNil())
 		Expect(wcClient).ToNot(BeNil())
 	})
+
+	It("IsClusterReadyToBeConfigured returns true for a cluster with one control plane machine in running phase", func() {
+		cpMachine := &clusterv1.Machine{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: cluster.Namespace,
+				Name:      cluster.Name + randomString(),
+				Labels: map[string]string{
+					clusterv1.ClusterLabelName:             cluster.Name,
+					clusterv1.MachineControlPlaneLabelName: "ok",
+				},
+			},
+		}
+		cpMachine.Status.SetTypedPhase(clusterv1.MachinePhaseRunning)
+
+		workerMachine := &clusterv1.Machine{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: cluster.Namespace,
+				Name:      cluster.Name + randomString(),
+				Labels: map[string]string{
+					clusterv1.ClusterLabelName: cluster.Name,
+				},
+			},
+		}
+		initObjects := []client.Object{
+			workerMachine,
+			cpMachine,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(ready).To(Equal(true))
+	})
+
+	It("IsClusterReadyToBeConfigured returns false for a cluster with no control plane machine in running phase", func() {
+		cpMachine := &clusterv1.Machine{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: cluster.Namespace,
+				Name:      cluster.Name + randomString(),
+				Labels: map[string]string{
+					clusterv1.ClusterLabelName:             cluster.Name,
+					clusterv1.MachineControlPlaneLabelName: "ok",
+				},
+			},
+		}
+		workerMachine := &clusterv1.Machine{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: cluster.Namespace,
+				Name:      cluster.Name + randomString(),
+				Labels: map[string]string{
+					clusterv1.ClusterLabelName: cluster.Name,
+				},
+			},
+			Status: clusterv1.MachineStatus{
+				Phase: "Runnning",
+			},
+		}
+		initObjects := []client.Object{
+			workerMachine,
+			cpMachine,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(ready).To(Equal(false))
+	})
 })
