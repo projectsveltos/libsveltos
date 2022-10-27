@@ -44,12 +44,12 @@ const (
 func GetKubernetesRestConfig(ctx context.Context, logger logr.Logger, c client.Client,
 	clusterNamespace, clusterName string) (*rest.Config, error) {
 
-	kubeconfigContent, err := getSecretData(ctx, logger, c, clusterNamespace, clusterName)
+	kubeconfigContent, err := GetSecretData(ctx, logger, c, clusterNamespace, clusterName)
 	if err != nil {
 		return nil, err
 	}
 
-	kubeconfig, err := createKubeconfig(logger, kubeconfigContent)
+	kubeconfig, err := CreateKubeconfig(logger, kubeconfigContent)
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +77,9 @@ func GetKubernetesClient(ctx context.Context, logger logr.Logger, c client.Clien
 	return client.New(config, client.Options{Scheme: s})
 }
 
-// getSecretData verifies Cluster exists and returns the content of secret containing
+// GetSecretData verifies Cluster exists and returns the content of secret containing
 // the kubeconfig for CAPI cluster
-func getSecretData(ctx context.Context, logger logr.Logger, c client.Client,
+func GetSecretData(ctx context.Context, logger logr.Logger, c client.Client,
 	clusterNamespace, clusterName string) ([]byte, error) {
 
 	logger.WithValues("namespace", clusterNamespace, "cluster", clusterName)
@@ -126,8 +126,8 @@ func getSecretData(ctx context.Context, logger logr.Logger, c client.Client,
 	return nil, nil
 }
 
-// createKubeconfig creates a temporary file with the Kubeconfig to access CAPI cluster
-func createKubeconfig(logger logr.Logger, kubeconfigContent []byte) (string, error) {
+// CreateKubeconfig creates a temporary file with the Kubeconfig to access CAPI cluster
+func CreateKubeconfig(logger logr.Logger, kubeconfigContent []byte) (string, error) {
 	tmpfile, err := os.CreateTemp("", "kubeconfig")
 	if err != nil {
 		logger.Error(err, "failed to create temporary file")
