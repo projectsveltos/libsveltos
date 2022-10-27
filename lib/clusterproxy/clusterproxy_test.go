@@ -161,6 +161,40 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(wcClient).ToNot(BeNil())
 	})
 
+	It("getMachinesForCluster returns list of all machines for a CPI cluster", func() {
+		cpMachine := &clusterv1.Machine{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: cluster.Namespace,
+				Name:      cluster.Name + randomString(),
+				Labels: map[string]string{
+					clusterv1.ClusterLabelName:             cluster.Name,
+					clusterv1.MachineControlPlaneLabelName: "ok",
+				},
+			},
+		}
+		workerMachine := &clusterv1.Machine{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: cluster.Namespace,
+				Name:      cluster.Name + randomString(),
+				Labels: map[string]string{
+					clusterv1.ClusterLabelName: cluster.Name,
+				},
+			},
+		}
+
+		initObjects := []client.Object{
+			workerMachine,
+			cpMachine,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		cps, err := clusterproxy.GetMachinesForCluster(context.TODO(), c,
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(len(cps.Items)).To(Equal(2))
+	})
+
 	It("IsClusterReadyToBeConfigured returns true for a cluster with one control plane machine in running phase", func() {
 		cpMachine := &clusterv1.Machine{
 			ObjectMeta: metav1.ObjectMeta{
