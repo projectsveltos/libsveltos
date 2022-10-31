@@ -148,17 +148,20 @@ func processRequests(ctx context.Context, d *deployer, i int, logger logr.Logger
 			ns, name, _ := getClusterFromKey(params.key)
 			applicant, featureID, _ := getApplicatantAndFeatureFromKey(params.key)
 			cleanup, err := getIsCleanupFromKey(params.key)
-			l.Info(fmt.Sprintf("worker: %d processing request. cleanup: %t", id, cleanup))
 			if err != nil {
 				storeResult(d, params.key, err, params.handler, params.metric, logger)
 			} else {
+				l.Info(fmt.Sprintf("worker: %d processing request. cleanup: %t", id, cleanup))
 				start := time.Now()
+				l.V(logs.LogDebug).Info("invoking handler")
 				err = params.handler(ctx, controlClusterClient,
 					ns, name, applicant, featureID,
 					l)
 				storeResult(d, params.key, err, params.handler, params.metric, logger)
 				elapsed := time.Since(start)
-				params.metric(elapsed, ns, name, featureID, l)
+				if params.metric != nil {
+					params.metric(elapsed, ns, name, featureID, l)
+				}
 			}
 		}
 		params = nil
