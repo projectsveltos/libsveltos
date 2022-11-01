@@ -12,7 +12,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: build
+all: crd build
 
 TOOLS_DIR := hack/tools
 TOOLS_BIN_DIR := $(TOOLS_DIR)/bin
@@ -77,6 +77,9 @@ crd: generate ## Generates go code (crd) for library
 .PHONY: generate
 generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+crd: generate ## Generates go code (crd) for library
+	cd lib/crd; go generate
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
