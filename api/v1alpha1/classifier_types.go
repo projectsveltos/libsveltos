@@ -133,7 +133,7 @@ type ClassifierSpec struct {
 	DeployedResources []DeployedResource `json:"deployedResources,omitempty"`
 
 	// KubernetesVersion allows to classify based on current kubernetes version
-	KubernetesVersion KubernetesVersion `json:"kubernetesVersion,omitempty"`
+	KubernetesVersion *KubernetesVersion `json:"kubernetesVersion,omitempty"`
 
 	// ClassifierLabels is set of labels, key,value pair, that will be added to each
 	// cluster matching Classifier instance
