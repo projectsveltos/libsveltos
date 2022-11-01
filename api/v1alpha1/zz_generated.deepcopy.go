@@ -198,7 +198,11 @@ func (in *ClassifierSpec) DeepCopyInto(out *ClassifierSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	out.KubernetesVersion = in.KubernetesVersion
+	if in.KubernetesVersion != nil {
+		in, out := &in.KubernetesVersion, &out.KubernetesVersion
+		*out = new(KubernetesVersion)
+		**out = **in
+	}
 	if in.ClassifierLabels != nil {
 		in, out := &in.ClassifierLabels, &out.ClassifierLabels
 		*out = make([]ClassifierLabel, len(*in))
