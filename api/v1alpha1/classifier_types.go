@@ -111,7 +111,7 @@ type KubernetesComparison string
 // Define the Action constants.
 const (
 	ComparisonEqual                KubernetesComparison = "Equal"
-	ComparisoNotEqual              KubernetesComparison = "NotEqual"
+	ComparisonNotEqual             KubernetesComparison = "NotEqual"
 	ComparisonGreaterThan          KubernetesComparison = "GreaterThan"
 	ComparisonLessThan             KubernetesComparison = "LessThan"
 	ComparisonGreaterThanOrEqualTo KubernetesComparison = "GreaterThanOrEqualTo"
