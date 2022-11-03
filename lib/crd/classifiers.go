@@ -105,6 +105,14 @@ spec:
                         - value
                         type: object
                       type: array
+                    maxCount:
+                      description: MaxCount is the maximun number of resources to
+                        match
+                      type: integer
+                    minCount:
+                      description: MinCount is the minimum number of resources to
+                        match
+                      type: integer
                     namespace:
                       description: Namespace of the resource deployed in the CAPI
                         Cluster. Empty for resources scoped at cluster level.
@@ -118,28 +126,30 @@ spec:
                   - version
                   type: object
                 type: array
-              kubernetesVersion:
-                description: KubernetesVersion allows to classify based on current
-                  kubernetes version
-                properties:
-                  comparison:
-                    description: Comparison indicate how to compare cluster kubernetes
-                      version with the specified version
-                    enum:
-                    - Equal
-                    - NotEqual
-                    - GreaterThan
-                    - LessThan
-                    - GreaterThanOrEqualTo
-                    - LessThanOrEqualTo
-                    type: string
-                  version:
-                    description: Version is the kubernetes version
-                    type: string
-                required:
-                - comparison
-                - version
-                type: object
+              kubernetesVersionConstraints:
+                description: KubernetesVersionConstraints allows to classify based
+                  on current kubernetes version
+                items:
+                  properties:
+                    comparison:
+                      description: Comparison indicate how to compare cluster kubernetes
+                        version with the specified version
+                      enum:
+                      - Equal
+                      - NotEqual
+                      - GreaterThan
+                      - LessThan
+                      - GreaterThanOrEqualTo
+                      - LessThanOrEqualTo
+                      type: string
+                    version:
+                      description: Version is the kubernetes version
+                      type: string
+                  required:
+                  - comparison
+                  - version
+                  type: object
+                type: array
             required:
             - classifierLabels
             type: object

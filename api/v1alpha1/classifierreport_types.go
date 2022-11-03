@@ -45,8 +45,29 @@ type ClassifierReportSpec struct {
 	Match bool `json:"match"`
 }
 
+// ReportPhase describes the state of a classifierReport.
+// +kubebuilder:validation:Enum:=WaitingForDelivery;Delivering;Processed
+type ReportPhase string
+
+const (
+	// ReportWaitingForDelivery indicates the report has yet to be sent to the
+	// management cluster
+	ReportWaitingForDelivery = ReportPhase("WaitingForDelivery")
+
+	// ReportDelivering indicates the report has been sent to the management
+	// cluster but not ack-ed yet
+	ReportDelivering = ReportPhase("Delivering")
+
+	// ReportProcessed indicates the report has been already delivered and acked
+	// in the management cluster.
+	ReportProcessed = ReportPhase("Processed")
+)
+
 // ClassifierReportStatus defines the observed state of ClassifierReport
 type ClassifierReportStatus struct {
+	// Phase represents the current phase of report.
+	// +optional
+	Phase *ReportPhase `json:"phase,omitempty"`
 }
 
 //+kubebuilder:object:root=true
