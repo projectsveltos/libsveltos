@@ -78,6 +78,14 @@ spec:
             type: object
           status:
             description: ClassifierReportStatus defines the observed state of ClassifierReport
+            properties:
+              phase:
+                description: Phase represents the current phase of report.
+                enum:
+                - WaitingForDelivery
+                - Delivering
+                - Processed
+                type: string
             type: object
         type: object
     served: true
