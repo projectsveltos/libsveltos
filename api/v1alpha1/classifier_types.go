@@ -104,6 +104,14 @@ type DeployedResource struct {
 
 	// LabelFilters allows to filter resources based on current labels.
 	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
+
+	// MinCount is the minimum number of resources to match
+	// +optnional
+	MinCount int `json:"minCount,omitempty"`
+
+	// MaxCount is the maximun number of resources to match
+	// +optnional
+	MaxCount int `json:"maxCount,omitempty"`
 }
 
 type KubernetesComparison string
@@ -118,7 +126,7 @@ const (
 	ComparisonLessThanOrEqualTo    KubernetesComparison = "LessThanOrEqualTo"
 )
 
-type KubernetesVersion struct {
+type KubernetesVersionConstraint struct {
 	// Version is the kubernetes version
 	Version string `json:"version"`
 
@@ -132,8 +140,8 @@ type ClassifierSpec struct {
 	// DeployedResources allows to classify based on current deployed resources
 	DeployedResources []DeployedResource `json:"deployedResources,omitempty"`
 
-	// KubernetesVersion allows to classify based on current kubernetes version
-	KubernetesVersion *KubernetesVersion `json:"kubernetesVersion,omitempty"`
+	// KubernetesVersionConstraints allows to classify based on current kubernetes version
+	KubernetesVersionConstraints []KubernetesVersionConstraint `json:"kubernetesVersionConstraints,omitempty"`
 
 	// ClassifierLabels is set of labels, key,value pair, that will be added to each
 	// cluster matching Classifier instance
