@@ -106,12 +106,12 @@ type DeployedResource struct {
 	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
 
 	// MinCount is the minimum number of resources to match
-	// +optnional
-	MinCount int `json:"minCount,omitempty"`
+	// +optional
+	MinCount *int `json:"minCount,omitempty"`
 
 	// MaxCount is the maximun number of resources to match
-	// +optnional
-	MaxCount int `json:"maxCount,omitempty"`
+	// +optional
+	MaxCount *int `json:"maxCount,omitempty"`
 }
 
 type KubernetesComparison string
