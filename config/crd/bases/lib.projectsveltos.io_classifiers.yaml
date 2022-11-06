@@ -57,8 +57,10 @@ spec:
                 items:
                   properties:
                     fieldFilters:
-                      description: FieldFilters allows to filter resources based on
-                        current field values.
+                      description: 'FieldFilters allows to filter resources based
+                        on current field values. Internally uses FieldSelector so
+                        only fields supported by FieldSelector can be used. Current
+                        list: https://github.com/kubernetes/kubernetes/blob/9d577d8a29893062dfbd669997396dbd01ab0e47/pkg/apis/core/v1/conversion.go#L33'
                       items:
                         properties:
                           field:
