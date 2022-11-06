@@ -86,6 +86,17 @@ type LabelFilter struct {
 	Value string `json:"value"`
 }
 
+type FieldFilter struct {
+	// Field is the field
+	Field string `json:"field"`
+
+	// Operation is the comparison operation
+	Operation Operation `json:"operation"`
+
+	// Value is the field value
+	Value string `json:"value"`
+}
+
 type DeployedResource struct {
 	// Namespace of the resource deployed in the CAPI Cluster.
 	// Empty for resources scoped at cluster level.
@@ -104,6 +115,9 @@ type DeployedResource struct {
 
 	// LabelFilters allows to filter resources based on current labels.
 	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
+
+	// FieldFilters allows to filter resources based on current field values.
+	FieldFilters []FieldFilter `json:"fieldFilters,omitempty"`
 
 	// MinCount is the minimum number of resources to match
 	// +optional
