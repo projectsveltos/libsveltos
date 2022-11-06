@@ -75,6 +75,29 @@ spec:
                   deployed resources
                 items:
                   properties:
+                    fieldFilters:
+                      description: FieldFilters allows to filter resources based on
+                        current field values.
+                      items:
+                        properties:
+                          field:
+                            description: Field is the field
+                            type: string
+                          operation:
+                            description: Operation is the comparison operation
+                            enum:
+                            - Equal
+                            - Different
+                            type: string
+                          value:
+                            description: Value is the field value
+                            type: string
+                        required:
+                        - field
+                        - operation
+                        - value
+                        type: object
+                      type: array
                     group:
                       description: Group of the resource deployed in the CAPI Cluster.
                       type: string
