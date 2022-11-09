@@ -293,7 +293,6 @@ spec:
                               instance
                             type: string
                         required:
-                        - failureMessage
                         - key
                         type: object
                       type: array

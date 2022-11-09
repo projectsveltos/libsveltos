@@ -188,7 +188,8 @@ type UnManagedLabel struct {
 
 	// FailureMessage is a human consumable message explaining the
 	// misconfiguration
-	FailureMessage *string `json:"failureMessage"`
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 type MachingClusterStatus struct {
