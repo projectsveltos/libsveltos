@@ -70,9 +70,9 @@ spec:
                   - value
                   type: object
                 type: array
-              deployedResources:
-                description: DeployedResources allows to classify based on current
-                  deployed resources
+              deployedResourceConstraints:
+                description: DeployedResourceConstraints allows to classify based
+                  on current deployed resources
                 items:
                   properties:
                     fieldFilters:
