@@ -97,7 +97,7 @@ type FieldFilter struct {
 	Value string `json:"value"`
 }
 
-type DeployedResource struct {
+type DeployedResourceConstraint struct {
 	// Namespace of the resource deployed in the CAPI Cluster.
 	// Empty for resources scoped at cluster level.
 	// +optional
@@ -154,8 +154,8 @@ type KubernetesVersionConstraint struct {
 
 // ClassifierSpec defines the desired state of Classifier
 type ClassifierSpec struct {
-	// DeployedResources allows to classify based on current deployed resources
-	DeployedResources []DeployedResource `json:"deployedResources,omitempty"`
+	// DeployedResourceConstraints allows to classify based on current deployed resources
+	DeployedResourceConstraints []DeployedResourceConstraint `json:"deployedResourceConstraints,omitempty"`
 
 	// KubernetesVersionConstraints allows to classify based on current kubernetes version
 	KubernetesVersionConstraints []KubernetesVersionConstraint `json:"kubernetesVersionConstraints,omitempty"`
