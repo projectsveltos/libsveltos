@@ -68,6 +68,7 @@ spec:
                       enum:
                       - SveltosManager
                       - Classifier
+                      - ClassifierAgent
                       type: string
                     logLevel:
                       description: 'LogLevel is the log severity above which logs
