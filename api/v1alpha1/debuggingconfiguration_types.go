@@ -37,7 +37,7 @@ const (
 	LogLevelVerbose = LogLevel("LogLevelVerbose")
 )
 
-// +kubebuilder:validation:Enum:=SveltosManager;Classifier
+// +kubebuilder:validation:Enum:=SveltosManager;Classifier;ClassifierAgent
 type Component string
 
 const (
@@ -46,6 +46,9 @@ const (
 
 	// Classifier is the classifier pod
 	ComponentClassifier = Component("Classifier")
+
+	// ClassifierAgent is the classifier agent pod
+	ComponentClassifierAgent = Component("ClassifierAgent")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.
