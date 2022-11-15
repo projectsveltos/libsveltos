@@ -12,7 +12,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: build
+all: crd build
 
 TOOLS_DIR := hack/tools
 TOOLS_BIN_DIR := $(TOOLS_DIR)/bin
@@ -103,13 +103,13 @@ endif
 
 .PHONY: test
 test: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test $(shell go list ./... ) $(TEST_ARGS) -coverprofile cover.out 
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test $(shell go list ./... | grep -v internal/test | grep -v lib/deployer/fake ) $(TEST_ARGS) -coverprofile cover.out 
 
 ##@ Build
 
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+	go build ./...
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.

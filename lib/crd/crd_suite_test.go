@@ -14,12 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package set
+package crd_test
 
-var (
-	Insert = (*Set).insert
-	Erase  = (*Set).erase
-	Len    = (*Set).len
-	Items  = (*Set).items
-	Has    = (*Set).has
+import (
+	"testing"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
+
+func TestCrd(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Crd Suite")
+}
