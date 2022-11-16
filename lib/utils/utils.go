@@ -21,6 +21,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
@@ -43,7 +44,9 @@ func GetUnstructured(object []byte) (*unstructured.Unstructured, error) {
 }
 
 // GetDynamicResourceInterface returns a dynamic ResourceInterface for the policy's GroupVersionKind
-func GetDynamicResourceInterface(config *rest.Config, policy *unstructured.Unstructured) (dynamic.ResourceInterface, error) {
+func GetDynamicResourceInterface(config *rest.Config, gvk schema.GroupVersionKind,
+	namespace string) (dynamic.ResourceInterface, error) {
+
 	if config == nil {
 		return nil, fmt.Errorf("rest.Config is nil")
 	}
@@ -52,8 +55,6 @@ func GetDynamicResourceInterface(config *rest.Config, policy *unstructured.Unstr
 	if err != nil {
 		return nil, err
 	}
-
-	gvk := policy.GroupVersionKind()
 
 	dc, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
@@ -67,7 +68,7 @@ func GetDynamicResourceInterface(config *rest.Config, policy *unstructured.Unstr
 	var dr dynamic.ResourceInterface
 	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
 		// namespaced resources should specify the namespace
-		dr = dynClient.Resource(mapping.Resource).Namespace(policy.GetNamespace())
+		dr = dynClient.Resource(mapping.Resource).Namespace(namespace)
 	} else {
 		// for cluster-wide resources
 		dr = dynClient.Resource(mapping.Resource)

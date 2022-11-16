@@ -53,7 +53,7 @@ var _ = Describe("utils ", func() {
 		policy, err := utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
 		Expect(err).To(BeNil())
 
-		dr, err := utils.GetDynamicResourceInterface(testEnv.Config, policy)
+		dr, err := utils.GetDynamicResourceInterface(testEnv.Config, policy.GroupVersionKind(), policy.GetNamespace())
 		Expect(err).To(BeNil())
 
 		_, err = dr.Create(ctx, policy, metav1.CreateOptions{})
