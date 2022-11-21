@@ -24,6 +24,8 @@ const (
 	// ClassifierLabelName is added to each ClassifierReport generated
 	// for a Classifier instance
 	ClassifierLabelName = "projectsveltos.io/classifier-name"
+
+	ClassifierReportKind = "ClassifierReport"
 )
 
 // ClassifierReportSpec defines the desired state of ClassifierReport
