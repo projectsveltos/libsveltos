@@ -97,4 +97,7 @@ func main() {
 
 	debuggingConfigurationFile := "../../config/crd/bases/lib.projectsveltos.io_debuggingconfigurations.yaml"
 	generate(debuggingConfigurationFile, "debuggingconfigurations", "DebuggingConfiguration")
+
+	accessRequestFile := "../../config/crd/bases/lib.projectsveltos.io_accessrequests.yaml"
+	generate(accessRequestFile, "accessrequests", "AccessRequest")
 }

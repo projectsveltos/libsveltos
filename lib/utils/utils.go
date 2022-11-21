@@ -17,7 +17,10 @@ limitations under the License.
 package utils
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,7 +30,13 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	apiv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"k8s.io/kubectl/pkg/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+var (
+	serverRegExp = regexp.MustCompile(`^https://[0-9a-zA-Z][0-9a-zA-Z-.]+[0-9a-zA-Z]:\d+$`)
 )
 
 // GetUnstructured returns an unstructured given a []bytes containing it
@@ -75,4 +84,82 @@ func GetDynamicResourceInterface(config *rest.Config, gvk schema.GroupVersionKin
 	}
 
 	return dr, nil
+}
+
+// GetKubeconfigWithUserToken() accepts a k8s client interface, OIDC IDToken,
+// username (e.g. user@example.org) and server with scheme, host, and port
+// (e.g.  https://127.0.0.1:1234) to return a kube-config with credentials set
+// for the user.
+func GetKubeconfigWithUserToken(ctx context.Context, c client.Client,
+	idToken, caData []byte,
+	userID, server string,
+) ([]byte, error) {
+	// Input validations.
+	if userID == "" || len(idToken) == 0 {
+		return nil,
+			fmt.Errorf("userID and IDToken cannot be empty")
+	}
+
+	return getUserOrSAKubeconfig(idToken, caData, userID, server)
+}
+
+// getUserOrSAKubeconfig() is a helper to return kubeconfig given the required
+// details for ServiceAccount or User/Token use-case.
+func getUserOrSAKubeconfig(
+	token, caData []byte,
+	user, server string,
+) ([]byte, error) {
+
+	if server == "" {
+		return nil, fmt.Errorf("server cannot be empty")
+	}
+
+	if !serverRegExp.MatchString(server) {
+		return nil,
+			fmt.Errorf("server value is invalid. valid values e.g. https://127.0.0.1:123, https://hostname:321")
+	}
+
+	config := apiv1.Config{
+		Kind:       "Config",
+		APIVersion: "v1",
+		AuthInfos: []apiv1.NamedAuthInfo{
+			{
+				Name: user,
+				AuthInfo: apiv1.AuthInfo{
+					Token: string(token),
+				},
+			},
+		},
+		Clusters: []apiv1.NamedCluster{
+			{
+				Name: user,
+				Cluster: apiv1.Cluster{
+					Server:                   server,
+					CertificateAuthorityData: caData,
+				},
+			},
+		},
+		Contexts: []apiv1.NamedContext{
+			{
+				Name: user,
+				Context: apiv1.Context{
+					Cluster:  user,
+					AuthInfo: user,
+				},
+			},
+		},
+		CurrentContext: user,
+		Preferences:    apiv1.Preferences{},
+	}
+
+	if caData == nil {
+		return nil, fmt.Errorf("empty CA data")
+	}
+
+	kubeconfig, err := json.Marshal(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating kubeconfig: %w", err)
+	}
+
+	return kubeconfig, nil
 }
