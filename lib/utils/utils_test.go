@@ -19,6 +19,7 @@ package utils_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -27,6 +28,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/projectsveltos/libsveltos/lib/utils"
 )
@@ -40,6 +42,10 @@ rules:
 - apiGroups: [""] # "" indicates the core API group
   resources: ["pods"]
   verbs: ["get", "watch", "list"]`
+
+	serverValue = "https://127.0.0.1:63159"
+	tokenID     = "token"
+	caData      = "caData"
 )
 
 var _ = Describe("utils ", func() {
@@ -66,5 +72,35 @@ var _ = Describe("utils ", func() {
 			return testEnv.Get(context.TODO(),
 				types.NamespacedName{Name: policy.GetName()}, currentClusterRole)
 		}, timeout, time.Second).Should(BeNil())
+	})
+
+	It("should validate UserID and IDToken input in GetKubeconfigWithUserToken()", func() {
+		_, err := utils.GetKubeconfigWithUserToken(ctx, testEnv.Client, nil, []byte(caData), "user@example.org", serverValue)
+		Expect(err).NotTo(BeNil())
+		Expect(err.Error()).To(ContainSubstring("userID and IDToken cannot be empty"))
+
+		_, err = utils.GetKubeconfigWithUserToken(ctx, testEnv.Client, []byte("0x123456"), []byte(caData), "", serverValue)
+		Expect(err).NotTo(BeNil())
+		Expect(err.Error()).To(ContainSubstring("userID and IDToken cannot be empty"))
+	})
+
+	It("GetKubeconfigWithUserToken() should return a usable kubeconfig", func() {
+		server := serverValue
+
+		By("Calling GetKubeconfigWithUserToken()")
+		kubeconfig, err := utils.GetKubeconfigWithUserToken(ctx, testEnv.Client, []byte("0x123456"), []byte(caData), "user@example.org", server)
+		Expect(err).To(Succeed())
+		Expect(kubeconfig).ToNot(BeNil())
+
+		By("Checking that kubeconfig can be loaded")
+		tmpFile, err := os.CreateTemp("", "kubeconfig")
+		Expect(err).To(Succeed())
+		defer tmpFile.Close()
+
+		_, err = tmpFile.Write(kubeconfig)
+		Expect(err).To(Succeed())
+
+		_, err = clientcmd.BuildConfigFromFlags("", tmpFile.Name())
+		Expect(err).To(Succeed())
 	})
 })

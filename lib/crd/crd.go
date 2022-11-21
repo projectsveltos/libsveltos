@@ -29,3 +29,7 @@ func GetClassifierReportCRDYAML() []byte {
 func GetDebuggingConfigurationCRDYAML() []byte {
 	return DebuggingConfigurationCRD
 }
+
+func GetAccessRequestCRDYAML() []byte {
+	return AccessRequestCRD
+}
