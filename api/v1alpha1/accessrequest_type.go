@@ -21,6 +21,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	AccessRequestFinalizer = "accessrequestfinalizer.projectsveltos.io"
+
+	AccessRequestKind = "AccessRequest"
+)
+
 // RequestType specifies the type of AccessRequest
 // +kubebuilder:validation:Enum:=ClassifierAgent;Different
 type RequestType string
