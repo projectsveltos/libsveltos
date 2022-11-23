@@ -30,8 +30,8 @@ const (
 	// This is the namespace/name of the secret containing the kubeconfig
 	// to send ClassifierReport to management cluster when classifier agent
 	// is configured to send ClassifierReports
-	SecretName      = "classifier-agent"
-	SecretNamespace = "projectsveltos"
+	ClassifierSecretName      = "classifier-agent"
+	ClassifierSecretNamespace = "projectsveltos"
 )
 
 // ClassifierReportSpec defines the desired state of ClassifierReport
