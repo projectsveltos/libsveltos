@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -26,10 +28,21 @@ const (
 	// Classifier before removing it from the apiserver.
 	ClassifierFinalizer = "classifierfinalizer.projectsveltos.io"
 
+	// ClassifierReportClusterLabel is added to each ClassifierReport
+	ClassifierReportClusterLabel = "projectsveltos.io/cluster"
+
 	ClassifierKind = "Classifier"
 
 	FeatureClassifier = "Classifier"
 )
+
+func GetClassifierReportName(classifierName, clusterName string) string {
+	return fmt.Sprintf("%s--%s", classifierName, clusterName)
+}
+
+func GetClusterInfo(clusterNamespace, clusterName string) string {
+	return fmt.Sprintf("%s--%s", clusterNamespace, clusterName)
+}
 
 // +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;Removing;Removed
 type ClassifierFeatureStatus string
