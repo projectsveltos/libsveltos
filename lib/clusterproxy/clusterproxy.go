@@ -140,10 +140,12 @@ func IsClusterReadyToBeConfigured(
 	}
 
 	for i := range machineList.Items {
-		if util.IsControlPlaneMachine(&machineList.Items[i]) &&
-			machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseRunning {
+		if util.IsControlPlaneMachine(&machineList.Items[i]) {
+			if machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseRunning ||
+				machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseProvisioned {
 
-			return true, nil
+				return true, nil
+			}
 		}
 	}
 
