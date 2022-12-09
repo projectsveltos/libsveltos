@@ -90,6 +90,7 @@ type DeployerInterface interface {
 		cleanup bool,
 		f RequestHandler,
 		m MetricHandler,
+		o Options,
 	) error
 
 	// IsInProgress returns true, if featureID for clusterNamespace/clusterName
