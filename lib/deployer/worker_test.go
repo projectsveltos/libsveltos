@@ -34,7 +34,7 @@ import (
 var messages chan string
 
 func writeToChannelHandler(ctx context.Context, c client.Client,
-	namespace, name, applicant, featureID string,
+	namespace, name, applicant, featureID string, o deployer.Options,
 	logger logr.Logger) error {
 
 	By("writeToChannelHandler: writing to channel")
@@ -50,7 +50,7 @@ func metricHandler(elapsed time.Duration,
 }
 
 func doNothingHandler(ctx context.Context, c client.Client,
-	namespace, name, applicant, featureID string,
+	namespace, name, applicant, featureID string, o deployer.Options,
 	logger logr.Logger) error {
 
 	return nil

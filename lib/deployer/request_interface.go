@@ -61,7 +61,7 @@ type Result struct {
 
 type RequestHandler func(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, applicant, featureID string,
-	logger logr.Logger) error
+	o Options, logger logr.Logger) error
 
 type MetricHandler func(elapsed time.Duration,
 	clusterNamespace, clusterName, featureID string,
