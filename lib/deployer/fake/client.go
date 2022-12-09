@@ -66,6 +66,7 @@ func (d *fakeDeployer) Deploy(
 	cleanup bool,
 	f deployer.RequestHandler,
 	m deployer.MetricHandler,
+	o deployer.Options,
 ) error {
 
 	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
