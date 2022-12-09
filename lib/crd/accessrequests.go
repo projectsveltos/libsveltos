@@ -54,6 +54,22 @@ spec:
           spec:
             description: AccessRequestSpec defines the desired state of AccessRequest
             properties:
+              controlPlaneEndpoint:
+                description: ControlPlaneEndpoint represents the endpoint used to
+                  communicate with the management cluster controlplane endpoint. It
+                  will be used when generating the kubeconfig.
+                properties:
+                  host:
+                    description: The hostname on which the API server is serving.
+                    type: string
+                  port:
+                    description: The port on which the API server is serving.
+                    format: int32
+                    type: integer
+                required:
+                - host
+                - port
+                type: object
               name:
                 description: Name is the name of the service account created for this
                   AccessRequest
