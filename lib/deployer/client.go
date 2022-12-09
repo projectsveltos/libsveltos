@@ -87,12 +87,17 @@ func (d *deployer) RegisterFeatureID(
 	return nil
 }
 
+type Options struct {
+	HandlerOptions map[string]string
+}
+
 func (d *deployer) Deploy(
 	ctx context.Context,
 	clusterNamespace, clusterName, applicant, featureID string,
 	cleanup bool,
 	f RequestHandler,
 	m MetricHandler,
+	o Options,
 ) error {
 
 	key := GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
@@ -128,7 +133,7 @@ func (d *deployer) Deploy(
 	}
 
 	d.log.V(logs.LogVerbose).Info("request added to jobQueue")
-	req := requestParams{key: key, handler: f, metric: m}
+	req := requestParams{key: key, handler: f, metric: m, handlerOptions: o}
 	d.jobQueue = append(d.jobQueue, req)
 
 	return nil

@@ -164,7 +164,7 @@ var _ = Describe("Client", func() {
 		defer cancel()
 		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
 
-		err := d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil)
+		err := d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil, deployer.Options{})
 		Expect(err).ToNot(BeNil())
 	})
 
@@ -174,7 +174,6 @@ var _ = Describe("Client", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
 
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
@@ -185,10 +184,11 @@ var _ = Describe("Client", func() {
 		err := d.RegisterFeatureID(featureID)
 		Expect(err).To(BeNil())
 
+		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
 		d.SetDirty([]string{key})
 		Expect(len(d.GetDirty())).To(Equal(1))
 
-		err = d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil)
+		err = d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil, deployer.Options{})
 		Expect(err).To(BeNil())
 		Expect(len(d.GetDirty())).To(Equal(1))
 		Expect(len(d.GetInProgress())).To(Equal(0))
@@ -211,7 +211,7 @@ var _ = Describe("Client", func() {
 		err := d.RegisterFeatureID(featureID)
 		Expect(err).To(BeNil())
 
-		err = d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil)
+		err = d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil, deployer.Options{})
 		Expect(err).To(BeNil())
 		Expect(len(d.GetDirty())).To(Equal(1))
 		Expect(len(d.GetInProgress())).To(Equal(0))
@@ -238,7 +238,7 @@ var _ = Describe("Client", func() {
 		d.SetInProgress([]string{key})
 		Expect(len(d.GetInProgress())).To(Equal(1))
 
-		err = d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil)
+		err = d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil, deployer.Options{})
 		Expect(err).To(BeNil())
 		Expect(len(d.GetDirty())).To(Equal(1))
 		Expect(len(d.GetInProgress())).To(Equal(1))
@@ -266,7 +266,7 @@ var _ = Describe("Client", func() {
 		d.SetResults(r)
 		Expect(len(d.GetResults())).To(Equal(1))
 
-		err = d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil)
+		err = d.Deploy(ctx, ns, name, applicant, featureID, cleanup, nil, nil, deployer.Options{})
 		Expect(err).To(BeNil())
 		Expect(len(d.GetDirty())).To(Equal(1))
 		Expect(len(d.GetInProgress())).To(Equal(0))

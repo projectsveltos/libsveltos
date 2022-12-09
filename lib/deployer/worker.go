@@ -54,9 +54,10 @@ const (
 )
 
 type requestParams struct {
-	key     string
-	handler RequestHandler
-	metric  MetricHandler
+	key            string
+	handler        RequestHandler
+	metric         MetricHandler
+	handlerOptions Options
 }
 
 type responseParams struct {
@@ -155,7 +156,7 @@ func processRequests(ctx context.Context, d *deployer, i int, logger logr.Logger
 				start := time.Now()
 				l.V(logs.LogDebug).Info("invoking handler")
 				err = params.handler(ctx, controlClusterClient,
-					ns, name, applicant, featureID,
+					ns, name, applicant, featureID, params.handlerOptions,
 					l)
 				storeResult(d, params.key, err, params.handler, params.metric, logger)
 				elapsed := time.Since(start)
@@ -170,7 +171,8 @@ func processRequests(ctx context.Context, d *deployer, i int, logger logr.Logger
 			d.mu.Lock()
 			if len(d.jobQueue) > 0 {
 				// take a request from queue and remove it from queue
-				params = &requestParams{key: d.jobQueue[0].key, handler: d.jobQueue[0].handler, metric: d.jobQueue[0].metric}
+				params = &requestParams{key: d.jobQueue[0].key, handler: d.jobQueue[0].handler,
+					handlerOptions: d.jobQueue[0].handlerOptions, metric: d.jobQueue[0].metric}
 				d.jobQueue = d.jobQueue[1:]
 				l := logger.WithValues("key", params.key)
 				l.V(logs.LogVerbose).Info("take from jobQueue")
