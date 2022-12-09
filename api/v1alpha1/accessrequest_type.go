@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 const (
@@ -52,6 +53,13 @@ type AccessRequestSpec struct {
 
 	// Type represent the type of the request
 	Type RequestType `json:"type"`
+
+	// ControlPlaneEndpoint represents the endpoint used to communicate with the
+	// management cluster controlplane endpoint. It will be used when generating the
+	// kubeconfig.
+	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
+
+	// TODO: Add also necessary information for a secure (mTLS) connection
 }
 
 // AccessRequestStatus defines the status of AccessRequest
