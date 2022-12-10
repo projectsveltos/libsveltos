@@ -74,7 +74,7 @@ type AccessRequestStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=accessrequests,scope=Cluster
+//+kubebuilder:resource:path=accessrequests,scope=Namespaced
 //+kubebuilder:subresource:status
 
 // AccessRequest is the Schema for the accessrequest API

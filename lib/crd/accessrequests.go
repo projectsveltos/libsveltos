@@ -32,7 +32,7 @@ spec:
     listKind: AccessRequestList
     plural: accessrequests
     singular: accessrequest
-  scope: Cluster
+  scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
@@ -85,6 +85,7 @@ spec:
                 - Different
                 type: string
             required:
+            - controlPlaneEndpoint
             - name
             - namespace
             - type
