@@ -17,33 +17,33 @@ limitations under the License.
 package set
 
 import (
-	libv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type Set struct {
-	data map[libv1alpha1.PolicyRef]bool
+	data map[corev1.ObjectReference]bool
 }
 
 func (s *Set) init() {
 	if s.data == nil {
-		s.data = make(map[libv1alpha1.PolicyRef]bool, 0)
+		s.data = make(map[corev1.ObjectReference]bool, 0)
 	}
 }
 
 // Insert adds entry to set
-func (s *Set) Insert(entry *libv1alpha1.PolicyRef) {
+func (s *Set) Insert(entry *corev1.ObjectReference) {
 	s.init()
 	s.data[*entry] = true
 }
 
 // Erase removes entry from set
-func (s *Set) Erase(entry *libv1alpha1.PolicyRef) {
+func (s *Set) Erase(entry *corev1.ObjectReference) {
 	s.init()
 	delete(s.data, *entry)
 }
 
 // Has returns true if entry is currently part of set
-func (s *Set) Has(entry *libv1alpha1.PolicyRef) bool {
+func (s *Set) Has(entry *corev1.ObjectReference) bool {
 	s.init()
 	_, ok := s.data[*entry]
 	return ok
@@ -55,8 +55,8 @@ func (s *Set) Len() int {
 }
 
 // Items returns a slice with all elements currently in set
-func (s *Set) Items() []libv1alpha1.PolicyRef {
-	keys := make([]libv1alpha1.PolicyRef, s.Len())
+func (s *Set) Items() []corev1.ObjectReference {
+	keys := make([]corev1.ObjectReference, s.Len())
 
 	i := 0
 	for k := range s.data {
@@ -68,8 +68,8 @@ func (s *Set) Items() []libv1alpha1.PolicyRef {
 }
 
 // Difference returns all elements which are in s but not in b
-func (s *Set) Difference(b *Set) []libv1alpha1.PolicyRef {
-	results := make([]libv1alpha1.PolicyRef, 0)
+func (s *Set) Difference(b *Set) []corev1.ObjectReference {
+	results := make([]corev1.ObjectReference, 0)
 	for entry := range s.data {
 		if !b.Has(&entry) {
 			results = append(results, entry)
