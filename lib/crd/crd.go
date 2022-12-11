@@ -33,3 +33,7 @@ func GetDebuggingConfigurationCRDYAML() []byte {
 func GetAccessRequestCRDYAML() []byte {
 	return AccessRequestCRD
 }
+
+func GetClusterCRDYAML() []byte {
+	return ClusterCRD
+}
