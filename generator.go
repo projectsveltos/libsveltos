@@ -100,4 +100,7 @@ func main() {
 
 	accessRequestFile := "../../config/crd/bases/lib.projectsveltos.io_accessrequests.yaml"
 	generate(accessRequestFile, "accessrequests", "AccessRequest")
+
+	clusterFile := "../../config/crd/bases/lib.projectsveltos.io_clusters.yaml"
+	generate(clusterFile, "clusters", "Cluster")
 }
