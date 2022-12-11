@@ -53,6 +53,11 @@ spec:
             type: object
           spec:
             description: ClusterSpec defines the desired state of Cluster
+            properties:
+              paused:
+                description: Paused can be used to prevent controllers from processing
+                  the Cluster and all its associated objects.
+                type: boolean
             type: object
           status:
             description: ClusterStatus defines the status of Cluster
