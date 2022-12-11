@@ -26,6 +26,9 @@ const (
 
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
+	// Paused can be used to prevent controllers from processing the Cluster and all its associated objects.
+	// +optional
+	Paused bool `json:"paused,omitempty"`
 }
 
 // ClusterStatus defines the status of Cluster
