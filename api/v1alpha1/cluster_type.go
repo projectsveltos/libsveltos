@@ -21,44 +21,45 @@ import (
 )
 
 const (
-	ClusterKind = "Cluster"
+	SveltosClusterKind = "SveltosCluster"
 )
 
-// ClusterSpec defines the desired state of Cluster
-type ClusterSpec struct {
-	// Paused can be used to prevent controllers from processing the Cluster and all its associated objects.
+// SveltosClusterSpec defines the desired state of SveltosCluster
+type SveltosClusterSpec struct {
+	// Paused can be used to prevent controllers from processing the
+	// SveltosCluster and all its associated objects.
 	// +optional
 	Paused bool `json:"paused,omitempty"`
 }
 
-// ClusterStatus defines the status of Cluster
-type ClusterStatus struct {
+// SveltosClusterStatus defines the status of SveltosCluster
+type SveltosClusterStatus struct {
 	// Ready is the state of the cluster.
 	Ready bool `json:"ready"`
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=clusters,scope=Namespaced
+//+kubebuilder:resource:path=sveltosclusters,scope=Namespaced
 //+kubebuilder:subresource:status
 
-// Cluster is the Schema for the cluster API
-type Cluster struct {
+// SveltosCluster is the Schema for the SveltosCluster API
+type SveltosCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterSpec   `json:"spec,omitempty"`
-	Status ClusterStatus `json:"status,omitempty"`
+	Spec   SveltosClusterSpec   `json:"spec,omitempty"`
+	Status SveltosClusterStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// ClusterList contains a list of Cluster
-type ClusterList struct {
+// SveltosClusterList contains a list of SveltosCluster
+type SveltosClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Cluster `json:"items"`
+	Items           []SveltosCluster `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Cluster{}, &ClusterList{})
+	SchemeBuilder.Register(&SveltosCluster{}, &SveltosClusterList{})
 }
