@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
 )
 
@@ -50,12 +51,16 @@ func setupScheme() (*runtime.Scheme, error) {
 	if err := clientgoscheme.AddToScheme(s); err != nil {
 		return nil, err
 	}
+	if err := libsveltosv1alpha1.AddToScheme(s); err != nil {
+		return nil, err
+	}
 	return s, nil
 }
 
 var _ = Describe("clusterproxy ", func() {
 	var logger logr.Logger
 	var cluster *clusterv1.Cluster
+	var sveltosCluster *libsveltosv1alpha1.SveltosCluster
 	var namespace string
 	var scheme *runtime.Scheme
 
@@ -78,36 +83,47 @@ var _ = Describe("clusterproxy ", func() {
 				},
 			},
 		}
+
+		sveltosCluster = &libsveltosv1alpha1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      upstreamClusterNamePrefix + randomString(),
+				Namespace: namespace,
+				Labels: map[string]string{
+					"dc": "eng",
+				},
+			},
+		}
 	})
 
-	It("getSecretData returns an error when cluster does not exist", func() {
+	It("getCAPISecretData returns an error when cluster does not exist", func() {
 		initObjects := []client.Object{}
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		_, err := clusterproxy.GetSecretData(context.TODO(), logger, c, cluster.Namespace, cluster.Name)
+		_, err := clusterproxy.GetCAPISecretData(context.TODO(), logger, c, cluster.Namespace, cluster.Name)
 		Expect(err).ToNot(BeNil())
 		Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Cluster %s/%s does not exist", cluster.Namespace, cluster.Name)))
 	})
 
-	It("getSecretData returns an error when secret does not exist", func() {
+	It("getCAPISecretData returns an error when secret does not exist", func() {
 		initObjects := []client.Object{
 			cluster,
 		}
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		_, err := clusterproxy.GetSecretData(context.TODO(), logger, c, cluster.Namespace, cluster.Name)
+		_, err := clusterproxy.GetCAPISecretData(context.TODO(), logger, c, cluster.Namespace, cluster.Name)
 		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Failed to get secret %s/%s-kubeconfig", cluster.Namespace, cluster.Name)))
+		Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Failed to get secret %s/%s%s", cluster.Namespace, cluster.Name,
+			clusterproxy.CapiKubeconfigSecretNamePostfix)))
 	})
 
-	It("getSecretData returns secret data", func() {
+	It("getCAPISecretData returns secret data", func() {
 		randomData := []byte(randomString())
 		secret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: cluster.Namespace,
-				Name:      cluster.Name + "-kubeconfig",
+				Name:      cluster.Name + clusterproxy.CapiKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
 				"data": randomData,
@@ -121,12 +137,12 @@ var _ = Describe("clusterproxy ", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		data, err := clusterproxy.GetSecretData(context.TODO(), logger, c, cluster.Namespace, cluster.Name)
+		data, err := clusterproxy.GetCAPISecretData(context.TODO(), logger, c, cluster.Namespace, cluster.Name)
 		Expect(err).To(BeNil())
 		Expect(data).To(Equal(randomData))
 	})
 
-	It("getKubernetesClient returns client to access CAPI cluster", func() {
+	It("getCAPIKubernetesClient returns client to access CAPI cluster", func() {
 		ns := &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespace,
@@ -138,7 +154,7 @@ var _ = Describe("clusterproxy ", func() {
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: cluster.Namespace,
-				Name:      cluster.Name + "-kubeconfig",
+				Name:      cluster.Name + clusterproxy.CapiKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
 				"data": testEnv.Kubeconfig,
@@ -155,7 +171,7 @@ var _ = Describe("clusterproxy ", func() {
 				types.NamespacedName{Namespace: secret.Namespace, Name: secret.Name}, currentSecret)
 		}, timeout, time.Second).Should(BeNil())
 
-		wcClient, err := clusterproxy.GetKubernetesClient(context.TODO(), logger, testEnv.Client, runtime.NewScheme(),
+		wcClient, err := clusterproxy.GetCAPIKubernetesClient(context.TODO(), logger, testEnv.Client, runtime.NewScheme(),
 			cluster.Namespace, cluster.Name)
 		Expect(err).To(BeNil())
 		Expect(wcClient).ToNot(BeNil())
@@ -195,7 +211,7 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(len(cps.Items)).To(Equal(2))
 	})
 
-	It("IsClusterReadyToBeConfigured returns true for a cluster with one control plane machine in running phase", func() {
+	It("IsCAPIClusterReadyToBeConfigured returns true for a cluster with one control plane machine in running phase", func() {
 		cpMachine := &clusterv1.Machine{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: cluster.Namespace,
@@ -225,12 +241,12 @@ var _ = Describe("clusterproxy ", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name, Kind: "Cluster"}, klogr.New())
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(true))
 	})
 
-	It("IsClusterReadyToBeConfigured returns false for a cluster with no control plane machine in running phase", func() {
+	It("IsCAPIClusterReadyToBeConfigured returns false for a cluster with no control plane machine in running phase", func() {
 		cpMachine := &clusterv1.Machine{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: cluster.Namespace,
@@ -262,6 +278,78 @@ var _ = Describe("clusterproxy ", func() {
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
 			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(ready).To(Equal(false))
+	})
+
+	It("getSveltosSecretData returns an error when cluster does not exist", func() {
+		initObjects := []client.Object{}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		_, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace, sveltosCluster.Name)
+		Expect(err).ToNot(BeNil())
+		Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("SveltosCluster %s/%s does not exist",
+			sveltosCluster.Namespace, sveltosCluster.Name)))
+	})
+
+	It("getSveltosSecretData returns an error when secret does not exist", func() {
+		initObjects := []client.Object{
+			sveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		_, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace, sveltosCluster.Name)
+		Expect(err).ToNot(BeNil())
+		Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Failed to get secret %s/%s%s", sveltosCluster.Namespace, sveltosCluster.Name,
+			clusterproxy.SveltosKubeconfigSecretNamePostfix)))
+	})
+
+	It("getSveltosSecretData returns secret data", func() {
+		randomData := []byte(randomString())
+		secret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: sveltosCluster.Namespace,
+				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
+			},
+			Data: map[string][]byte{
+				"data": randomData,
+			},
+		}
+
+		initObjects := []client.Object{
+			sveltosCluster,
+			&secret,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		data, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace, sveltosCluster.Name)
+		Expect(err).To(BeNil())
+		Expect(data).To(Equal(randomData))
+	})
+
+	It("IsClusterReadyToBeConfigured returns false when Status.Ready is set to false", func() {
+		sveltosCluster.Status.Ready = true
+		initObjects := []client.Object{
+			sveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
+			&corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name, Kind: libsveltosv1alpha1.SveltosClusterKind},
+			klogr.New())
+		Expect(err).To(BeNil())
+		Expect(ready).To(Equal(true))
+
+		sveltosCluster.Status.Ready = false
+		Expect(c.Status().Update(context.TODO(), sveltosCluster)).To(Succeed())
+
+		ready, err = clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
+			&corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name, Kind: libsveltosv1alpha1.SveltosClusterKind},
+			klogr.New())
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(false))
 	})
