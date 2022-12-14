@@ -62,6 +62,10 @@ spec:
           status:
             description: SveltosClusterStatus defines the status of SveltosCluster
             properties:
+              failureMessage:
+                description: FailureMessage is a human consumable message explaining
+                  the misconfiguration
+                type: string
               ready:
                 description: Ready is the state of the cluster.
                 type: boolean
