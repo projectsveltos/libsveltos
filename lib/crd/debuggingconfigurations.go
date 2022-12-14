@@ -69,6 +69,7 @@ spec:
                       - SveltosManager
                       - Classifier
                       - ClassifierAgent
+                      - SveltosClusterManager
                       type: string
                     logLevel:
                       description: 'LogLevel is the log severity above which logs
