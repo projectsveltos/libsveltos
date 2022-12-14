@@ -36,6 +36,11 @@ type SveltosClusterSpec struct {
 type SveltosClusterStatus struct {
 	// Ready is the state of the cluster.
 	Ready bool `json:"ready"`
+
+	// FailureMessage is a human consumable message explaining the
+	// misconfiguration
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
