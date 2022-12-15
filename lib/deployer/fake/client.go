@@ -19,10 +19,10 @@ package fake
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/go-logr/logr"
-
+	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	"github.com/projectsveltos/libsveltos/lib/deployer"
 )
 
@@ -63,13 +63,14 @@ func (d *fakeDeployer) RegisterFeatureID(
 func (d *fakeDeployer) Deploy(
 	ctx context.Context,
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool,
 	f deployer.RequestHandler,
 	m deployer.MetricHandler,
 	o deployer.Options,
 ) error {
 
-	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 	d.inProgress = append(d.inProgress, key)
 	return nil
 }
@@ -82,10 +83,11 @@ func (d *fakeDeployer) Deploy(
 func (d *fakeDeployer) GetResult(
 	ctx context.Context,
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool,
 ) deployer.Result {
 
-	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 	v, ok := d.results[key]
 	result := deployer.Result{}
 	if !ok {
@@ -104,10 +106,11 @@ func (d *fakeDeployer) GetResult(
 
 func (d *fakeDeployer) IsInProgress(
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool,
 ) bool {
 
-	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 	for i := range d.inProgress {
 		if d.inProgress[i] == key {
 			return true
@@ -118,9 +121,10 @@ func (d *fakeDeployer) IsInProgress(
 
 func (d *fakeDeployer) CleanupEntries(
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool) {
 
-	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 
 	// Remove any entry we might have for this cluster/feature
 	delete(d.results, key)
@@ -129,21 +133,23 @@ func (d *fakeDeployer) CleanupEntries(
 // StoreResult store request result
 func (d *fakeDeployer) StoreResult(
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool,
 	err error,
 ) {
 
-	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 	d.results[key] = err
 }
 
 // StoreInProgress marks request as in progress
 func (d *fakeDeployer) StoreInProgress(
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool,
 ) {
 
-	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 	d.inProgress = append(d.inProgress, key)
 }
 

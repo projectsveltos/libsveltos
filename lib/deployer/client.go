@@ -24,6 +24,7 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
@@ -94,13 +95,14 @@ type Options struct {
 func (d *deployer) Deploy(
 	ctx context.Context,
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool,
 	f RequestHandler,
 	m MetricHandler,
 	o Options,
 ) error {
 
-	key := GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -142,10 +144,11 @@ func (d *deployer) Deploy(
 func (d *deployer) GetResult(
 	ctx context.Context,
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool,
 ) Result {
 
-	responseParam, err := getRequestStatus(d, clusterNamespace, clusterName, applicant, featureID, cleanup)
+	responseParam, err := getRequestStatus(d, clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 	if err != nil {
 		return Result{
 			ResultStatus: Unavailable,
@@ -180,10 +183,11 @@ func (d *deployer) GetResult(
 
 func (d *deployer) IsInProgress(
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool,
 ) bool {
 
-	key := GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -200,9 +204,10 @@ func (d *deployer) IsInProgress(
 
 func (d *deployer) CleanupEntries(
 	clusterNamespace, clusterName, applicant, featureID string,
+	clusterType sveltosv1.ClusterType,
 	cleanup bool) {
 
-	key := GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 
 	// Remove any entry we might have for this cluster/feature
 

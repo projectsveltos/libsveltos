@@ -22,6 +22,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 )
 
 const (
@@ -61,11 +63,11 @@ type Result struct {
 
 type RequestHandler func(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, applicant, featureID string,
-	o Options, logger logr.Logger) error
+	clusterType sveltosv1.ClusterType, o Options, logger logr.Logger) error
 
 type MetricHandler func(elapsed time.Duration,
 	clusterNamespace, clusterName, featureID string,
-	logger logr.Logger)
+	clusterType sveltosv1.ClusterType, logger logr.Logger)
 
 type DeployerInterface interface {
 	// RegisterFeatureID allows registering a feature ID.
@@ -87,6 +89,7 @@ type DeployerInterface interface {
 	Deploy(
 		ctx context.Context,
 		clusterNamespace, clusterName, applicant, featureID string,
+		clusterType sveltosv1.ClusterType,
 		cleanup bool,
 		f RequestHandler,
 		m MetricHandler,
@@ -99,6 +102,7 @@ type DeployerInterface interface {
 	// removed is currently in progress.
 	IsInProgress(
 		clusterNamespace, clusterName, applicant, featureID string,
+		clusterType sveltosv1.ClusterType,
 		cleanup bool,
 	) bool
 
@@ -106,11 +110,12 @@ type DeployerInterface interface {
 	GetResult(
 		ctx context.Context,
 		clusterNamespace, clusterName, applicant, featureID string,
+		clusterType sveltosv1.ClusterType,
 		cleanup bool,
 	) Result
 
 	// CleanupEntries removes any entry (from any internal data structure) for
 	// given feature
 	CleanupEntries(clusterNamespace, clusterName, applicant, featureID string,
-		cleanup bool)
+		clusterType sveltosv1.ClusterType, cleanup bool)
 }
