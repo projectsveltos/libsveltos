@@ -69,8 +69,6 @@ spec:
               ready:
                 description: Ready is the state of the cluster.
                 type: boolean
-            required:
-            - ready
             type: object
         type: object
     served: true
