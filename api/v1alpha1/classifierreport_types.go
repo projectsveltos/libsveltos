@@ -20,6 +20,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type ClusterType string
+
+const (
+	// ClusterTypeCapi indicates type is CAPI Cluster
+	ClusterTypeCapi = ClusterType("Capi")
+
+	// ClusterTypeSveltos indicates type is Sveltos Cluster
+	ClusterTypeSveltos = ClusterType("Sveltos")
+)
+
 const (
 	// ClassifierLabelName is added to each ClassifierReport generated
 	// for a Classifier instance
@@ -43,6 +53,9 @@ type ClassifierReportSpec struct {
 	// ClusterName is the name of the CAPI Cluster this ClusterReport
 	// is for.
 	ClusterName string `json:"clusterName"`
+
+	// ClusterType is the type of Cluster
+	ClusterType ClusterType `json:"clusterType"`
 
 	// ClassifierName is the name of the Classifier instance this report
 	// is for.

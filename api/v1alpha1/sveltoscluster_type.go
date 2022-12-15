@@ -35,7 +35,7 @@ type SveltosClusterSpec struct {
 // SveltosClusterStatus defines the status of SveltosCluster
 type SveltosClusterStatus struct {
 	// Ready is the state of the cluster.
-    // +optional
+	// +optional
 	Ready bool `json:"ready,omitempty"`
 
 	// FailureMessage is a human consumable message explaining the

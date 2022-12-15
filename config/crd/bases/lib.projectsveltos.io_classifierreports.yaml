@@ -47,6 +47,9 @@ spec:
                 description: ClusterNamespace is the namespace of the CAPI Cluster
                   this ClusterReport is for.
                 type: string
+              clusterType:
+                description: ClusterType is the type of Cluster
+                type: string
               match:
                 description: Match indicates whether CAPI Cluster is currently a match
                   for the Classifier instance this report is for
@@ -55,6 +58,7 @@ spec:
             - classifierName
             - clusterName
             - clusterNamespace
+            - clusterType
             - match
             type: object
           status:
