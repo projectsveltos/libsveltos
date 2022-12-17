@@ -67,7 +67,7 @@ var _ = Describe("CRD", func() {
 	})
 
 	It("Gets the Cluster CustomResourceDefinition", func() {
-		yaml := crd.GetClusterCRDYAML()
+		yaml := crd.GetSveltosClusterCRDYAML()
 
 		filename := "../../config/crd/bases/lib.projectsveltos.io_sveltosclusters.yaml"
 		currentFile, err := os.ReadFile(filename)

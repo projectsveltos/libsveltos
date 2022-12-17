@@ -34,6 +34,6 @@ func GetAccessRequestCRDYAML() []byte {
 	return AccessRequestCRD
 }
 
-func GetClusterCRDYAML() []byte {
+func GetSveltosClusterCRDYAML() []byte {
 	return SveltosClusterCRD
 }
