@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,16 +29,28 @@ const (
 	// Classifier before removing it from the apiserver.
 	ClassifierFinalizer = "classifierfinalizer.projectsveltos.io"
 
-	// ClassifierReportClusterLabel is added to each ClassifierReport
-	ClassifierReportClusterLabel = "projectsveltos.io/cluster"
+	// ClassifierReportClusterNameLabel is added to each ClassifierReport
+	ClassifierReportClusterNameLabel = "projectsveltos.io/cluster-name"
+
+	// ClassifierReportClusterTypeLabel is added to each ClassifierReport
+	ClassifierReportClusterTypeLabel = "projectsveltos.io/cluster-type"
 
 	ClassifierKind = "Classifier"
 
 	FeatureClassifier = "Classifier"
 )
 
-func GetClassifierReportName(classifierName, clusterName string) string {
-	return fmt.Sprintf("%s--%s", classifierName, clusterName)
+func GetClassifierReportName(classifierName, clusterName string, clusterType *ClusterType) string {
+	// TODO: shorten this
+	return fmt.Sprintf("%s--%s--%s",
+		strings.ToLower(string(*clusterType)), classifierName, clusterName)
+}
+
+func GetClassifierReportLabels(clusterName string, clusterType *ClusterType) map[string]string {
+	return map[string]string{
+		ClassifierReportClusterNameLabel: clusterName,
+		ClassifierReportClusterTypeLabel: strings.ToLower(string(*clusterType)),
+	}
 }
 
 func GetClusterInfo(clusterNamespace, clusterName string) string {
