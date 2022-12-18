@@ -46,8 +46,9 @@ func GetClassifierReportName(classifierName, clusterName string, clusterType *Cl
 		strings.ToLower(string(*clusterType)), classifierName, clusterName)
 }
 
-func GetClassifierReportLabels(clusterName string, clusterType *ClusterType) map[string]string {
+func GetClassifierReportLabels(classifierName, clusterName string, clusterType *ClusterType) map[string]string {
 	return map[string]string{
+		ClassifierLabelName:              classifierName,
 		ClassifierReportClusterNameLabel: clusterName,
 		ClassifierReportClusterTypeLabel: strings.ToLower(string(*clusterType)),
 	}
