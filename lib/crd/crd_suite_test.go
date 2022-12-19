@@ -17,13 +17,81 @@ limitations under the License.
 package crd_test
 
 import (
+	"context"
+	"fmt"
+	"path"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+
+	"github.com/projectsveltos/libsveltos/internal/test/helpers"
 )
 
-func TestCrd(t *testing.T) {
+var (
+	testEnv *helpers.TestEnvironment
+	cancel  context.CancelFunc
+	ctx     context.Context
+	scheme  *runtime.Scheme
+)
+
+func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Crd Suite")
+	RunSpecs(t, "Controllers Suite")
+}
+
+var _ = BeforeSuite(func() {
+	By("bootstrapping test environment")
+
+	ctx, cancel = context.WithCancel(context.TODO())
+
+	var err error
+	scheme, err = setupScheme()
+	Expect(err).To(BeNil())
+
+	testEnvConfig := helpers.NewTestEnvironmentConfiguration([]string{
+		path.Join("config", "crd", "bases"),
+	}, scheme)
+	testEnv, err = testEnvConfig.Build(scheme)
+	if err != nil {
+		panic(err)
+	}
+
+	go func() {
+		By("Starting the manager")
+		if err := testEnv.StartManager(ctx); err != nil {
+			panic(fmt.Sprintf("Failed to start the envtest manager: %v", err))
+		}
+	}()
+
+	if synced := testEnv.GetCache().WaitForCacheSync(ctx); !synced {
+		time.Sleep(time.Second)
+	}
+})
+
+var _ = AfterSuite(func() {
+	cancel()
+	By("tearing down the test environment")
+	err := testEnv.Stop()
+	Expect(err).ToNot(HaveOccurred())
+})
+
+func setupScheme() (*runtime.Scheme, error) {
+	s := runtime.NewScheme()
+	if err := clusterv1.AddToScheme(s); err != nil {
+		return nil, err
+	}
+	if err := clientgoscheme.AddToScheme(s); err != nil {
+		return nil, err
+	}
+	if err := apiextensionsv1.AddToScheme(s); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
