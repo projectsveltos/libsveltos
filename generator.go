@@ -103,4 +103,7 @@ func main() {
 
 	sveltosClusterFile := "../../config/crd/bases/lib.projectsveltos.io_sveltosclusters.yaml"
 	generate(sveltosClusterFile, "sveltosclusters", "SveltosCluster")
+
+	resourceSummaryFile := "../../config/crd/bases/lib.projectsveltos.io_resourcesummaries.yaml"
+	generate(resourceSummaryFile, "resourcesummaries", "ResourceSummary")
 }

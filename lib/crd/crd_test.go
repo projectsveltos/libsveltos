@@ -66,10 +66,20 @@ var _ = Describe("CRD", func() {
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
 
-	It("Gets the Cluster CustomResourceDefinition", func() {
+	It("Gets the SveltosCluster CustomResourceDefinition", func() {
 		yaml := crd.GetSveltosClusterCRDYAML()
 
 		filename := "../../config/crd/bases/lib.projectsveltos.io_sveltosclusters.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the ResourceSummary CustomResourceDefinition", func() {
+		yaml := crd.GetResourceSummaryCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_resourcesummaries.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 

@@ -46,11 +46,11 @@ const (
 
 // ClassifierReportSpec defines the desired state of ClassifierReport
 type ClassifierReportSpec struct {
-	// ClusterNamespace is the namespace of the CAPI Cluster this
+	// ClusterNamespace is the namespace of the Cluster this
 	// ClusterReport is for.
 	ClusterNamespace string `json:"clusterNamespace"`
 
-	// ClusterName is the name of the CAPI Cluster this ClusterReport
+	// ClusterName is the name of the Cluster this ClusterReport
 	// is for.
 	ClusterName string `json:"clusterName"`
 
@@ -61,7 +61,7 @@ type ClassifierReportSpec struct {
 	// is for.
 	ClassifierName string `json:"classifierName"`
 
-	// Match indicates whether CAPI Cluster is currently a match for
+	// Match indicates whether Cluster is currently a match for
 	// the Classifier instance this report is for
 	Match bool `json:"match"`
 }

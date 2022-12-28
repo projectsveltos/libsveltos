@@ -40,18 +40,18 @@ spec:
                   this report is for.
                 type: string
               clusterName:
-                description: ClusterName is the name of the CAPI Cluster this ClusterReport
+                description: ClusterName is the name of the Cluster this ClusterReport
                   is for.
                 type: string
               clusterNamespace:
-                description: ClusterNamespace is the namespace of the CAPI Cluster
-                  this ClusterReport is for.
+                description: ClusterNamespace is the namespace of the Cluster this
+                  ClusterReport is for.
                 type: string
               clusterType:
                 description: ClusterType is the type of Cluster
                 type: string
               match:
-                description: Match indicates whether CAPI Cluster is currently a match
+                description: Match indicates whether Cluster is currently a match
                   for the Classifier instance this report is for
                 type: boolean
             required:

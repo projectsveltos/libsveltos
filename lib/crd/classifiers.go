@@ -101,10 +101,10 @@ spec:
                         type: object
                       type: array
                     group:
-                      description: Group of the resource deployed in the CAPI Cluster.
+                      description: Group of the resource deployed in the Cluster.
                       type: string
                     kind:
-                      description: Kind of the resource deployed in the CAPI Cluster.
+                      description: Kind of the resource deployed in the Cluster.
                       minLength: 1
                       type: string
                     labelFilters:
@@ -139,11 +139,11 @@ spec:
                         match
                       type: integer
                     namespace:
-                      description: Namespace of the resource deployed in the CAPI
-                        Cluster. Empty for resources scoped at cluster level.
+                      description: Namespace of the resource deployed in the  Cluster.
+                        Empty for resources scoped at cluster level.
                       type: string
                     version:
-                      description: Version of the resource deployed in the CAPI Cluster.
+                      description: Version of the resource deployed in the Cluster.
                       type: string
                   required:
                   - group
@@ -187,7 +187,7 @@ spec:
                 items:
                   properties:
                     cluster:
-                      description: Cluster references the CAPI Cluster
+                      description: Cluster references the Cluster
                       properties:
                         apiVersion:
                           description: API version of the referent.
@@ -229,7 +229,7 @@ spec:
                       type: string
                     hash:
                       description: Hash represents the hash of the Classifier currently
-                        deployed in the CAPI Cluster
+                        deployed in the Cluster
                       format: byte
                       type: string
                     status:
