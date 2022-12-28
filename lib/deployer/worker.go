@@ -31,10 +31,10 @@ import (
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
-// A "request" represents the need to deploy a feature in a CAPI cluster.
+// A "request" represents the need to deploy a feature in a cluster.
 //
 // When a request arrives, the flow is following:
-// - when a request to configure feature in a CAPI cluster arrives,
+// - when a request to configure feature in a cluster arrives,
 // it is first added to the dirty set or dropped if it already present in the
 // dirty set;
 // - pushed to the jobQueue only if it is not presented in inProgress.
@@ -45,7 +45,7 @@ import (
 //
 // If a request, currently in the inProgress arrives again, such request is only added
 // to the dirty set, not to the queue. This guarantees that a request to deploy a feature
-// in a CAPI cluster is never process more than once in parallel.
+// in a cluster is never process more than once in parallel.
 //
 // When worker is done, the request is removed from the inProgress set.
 // If the same request is also present in the dirty set, it is added back to the back of the jobQueue.
@@ -89,7 +89,7 @@ func (d *deployer) startWorkloadWorkers(ctx context.Context, numOfWorker int, lo
 }
 
 // GetKey returns a unique ID for a request provided:
-// - clusterNamespace and clusterName which are the namespace/name of the CAPI
+// - clusterNamespace and clusterName which are the namespace/name of the
 // cluster where feature needs to be deployed;
 // - featureID is a unique identifier for the feature that needs to be deployed.
 func GetKey(clusterNamespace, clusterName, applicant, featureID string, clusterType sveltosv1.ClusterType, cleanup bool) string {
@@ -98,7 +98,7 @@ func GetKey(clusterNamespace, clusterName, applicant, featureID string, clusterT
 }
 
 // getClusterFromKey given a unique request key, returns:
-// - clusterNamespace and clusterName which are the namespace/name of the CAPI
+// - clusterNamespace and clusterName which are the namespace/name of the
 // cluster where feature needs to be deployed;
 func getClusterFromKey(key string) (namespace, name string, err error) {
 	info := strings.Split(key, separator)

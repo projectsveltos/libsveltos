@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 // PolicyRef specifies a resource containing one or more policy
-// to deploy in matching CAPI Clusters.
+// to deploy in matching Clusters.
 type PolicyRef struct {
 	// Namespace of the referenced resource.
 	// +kubebuilder:validation:MinLength=1
