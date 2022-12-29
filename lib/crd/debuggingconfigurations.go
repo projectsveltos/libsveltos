@@ -70,6 +70,8 @@ spec:
                       - Classifier
                       - ClassifierAgent
                       - SveltosClusterManager
+                      - DriftDetectionManager
+                      - AccessManager
                       type: string
                     logLevel:
                       description: 'LogLevel is the log severity above which logs

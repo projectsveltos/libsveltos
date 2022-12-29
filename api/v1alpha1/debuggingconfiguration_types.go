@@ -41,7 +41,7 @@ const (
 	LogLevelVerbose = LogLevel("LogLevelVerbose")
 )
 
-// +kubebuilder:validation:Enum:=SveltosManager;Classifier;ClassifierAgent;SveltosClusterManager
+// +kubebuilder:validation:Enum:=SveltosManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager
 type Component string
 
 const (
@@ -56,6 +56,12 @@ const (
 
 	// ComponentSveltosClusterManager is the sveltoscluster-manager pod
 	ComponentSveltosClusterManager = Component("SveltosClusterManager")
+
+	// DriftDetectionManager is the drift-detection-manager pod
+	DriftDetectionManager = Component("DriftDetectionManager")
+
+	// AccessManager is the access-manager pod
+	AccessManager = Component("AccessManager")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.
