@@ -57,11 +57,11 @@ const (
 	// ComponentSveltosClusterManager is the sveltoscluster-manager pod
 	ComponentSveltosClusterManager = Component("SveltosClusterManager")
 
-	// ComponentSDriftDetectionManager is the drift-detection-manager pod
-	ComponentSDriftDetectionManager = Component("DriftDetectionManager")
+	// ComponentDriftDetectionManager is the drift-detection-manager pod
+	ComponentDriftDetectionManager = Component("DriftDetectionManager")
 
-	// ComponentSAccessManager is the access-manager pod
-	ComponentSAccessManager = Component("AccessManager")
+	// ComponentAccessManager is the access-manager pod
+	ComponentAccessManager = Component("AccessManager")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.
