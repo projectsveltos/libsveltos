@@ -21,6 +21,9 @@ import (
 )
 
 const (
+	// ResourceSummaryFinalizer is finalizer added to ResourceSummary
+	ResourceSummaryFinalizer = "resourcesummaryfinalizer.projectsveltos.io"
+
 	ResourceSummaryKind = "ResourceSummary"
 
 	// ClusterSummaryLabelName is added to all ResourceSummary instances
