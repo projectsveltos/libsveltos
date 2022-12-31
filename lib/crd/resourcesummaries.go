@@ -145,6 +145,38 @@ spec:
               helmResourcesChanged:
                 description: Helm Resources changed.
                 type: boolean
+              resourceHashes:
+                description: Resource specifies a resource.
+                items:
+                  properties:
+                    group:
+                      description: Group of the resource deployed in the Cluster.
+                      type: string
+                    hash:
+                      description: Hash is the hash of a resource's data.
+                      type: string
+                    kind:
+                      description: Kind of the resource deployed in the Cluster.
+                      minLength: 1
+                      type: string
+                    name:
+                      description: Name of the resource deployed in the Cluster.
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: Namespace of the resource deployed in the Cluster.
+                        Empty for resources scoped at cluster level.
+                      type: string
+                    version:
+                      description: Version of the resource deployed in the Cluster.
+                      type: string
+                  required:
+                  - group
+                  - kind
+                  - name
+                  - version
+                  type: object
+                type: array
               resourcesChanged:
                 description: Resources changed.
                 type: boolean
