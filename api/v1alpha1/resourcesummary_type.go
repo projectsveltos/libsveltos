@@ -72,6 +72,14 @@ type HelmResources struct {
 	Resources []Resource `json:"group,omitempty"`
 }
 
+type ResourceHash struct {
+	// Resource specifies a resource.
+	Resource `json:",inline"`
+
+	// Hash is the hash of a resource's data.
+	Hash string `json:"hash,omitempty"`
+}
+
 // ResourceSummarySpec defines the desired state of ResourceSummary
 type ResourceSummarySpec struct {
 	// Resources deployed by ClusterSummary because of referenced ConfigMaps/Secrets
@@ -92,6 +100,9 @@ type ResourceSummaryStatus struct {
 	// Helm Resources changed.
 	// +optional
 	HelmResourcesChanged bool `json:"helmResourcesChanged,omitempty"`
+
+	// Resource specifies a resource.
+	ResourceHashes []ResourceHash `json:"resourceHashes,omitempty"`
 }
 
 //+kubebuilder:object:root=true
