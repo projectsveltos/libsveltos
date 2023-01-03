@@ -101,8 +101,11 @@ type ResourceSummaryStatus struct {
 	// +optional
 	HelmResourcesChanged bool `json:"helmResourcesChanged,omitempty"`
 
-	// Resource specifies a resource.
+	// ResourceHashes specifies a list of resource plus hash
 	ResourceHashes []ResourceHash `json:"resourceHashes,omitempty"`
+
+	// HelmResourceHashes specifies list of resource plus hash.
+	HelmResourceHashes []ResourceHash `json:"helmResourceHashes,omitempty"`
 }
 
 //+kubebuilder:object:root=true
