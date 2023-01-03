@@ -142,11 +142,43 @@ spec:
           status:
             description: ResourceSummaryStatus defines the status of ResourceSummary
             properties:
+              helmResourceHashes:
+                description: HelmResourceHashes specifies list of resource plus hash.
+                items:
+                  properties:
+                    group:
+                      description: Group of the resource deployed in the Cluster.
+                      type: string
+                    hash:
+                      description: Hash is the hash of a resource's data.
+                      type: string
+                    kind:
+                      description: Kind of the resource deployed in the Cluster.
+                      minLength: 1
+                      type: string
+                    name:
+                      description: Name of the resource deployed in the Cluster.
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: Namespace of the resource deployed in the Cluster.
+                        Empty for resources scoped at cluster level.
+                      type: string
+                    version:
+                      description: Version of the resource deployed in the Cluster.
+                      type: string
+                  required:
+                  - group
+                  - kind
+                  - name
+                  - version
+                  type: object
+                type: array
               helmResourcesChanged:
                 description: Helm Resources changed.
                 type: boolean
               resourceHashes:
-                description: Resource specifies a resource.
+                description: ResourceHashes specifies a list of resource plus hash
                 items:
                   properties:
                     group:
