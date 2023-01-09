@@ -5,10 +5,32 @@
 
 # libsveltos
 
-<img src="https://raw.githubusercontent.com/projectsveltos/libsveltos/dev/logos/logo.png" width="200">
+<img src="https://raw.githubusercontent.com/projectsveltos/sveltos/main/docs/assets/logo.png" width="200">
 
-## What Sveltos is
-Sveltos is tool for policy driven management of kubernetes resources and helm charts in [ClusterAPI](https://github.com/kubernetes-sigs/cluster-api) powered Kubernetes clusters. Sveltos provides declarative APIs to provision  features like Helm charts, ingress controllers, CNIs, storage classes and other resources in a given set of Kubernetes clusters. Sveltos is a freely available and open source. Sveltos is very lightweight and can be installed onto any Kubernetes clusters in minutes.
+Please refere to sveltos [documentation](https://projectsveltos.github.io/sveltos/).
 
 ## What this repository is
 Libraries containing all pieces common across different repositories
+
+## Contributing [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/projectsveltos/sveltos-manager/issues)
+:heart: Your contributions are always welcome!
+If you have questions, noticed any bug or want to get the latest project news, you can connect with us in the following ways:
+1. Open a bug/feature enhancement on github;
+2. Chat with us on the Slack in the [#projectsveltos](https://join.slack.com/t/projectsveltos/shared_invite/zt-1hraownbr-W8NTs6LTimxLPB8Erj8Q6Q) channel;
+3. Submit a pull request.
+
+## License
+
+Copyright 2022.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
