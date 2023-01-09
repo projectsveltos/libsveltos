@@ -26,7 +26,7 @@ import (
 )
 
 var _ = Describe("CRD", func() {
-	It("Should get the Classifier CustomResourceDefinition", func() {
+	It("Gets the Classifier CustomResourceDefinition", func() {
 		yaml := crd.GetClassifierCRDYAML()
 
 		filename := "../../config/crd/bases/lib.projectsveltos.io_classifiers.yaml"
@@ -36,7 +36,7 @@ var _ = Describe("CRD", func() {
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
 
-	It("Should get the ClassifierReport CustomResourceDefinition", func() {
+	It("Gets the ClassifierReport CustomResourceDefinition", func() {
 		yaml := crd.GetClassifierReportCRDYAML()
 
 		filename := "../../config/crd/bases/lib.projectsveltos.io_classifierreports.yaml"
@@ -46,10 +46,40 @@ var _ = Describe("CRD", func() {
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
 
-	It("Should get the DebuggingConfiguration CustomResourceDefinition", func() {
+	It("Gets the DebuggingConfiguration CustomResourceDefinition", func() {
 		yaml := crd.GetDebuggingConfigurationCRDYAML()
 
 		filename := "../../config/crd/bases/lib.projectsveltos.io_debuggingconfigurations.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the AccessRequest CustomResourceDefinition", func() {
+		yaml := crd.GetAccessRequestCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_accessrequests.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the SveltosCluster CustomResourceDefinition", func() {
+		yaml := crd.GetSveltosClusterCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_sveltosclusters.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the ResourceSummary CustomResourceDefinition", func() {
+		yaml := crd.GetResourceSummaryCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_resourcesummaries.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 

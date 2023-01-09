@@ -26,26 +26,31 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 const (
 	//nolint: gosec // CAPI secret postfix
-	kubeconfigSecretNamePostfix = "-kubeconfig"
+	capiKubeconfigSecretNamePostfix = "-kubeconfig"
+
+	//nolint: gosec // Sveltos secret postfix
+	sveltosKubeconfigSecretNamePostfix = "-sveltos-kubeconfig"
 )
 
-// GetKubernetesRestConfig returns rest.Config for a CAPI Cluster clusterNamespace/clusterName
+// GetCAPIKubernetesRestConfig returns rest.Config for a CAPI Cluster clusterNamespace/clusterName
 // c is the client to access management cluster
-func GetKubernetesRestConfig(ctx context.Context, logger logr.Logger, c client.Client,
+func GetCAPIKubernetesRestConfig(ctx context.Context, logger logr.Logger, c client.Client,
 	clusterNamespace, clusterName string) (*rest.Config, error) {
 
-	kubeconfigContent, err := GetSecretData(ctx, logger, c, clusterNamespace, clusterName)
+	kubeconfigContent, err := GetCAPISecretData(ctx, logger, c, clusterNamespace, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -65,12 +70,12 @@ func GetKubernetesRestConfig(ctx context.Context, logger logr.Logger, c client.C
 	return config, nil
 }
 
-// GetKubernetesClient returns a client to access CAPI Cluster clusterNamespace/clusterName
+// GetCAPIKubernetesClient returns a client to access CAPI Cluster clusterNamespace/clusterName
 // c is the client to access management cluster
-func GetKubernetesClient(ctx context.Context, logger logr.Logger, c client.Client,
+func GetCAPIKubernetesClient(ctx context.Context, logger logr.Logger, c client.Client,
 	s *runtime.Scheme, clusterNamespace, clusterName string) (client.Client, error) {
 
-	config, err := GetKubernetesRestConfig(ctx, logger, c, clusterNamespace, clusterName)
+	config, err := GetCAPIKubernetesRestConfig(ctx, logger, c, clusterNamespace, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +83,9 @@ func GetKubernetesClient(ctx context.Context, logger logr.Logger, c client.Clien
 	return client.New(config, client.Options{Scheme: s})
 }
 
-// GetSecretData verifies Cluster exists and returns the content of secret containing
+// GetCAPISecretData verifies Cluster exists and returns the content of secret containing
 // the kubeconfig for CAPI cluster
-func GetSecretData(ctx context.Context, logger logr.Logger, c client.Client,
+func GetCAPISecretData(ctx context.Context, logger logr.Logger, c client.Client,
 	clusterNamespace, clusterName string) ([]byte, error) {
 
 	logger.WithValues("namespace", clusterNamespace, "cluster", clusterName)
@@ -103,33 +108,108 @@ func GetSecretData(ctx context.Context, logger logr.Logger, c client.Client,
 		return nil, err
 	}
 
-	secretName := cluster.Name + kubeconfigSecretNamePostfix
-	logger = logger.WithValues("secret", secretName)
-
-	secret := &corev1.Secret{}
-	key = client.ObjectKey{
-		Namespace: clusterNamespace,
-		Name:      secretName,
-	}
-
-	if err := c.Get(ctx, key, secret); err != nil {
-		logger.Error(err, "failed to get secret")
-		return nil, errors.Wrap(err,
-			fmt.Sprintf("Failed to get secret %s/%s",
-				clusterNamespace, secretName))
-	}
-
-	for k, contents := range secret.Data {
-		logger.V(logs.LogVerbose).Info("Reading secret", "key", k)
-		return contents, nil
-	}
-
-	return nil, nil
+	return getSecretData(ctx, logger, c, clusterNamespace, clusterName, capiKubeconfigSecretNamePostfix)
 }
 
-// IsClusterReadyToBeConfigured gets all Machines for a given CAPI Cluster and returns true
-// if at least one control plane machine is in running phase
+// GetSveltosKubernetesRestConfig returns rest.Config for a Sveltos Cluster clusterNamespace/clusterName
+// c is the client to access management cluster
+func GetSveltosKubernetesRestConfig(ctx context.Context, logger logr.Logger, c client.Client,
+	clusterNamespace, clusterName string) (*rest.Config, error) {
+
+	kubeconfigContent, err := GetSveltosSecretData(ctx, logger, c, clusterNamespace, clusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeconfig, err := CreateKubeconfig(logger, kubeconfigContent)
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(kubeconfig)
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		logger.Error(err, "BuildConfigFromFlags")
+		return nil, errors.Wrap(err, "BuildConfigFromFlags")
+	}
+
+	return config, nil
+}
+
+// GetSveltosKubernetesClient returns a client to access Sveltos Cluster clusterNamespace/clusterName
+// c is the client to access management cluster
+func GetSveltosKubernetesClient(ctx context.Context, logger logr.Logger, c client.Client,
+	s *runtime.Scheme, clusterNamespace, clusterName string) (client.Client, error) {
+
+	config, err := GetSveltosKubernetesRestConfig(ctx, logger, c, clusterNamespace, clusterName)
+	if err != nil {
+		return nil, err
+	}
+	logger.V(logs.LogVerbose).Info("return new client")
+	return client.New(config, client.Options{Scheme: s})
+}
+
+// GetSveltosSecretData verifies Cluster exists and returns the content of secret containing
+// the kubeconfig for Sveltos cluster
+func GetSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Client,
+	clusterNamespace, clusterName string) ([]byte, error) {
+
+	logger.WithValues("namespace", clusterNamespace, "cluster", clusterName)
+	logger.V(logs.LogVerbose).Info("Get secret")
+	key := client.ObjectKey{
+		Namespace: clusterNamespace,
+		Name:      clusterName,
+	}
+
+	cluster := libsveltosv1alpha1.SveltosCluster{}
+	if err := c.Get(ctx, key, &cluster); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("SveltosCluster does not exist")
+			return nil, errors.Wrap(err,
+				fmt.Sprintf("SveltosCluster %s/%s does not exist",
+					clusterNamespace,
+					clusterName,
+				))
+		}
+		return nil, err
+	}
+
+	return getSecretData(ctx, logger, c, clusterNamespace, clusterName, sveltosKubeconfigSecretNamePostfix)
+}
+
+// IsClusterReadyToBeConfigured returns true if cluster is ready to be configured
 func IsClusterReadyToBeConfigured(
+	ctx context.Context, c client.Client,
+	cluster *corev1.ObjectReference, logger logr.Logger,
+) (bool, error) {
+
+	if cluster.Kind == libsveltosv1alpha1.SveltosClusterKind {
+		return isSveltosClusterReadyToBeConfigured(ctx, c, cluster, logger)
+	}
+
+	return isCAPIClusterReadyToBeConfigured(ctx, c, cluster, logger)
+}
+
+// isSveltosClusterReadyToBeConfigured  returns true if SveltosCluster
+// Status.Ready is set to true
+func isSveltosClusterReadyToBeConfigured(
+	ctx context.Context, c client.Client,
+	cluster *corev1.ObjectReference, logger logr.Logger,
+) (bool, error) {
+
+	sveltosCluster := &libsveltosv1alpha1.SveltosCluster{}
+	err := c.Get(ctx, types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Name}, sveltosCluster)
+	if err != nil {
+		logger.Info(fmt.Sprintf("Failed to get SveltosCluster %v", err))
+		return false, err
+	}
+
+	return sveltosCluster.Status.Ready, nil
+}
+
+// isCAPIClusterReadyToBeConfigured gets all Machines for a given CAPI Cluster and returns true
+// if at least one control plane machine is in running phase
+func isCAPIClusterReadyToBeConfigured(
 	ctx context.Context, c client.Client,
 	cluster *corev1.ObjectReference, logger logr.Logger,
 ) (bool, error) {
@@ -140,10 +220,12 @@ func IsClusterReadyToBeConfigured(
 	}
 
 	for i := range machineList.Items {
-		if util.IsControlPlaneMachine(&machineList.Items[i]) &&
-			machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseRunning {
+		if util.IsControlPlaneMachine(&machineList.Items[i]) {
+			if machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseRunning ||
+				machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseProvisioned {
 
-			return true, nil
+				return true, nil
+			}
 		}
 	}
 
@@ -186,4 +268,31 @@ func CreateKubeconfig(logger logr.Logger, kubeconfigContent []byte) (string, err
 	}
 
 	return tmpfile.Name(), nil
+}
+
+func getSecretData(ctx context.Context, logger logr.Logger, c client.Client,
+	clusterNamespace, clusterName, postfix string) ([]byte, error) {
+
+	secretName := clusterName + postfix
+	logger = logger.WithValues("secret", secretName)
+
+	secret := &corev1.Secret{}
+	key := client.ObjectKey{
+		Namespace: clusterNamespace,
+		Name:      secretName,
+	}
+
+	if err := c.Get(ctx, key, secret); err != nil {
+		logger.Error(err, "failed to get secret")
+		return nil, errors.Wrap(err,
+			fmt.Sprintf("Failed to get secret %s/%s",
+				clusterNamespace, secretName))
+	}
+
+	for k, contents := range secret.Data {
+		logger.V(logs.LogVerbose).Info("Reading secret", "key", k)
+		return contents, nil
+	}
+
+	return nil, nil
 }

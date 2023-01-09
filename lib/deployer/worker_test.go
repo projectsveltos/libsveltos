@@ -28,14 +28,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	"github.com/projectsveltos/libsveltos/lib/deployer"
 )
 
 var messages chan string
 
 func writeToChannelHandler(ctx context.Context, c client.Client,
-	namespace, name, applicant, featureID string,
-	logger logr.Logger) error {
+	namespace, name, applicant, featureID string, clusterType sveltosv1.ClusterType,
+	o deployer.Options, logger logr.Logger) error {
 
 	By("writeToChannelHandler: writing to channel")
 	messages <- "done deploying"
@@ -44,14 +45,15 @@ func writeToChannelHandler(ctx context.Context, c client.Client,
 
 func metricHandler(elapsed time.Duration,
 	clusterNamespace, clusterName, featureID string,
+	clusterType sveltosv1.ClusterType,
 	logger logr.Logger) {
 
 	By("metricHandler: storing metrics")
 }
 
 func doNothingHandler(ctx context.Context, c client.Client,
-	namespace, name, applicant, featureID string,
-	logger logr.Logger) error {
+	namespace, name, applicant, featureID string, clusterType sveltosv1.ClusterType,
+	o deployer.Options, logger logr.Logger) error {
 
 	return nil
 }
@@ -63,7 +65,7 @@ var _ = Describe("Worker", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := true
-		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, cleanup)
 
 		outNs, outName, err := deployer.GetClusterFromKey(key)
 		Expect(err).To(BeNil())
@@ -84,7 +86,7 @@ var _ = Describe("Worker", func() {
 		applicant := ""
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, false)
+		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, false)
 
 		outNs, outName, err := deployer.GetClusterFromKey(key)
 		Expect(err).To(BeNil())
@@ -123,7 +125,7 @@ var _ = Describe("Worker", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, cleanup)
 		d.SetInProgress([]string{key})
 		Expect(len(d.GetInProgress())).To(Equal(1))
 
@@ -141,7 +143,7 @@ var _ = Describe("Worker", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, cleanup)
 		d.SetInProgress([]string{key})
 		Expect(len(d.GetInProgress())).To(Equal(1))
 
@@ -164,13 +166,13 @@ var _ = Describe("Worker", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := true
-		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1.ClusterTypeSveltos, cleanup)
 
 		r := map[string]error{key: nil}
 		d.SetResults(r)
 		Expect(len(d.GetResults())).To(Equal(1))
 
-		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, cleanup)
+		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, sveltosv1.ClusterTypeSveltos, cleanup)
 		Expect(err).To(BeNil())
 		Expect(resp).ToNot(BeNil())
 		Expect(deployer.IsResponseDeployed(resp)).To(BeTrue())
@@ -186,13 +188,13 @@ var _ = Describe("Worker", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := true
-		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, cleanup)
 
 		r := map[string]error{key: fmt.Errorf("failed to deploy")}
 		d.SetResults(r)
 		Expect(len(d.GetResults())).To(Equal(1))
 
-		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, cleanup)
+		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, cleanup)
 		Expect(err).To(BeNil())
 		Expect(resp).ToNot(BeNil())
 		Expect(deployer.IsResponseFailed(resp)).To(BeTrue())
@@ -208,12 +210,12 @@ var _ = Describe("Worker", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1.ClusterTypeSveltos, cleanup)
 
 		d.SetInProgress([]string{key})
 		Expect(len(d.GetInProgress())).To(Equal(1))
 
-		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, cleanup)
+		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, sveltosv1.ClusterTypeSveltos, cleanup)
 		Expect(err).To(BeNil())
 		Expect(resp).To(BeNil())
 	})
@@ -228,12 +230,12 @@ var _ = Describe("Worker", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, cleanup)
 
 		d.SetJobQueue(key, nil, nil)
 		Expect(len(d.GetJobQueue())).To(Equal(1))
 
-		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, cleanup)
+		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, cleanup)
 		Expect(err).To(BeNil())
 		Expect(resp).To(BeNil())
 	})
@@ -249,7 +251,7 @@ var _ = Describe("Worker", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := true
-		key := deployer.GetKey(ns, name, applicant, featureID, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, cleanup)
 		d.SetJobQueue(key, writeToChannelHandler, metricHandler)
 		Expect(len(d.GetJobQueue())).To(Equal(1))
 		messages = make(chan string)
@@ -269,7 +271,7 @@ var _ = Describe("Worker", func() {
 			return gotResult
 		}, 20*time.Second, time.Second).Should(BeTrue())
 
-		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, cleanup)
+		resp, err := deployer.GetRequestStatus(d, ns, name, applicant, featureID, sveltosv1.ClusterTypeCapi, cleanup)
 		Expect(err).To(BeNil())
 		Expect(deployer.IsResponseDeployed(resp)).To(BeTrue())
 	})

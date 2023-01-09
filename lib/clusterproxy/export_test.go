@@ -14,30 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package crd
+package clusterproxy
 
-//go:generate go run ../../generator.go
+const (
+	CapiKubeconfigSecretNamePostfix = capiKubeconfigSecretNamePostfix
 
-func GetClassifierCRDYAML() []byte {
-	return ClassifierCRD
-}
-
-func GetClassifierReportCRDYAML() []byte {
-	return ClassifierReportCRD
-}
-
-func GetDebuggingConfigurationCRDYAML() []byte {
-	return DebuggingConfigurationCRD
-}
-
-func GetAccessRequestCRDYAML() []byte {
-	return AccessRequestCRD
-}
-
-func GetSveltosClusterCRDYAML() []byte {
-	return SveltosClusterCRD
-}
-
-func GetResourceSummaryCRDYAML() []byte {
-	return ResourceSummaryCRD
-}
+	SveltosKubeconfigSecretNamePostfix = sveltosKubeconfigSecretNamePostfix
+)

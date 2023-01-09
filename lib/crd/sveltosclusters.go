@@ -16,29 +16,28 @@ limitations under the License.
 */
 package crd
 
-var DebuggingConfigurationFile = "../../config/crd/bases/lib.projectsveltos.io_debuggingconfigurations.yaml"
-var DebuggingConfigurationCRD = []byte(`---
+var SveltosClusterFile = "../../config/crd/bases/lib.projectsveltos.io_sveltosclusters.yaml"
+var SveltosClusterCRD = []byte(`---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: debuggingconfigurations.lib.projectsveltos.io
+  name: sveltosclusters.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
   names:
-    kind: DebuggingConfiguration
-    listKind: DebuggingConfigurationList
-    plural: debuggingconfigurations
-    singular: debuggingconfiguration
-  scope: Cluster
+    kind: SveltosCluster
+    listKind: SveltosClusterList
+    plural: sveltosclusters
+    singular: sveltoscluster
+  scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: DebuggingConfiguration is the Schema for the debuggingconfigurations
-          API
+        description: SveltosCluster is the Schema for the SveltosCluster API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -53,44 +52,29 @@ spec:
           metadata:
             type: object
           spec:
-            description: DebuggingConfigurationSpec defines the desired state of DebuggingConfiguration
+            description: SveltosClusterSpec defines the desired state of SveltosCluster
             properties:
-              configuration:
-                description: Configuration contains debugging configuration as granular
-                  as per component.
-                items:
-                  description: ComponentConfiguration is the debugging configuration
-                    to be applied to a Sveltos component.
-                  properties:
-                    component:
-                      description: Component indicates which Sveltos component the
-                        configuration applies to.
-                      enum:
-                      - SveltosManager
-                      - Classifier
-                      - ClassifierAgent
-                      - SveltosClusterManager
-                      - DriftDetectionManager
-                      - AccessManager
-                      type: string
-                    logLevel:
-                      description: 'LogLevel is the log severity above which logs
-                        are sent to the stdout. [Default: Info]'
-                      enum:
-                      - LogLevelNotSet
-                      - LogLevelInfo
-                      - LogLevelDebug
-                      - LogLevelVerbose
-                      type: string
-                  required:
-                  - component
-                  type: object
-                type: array
-                x-kubernetes-list-type: atomic
+              paused:
+                description: Paused can be used to prevent controllers from processing
+                  the SveltosCluster and all its associated objects.
+                type: boolean
+            type: object
+          status:
+            description: SveltosClusterStatus defines the status of SveltosCluster
+            properties:
+              failureMessage:
+                description: FailureMessage is a human consumable message explaining
+                  the misconfiguration
+                type: string
+              ready:
+                description: Ready is the state of the cluster.
+                type: boolean
             type: object
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

@@ -20,6 +20,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	DebuggingConfigurationKind = "DebuggingConfiguration"
+)
+
 // +kubebuilder:validation:Enum:=LogLevelNotSet;LogLevelInfo;LogLevelDebug;LogLevelVerbose
 type LogLevel string
 
@@ -37,7 +41,7 @@ const (
 	LogLevelVerbose = LogLevel("LogLevelVerbose")
 )
 
-// +kubebuilder:validation:Enum:=SveltosManager;Classifier;ClassifierAgent
+// +kubebuilder:validation:Enum:=SveltosManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager
 type Component string
 
 const (
@@ -49,6 +53,15 @@ const (
 
 	// ClassifierAgent is the classifier agent pod
 	ComponentClassifierAgent = Component("ClassifierAgent")
+
+	// ComponentSveltosClusterManager is the sveltoscluster-manager pod
+	ComponentSveltosClusterManager = Component("SveltosClusterManager")
+
+	// ComponentDriftDetectionManager is the drift-detection-manager pod
+	ComponentDriftDetectionManager = Component("DriftDetectionManager")
+
+	// ComponentAccessManager is the access-manager pod
+	ComponentAccessManager = Component("AccessManager")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.

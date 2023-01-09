@@ -19,16 +19,17 @@ package set_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 
-	libv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	"github.com/projectsveltos/libsveltos/lib/set"
 )
 
-func getEntry() *libv1alpha1.PolicyRef {
-	return &libv1alpha1.PolicyRef{
-		Kind:      randomString(),
-		Namespace: randomString(),
-		Name:      randomString(),
+func getEntry() *corev1.ObjectReference {
+	return &corev1.ObjectReference{
+		APIVersion: randomString(),
+		Kind:       randomString(),
+		Namespace:  randomString(),
+		Name:       randomString(),
 	}
 }
 

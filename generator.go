@@ -97,4 +97,13 @@ func main() {
 
 	debuggingConfigurationFile := "../../config/crd/bases/lib.projectsveltos.io_debuggingconfigurations.yaml"
 	generate(debuggingConfigurationFile, "debuggingconfigurations", "DebuggingConfiguration")
+
+	accessRequestFile := "../../config/crd/bases/lib.projectsveltos.io_accessrequests.yaml"
+	generate(accessRequestFile, "accessrequests", "AccessRequest")
+
+	sveltosClusterFile := "../../config/crd/bases/lib.projectsveltos.io_sveltosclusters.yaml"
+	generate(sveltosClusterFile, "sveltosclusters", "SveltosCluster")
+
+	resourceSummaryFile := "../../config/crd/bases/lib.projectsveltos.io_resourcesummaries.yaml"
+	generate(resourceSummaryFile, "resourcesummaries", "ResourceSummary")
 }

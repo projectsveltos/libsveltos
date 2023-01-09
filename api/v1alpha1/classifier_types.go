@@ -17,6 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -26,10 +29,34 @@ const (
 	// Classifier before removing it from the apiserver.
 	ClassifierFinalizer = "classifierfinalizer.projectsveltos.io"
 
+	// ClassifierReportClusterNameLabel is added to each ClassifierReport
+	ClassifierReportClusterNameLabel = "projectsveltos.io/cluster-name"
+
+	// ClassifierReportClusterTypeLabel is added to each ClassifierReport
+	ClassifierReportClusterTypeLabel = "projectsveltos.io/cluster-type"
+
 	ClassifierKind = "Classifier"
 
 	FeatureClassifier = "Classifier"
 )
+
+func GetClassifierReportName(classifierName, clusterName string, clusterType *ClusterType) string {
+	// TODO: shorten this
+	return fmt.Sprintf("%s--%s--%s",
+		strings.ToLower(string(*clusterType)), classifierName, clusterName)
+}
+
+func GetClassifierReportLabels(classifierName, clusterName string, clusterType *ClusterType) map[string]string {
+	return map[string]string{
+		ClassifierLabelName:              classifierName,
+		ClassifierReportClusterNameLabel: clusterName,
+		ClassifierReportClusterTypeLabel: strings.ToLower(string(*clusterType)),
+	}
+}
+
+func GetClusterInfo(clusterNamespace, clusterName string) string {
+	return fmt.Sprintf("%s--%s", clusterNamespace, clusterName)
+}
 
 // +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;Removing;Removed
 type ClassifierFeatureStatus string
@@ -98,18 +125,18 @@ type FieldFilter struct {
 }
 
 type DeployedResourceConstraint struct {
-	// Namespace of the resource deployed in the CAPI Cluster.
+	// Namespace of the resource deployed in the  Cluster.
 	// Empty for resources scoped at cluster level.
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	// Group of the resource deployed in the CAPI Cluster.
+	// Group of the resource deployed in the Cluster.
 	Group string `json:"group"`
 
-	// Version of the resource deployed in the CAPI Cluster.
+	// Version of the resource deployed in the Cluster.
 	Version string `json:"version"`
 
-	// Kind of the resource deployed in the CAPI Cluster.
+	// Kind of the resource deployed in the Cluster.
 	// +kubebuilder:validation:MinLength=1
 	Kind string `json:"kind"`
 
@@ -166,11 +193,11 @@ type ClassifierSpec struct {
 }
 
 type ClusterInfo struct {
-	// Cluster references the CAPI Cluster
+	// Cluster references the Cluster
 	Cluster corev1.ObjectReference `json:"cluster"`
 
 	// Hash represents the hash of the Classifier currently deployed
-	// in the CAPI Cluster
+	// in the Cluster
 	Hash []byte `json:"hash"`
 
 	// Status represents the state of the feature in the workload cluster

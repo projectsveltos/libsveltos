@@ -20,27 +20,48 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type ClusterType string
+
+const (
+	// ClusterTypeCapi indicates type is CAPI Cluster
+	ClusterTypeCapi = ClusterType("Capi")
+
+	// ClusterTypeSveltos indicates type is Sveltos Cluster
+	ClusterTypeSveltos = ClusterType("Sveltos")
+)
+
 const (
 	// ClassifierLabelName is added to each ClassifierReport generated
 	// for a Classifier instance
 	ClassifierLabelName = "projectsveltos.io/classifier-name"
+
+	ClassifierReportKind = "ClassifierReport"
+
+	// This is the namespace/name of the secret containing the kubeconfig
+	// to send ClassifierReport to management cluster when classifier agent
+	// is configured to send ClassifierReports
+	ClassifierSecretName      = "classifier-agent"
+	ClassifierSecretNamespace = "projectsveltos"
 )
 
 // ClassifierReportSpec defines the desired state of ClassifierReport
 type ClassifierReportSpec struct {
-	// ClusterNamespace is the namespace of the CAPI Cluster this
+	// ClusterNamespace is the namespace of the Cluster this
 	// ClusterReport is for.
 	ClusterNamespace string `json:"clusterNamespace"`
 
-	// ClusterName is the name of the CAPI Cluster this ClusterReport
+	// ClusterName is the name of the Cluster this ClusterReport
 	// is for.
 	ClusterName string `json:"clusterName"`
+
+	// ClusterType is the type of Cluster
+	ClusterType ClusterType `json:"clusterType"`
 
 	// ClassifierName is the name of the Classifier instance this report
 	// is for.
 	ClassifierName string `json:"classifierName"`
 
-	// Match indicates whether CAPI Cluster is currently a match for
+	// Match indicates whether Cluster is currently a match for
 	// the Classifier instance this report is for
 	Match bool `json:"match"`
 }

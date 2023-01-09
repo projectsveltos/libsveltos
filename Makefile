@@ -102,7 +102,7 @@ endif
 ##@ TESTING
 
 .PHONY: test
-test: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
+test: generate manifests fmt vet $(SETUP_ENVTEST) ## Run tests.
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test $(shell go list ./... | grep -v internal/test | grep -v lib/deployer/fake ) $(TEST_ARGS) -coverprofile cover.out 
 
 ##@ Build

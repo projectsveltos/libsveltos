@@ -27,13 +27,14 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
-// A "request" represents the need to deploy a feature in a CAPI cluster.
+// A "request" represents the need to deploy a feature in a cluster.
 //
 // When a request arrives, the flow is following:
-// - when a request to configure feature in a CAPI cluster arrives,
+// - when a request to configure feature in a cluster arrives,
 // it is first added to the dirty set or dropped if it already present in the
 // dirty set;
 // - pushed to the jobQueue only if it is not presented in inProgress.
@@ -44,7 +45,7 @@ import (
 //
 // If a request, currently in the inProgress arrives again, such request is only added
 // to the dirty set, not to the queue. This guarantees that a request to deploy a feature
-// in a CAPI cluster is never process more than once in parallel.
+// in a cluster is never process more than once in parallel.
 //
 // When worker is done, the request is removed from the inProgress set.
 // If the same request is also present in the dirty set, it is added back to the back of the jobQueue.
@@ -54,9 +55,10 @@ const (
 )
 
 type requestParams struct {
-	key     string
-	handler RequestHandler
-	metric  MetricHandler
+	key            string
+	handler        RequestHandler
+	metric         MetricHandler
+	handlerOptions Options
 }
 
 type responseParams struct {
@@ -87,19 +89,20 @@ func (d *deployer) startWorkloadWorkers(ctx context.Context, numOfWorker int, lo
 }
 
 // GetKey returns a unique ID for a request provided:
-// - clusterNamespace and clusterName which are the namespace/name of the CAPI
+// - clusterNamespace and clusterName which are the namespace/name of the
 // cluster where feature needs to be deployed;
 // - featureID is a unique identifier for the feature that needs to be deployed.
-func GetKey(clusterNamespace, clusterName, applicant, featureID string, cleanup bool) string {
-	return clusterNamespace + separator + clusterName + separator + applicant + separator + featureID + separator + strconv.FormatBool(cleanup)
+func GetKey(clusterNamespace, clusterName, applicant, featureID string, clusterType sveltosv1.ClusterType, cleanup bool) string {
+	return clusterNamespace + separator + clusterName + separator + string(clusterType) + separator +
+		applicant + separator + featureID + separator + strconv.FormatBool(cleanup)
 }
 
 // getClusterFromKey given a unique request key, returns:
-// - clusterNamespace and clusterName which are the namespace/name of the CAPI
+// - clusterNamespace and clusterName which are the namespace/name of the
 // cluster where feature needs to be deployed;
 func getClusterFromKey(key string) (namespace, name string, err error) {
 	info := strings.Split(key, separator)
-	const length = 5
+	const length = 6
 	if len(info) != length {
 		err = fmt.Errorf("key: %s is malformed", key)
 		return
@@ -109,29 +112,43 @@ func getClusterFromKey(key string) (namespace, name string, err error) {
 	return
 }
 
-// getApplicatantAndFeatureFromKey given a unique request key, returns:
-// - featureID is a unique identifier for the feature that needs to be deployed;
-func getApplicatantAndFeatureFromKey(key string) (applicant, featureID string, err error) {
+// getClusterTypeFromKey given a unique request key, returns:
+// - clusterType of the cluster where features need to be deployed
+func getClusterTypeFromKey(key string) (clusterType sveltosv1.ClusterType, err error) {
 	info := strings.Split(key, separator)
-	const length = 5
+	const length = 6
 	if len(info) != length {
 		err = fmt.Errorf("key: %s is malformed", key)
 		return
 	}
-	applicant = info[2]
-	featureID = info[3]
+	currentClusterType := info[2]
+	clusterType = sveltosv1.ClusterType(currentClusterType)
+	return
+}
+
+// getApplicatantAndFeatureFromKey given a unique request key, returns:
+// - featureID is a unique identifier for the feature that needs to be deployed;
+func getApplicatantAndFeatureFromKey(key string) (applicant, featureID string, err error) {
+	info := strings.Split(key, separator)
+	const length = 6
+	if len(info) != length {
+		err = fmt.Errorf("key: %s is malformed", key)
+		return
+	}
+	applicant = info[3]
+	featureID = info[4]
 	return
 }
 
 // getIsCleanupFromKey returns true if the request was for cleanup
 func getIsCleanupFromKey(key string) (cleanup bool, err error) {
 	info := strings.Split(key, separator)
-	const length = 5
+	const length = 6
 	if len(info) != length {
 		err = fmt.Errorf("key: %s is malformed", key)
 		return
 	}
-	cleanup, err = strconv.ParseBool(info[4])
+	cleanup, err = strconv.ParseBool(info[5])
 	return
 }
 
@@ -146,6 +163,7 @@ func processRequests(ctx context.Context, d *deployer, i int, logger logr.Logger
 			l := logger.WithValues("key", params.key)
 			// Get error only from getIsCleanupFromKey as same key is always used
 			ns, name, _ := getClusterFromKey(params.key)
+			clusterType, _ := getClusterTypeFromKey(params.key)
 			applicant, featureID, _ := getApplicatantAndFeatureFromKey(params.key)
 			cleanup, err := getIsCleanupFromKey(params.key)
 			if err != nil {
@@ -155,12 +173,12 @@ func processRequests(ctx context.Context, d *deployer, i int, logger logr.Logger
 				start := time.Now()
 				l.V(logs.LogDebug).Info("invoking handler")
 				err = params.handler(ctx, controlClusterClient,
-					ns, name, applicant, featureID,
+					ns, name, applicant, featureID, clusterType, params.handlerOptions,
 					l)
 				storeResult(d, params.key, err, params.handler, params.metric, logger)
 				elapsed := time.Since(start)
 				if params.metric != nil {
-					params.metric(elapsed, ns, name, featureID, l)
+					params.metric(elapsed, ns, name, featureID, clusterType, l)
 				}
 			}
 		}
@@ -170,7 +188,8 @@ func processRequests(ctx context.Context, d *deployer, i int, logger logr.Logger
 			d.mu.Lock()
 			if len(d.jobQueue) > 0 {
 				// take a request from queue and remove it from queue
-				params = &requestParams{key: d.jobQueue[0].key, handler: d.jobQueue[0].handler, metric: d.jobQueue[0].metric}
+				params = &requestParams{key: d.jobQueue[0].key, handler: d.jobQueue[0].handler,
+					handlerOptions: d.jobQueue[0].handlerOptions, metric: d.jobQueue[0].metric}
 				d.jobQueue = d.jobQueue[1:]
 				l := logger.WithValues("key", params.key)
 				l.V(logs.LogVerbose).Info("take from jobQueue")
@@ -243,10 +262,10 @@ func storeResult(d *deployer, key string, err error, handler RequestHandler, met
 // If result is available it returns the result.
 // If request is still queued, responseParams is nil and an error is nil.
 // If result is not available and request is neither queued nor already processed, it returns an error to indicate that.
-func getRequestStatus(d *deployer, clusterNamespace, clusterName, applicant, featureID string,
+func getRequestStatus(d *deployer, clusterNamespace, clusterName, applicant, featureID string, clusterType sveltosv1.ClusterType,
 	cleanup bool) (*responseParams, error) {
 
-	key := GetKey(clusterNamespace, clusterName, applicant, featureID, cleanup)
+	key := GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
 
 	logger := d.log.WithValues("key", key)
 
