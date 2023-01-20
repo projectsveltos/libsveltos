@@ -41,3 +41,7 @@ func GetSveltosClusterCRDYAML() []byte {
 func GetResourceSummaryCRDYAML() []byte {
 	return ResourceSummaryCRD
 }
+
+func GetRoleRequestCRDYAML() []byte {
+	return RoleRequestCRD
+}

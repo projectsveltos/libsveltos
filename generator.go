@@ -106,4 +106,8 @@ func main() {
 
 	resourceSummaryFile := "../../config/crd/bases/lib.projectsveltos.io_resourcesummaries.yaml"
 	generate(resourceSummaryFile, "resourcesummaries", "ResourceSummary")
+
+	roleRequestFile := "../../config/crd/bases/lib.projectsveltos.io_rolerequests.yaml"
+	generate(roleRequestFile, "rolerequests", "RoleRequest")
+
 }
