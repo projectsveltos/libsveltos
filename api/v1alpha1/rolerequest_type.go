@@ -21,8 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type Selector string
-
 const (
 	RoleRequestFinalizer = "rolerequestfinalizer.projectsveltos.io"
 
