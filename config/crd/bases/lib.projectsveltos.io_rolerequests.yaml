@@ -77,6 +77,32 @@ spec:
           status:
             description: RoleRequestStatus defines the status of RoleRequest
             properties:
+              clusterHashes:
+                description: ClusterHash represents the hash of the ClusterRoles/Roles
+                  deployed in a matching cluster for the admin.
+                items:
+                  properties:
+                    clusterName:
+                      description: ClusterName is the name of the managed Cluster
+                      type: string
+                    clusterNamespace:
+                      description: ClusterNamespace is the namespace of the managed
+                        Cluster
+                      type: string
+                    clusterType:
+                      description: ClusterType is the type of Cluster
+                      type: string
+                    hash:
+                      description: Hash is the hash of the ClusterRoles/Roles deployed
+                        in the managed cluster for admin
+                      format: byte
+                      type: string
+                  required:
+                  - clusterName
+                  - clusterNamespace
+                  - clusterType
+                  type: object
+                type: array
               failureMessage:
                 description: FailureMessage provides more information if an error
                   occurs.
