@@ -45,11 +45,31 @@ type RoleRequestSpec struct {
 	Admin string `json:"admin,omitempty"`
 }
 
+type ClusterHash struct {
+	// ClusterNamespace is the namespace of the managed Cluster
+	ClusterNamespace string `json:"clusterNamespace"`
+
+	// ClusterName is the name of the managed Cluster
+	ClusterName string `json:"clusterName"`
+
+	// ClusterType is the type of Cluster
+	ClusterType ClusterType `json:"clusterType"`
+
+	// Hash is the hash of the ClusterRoles/Roles deployed in the
+	// managed cluster for admin
+	Hash []byte `json:"hash,omitempty"`
+}
+
 // RoleRequestStatus defines the status of RoleRequest
 type RoleRequestStatus struct {
 	// MatchingClusterRefs reference all the cluster currently matching
 	// RoleRequest ClusterSelector
 	MatchingClusterRefs []corev1.ObjectReference `json:"matchingClusters,omitempty"`
+
+	// ClusterHash represents the hash of the ClusterRoles/Roles deployed in
+	// a matching cluster for the admin.
+	// +optional
+	ClusterHashes []ClusterHash `json:"clusterHashes,omitempty"`
 
 	// FailureMessage provides more information if an error occurs.
 	// +optional
