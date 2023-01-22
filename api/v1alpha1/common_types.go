@@ -16,6 +16,10 @@ limitations under the License.
 
 package v1alpha1
 
+import (
+	corev1 "k8s.io/api/core/v1"
+)
+
 // ReferencedResourceKind is a string representation of allowed kind of resources
 // that can be referenced in a ClusterProfile
 type ReferencedResourceKind string
@@ -27,3 +31,43 @@ const (
 )
 
 type Selector string
+
+// +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;Removing;Removed
+type SveltosFeatureStatus string
+
+const (
+	// SveltosStatusProvisioning indicates that sveltos feature is being
+	// provisioned in the workload cluster
+	SveltosStatusProvisioning = SveltosFeatureStatus("Provisioning")
+
+	// SveltosStatusProvisioned indicates that sveltos has been
+	// provisioned in the workload cluster
+	SveltosStatusProvisioned = SveltosFeatureStatus("Provisioned")
+
+	// SveltosStatusFailed indicates that configuring sveltos feature
+	// in the workload cluster failed
+	SveltosStatusFailed = SveltosFeatureStatus("Failed")
+
+	// SveltosStatusRemoving indicates that sveltos feature is being
+	// removed
+	SveltosStatusRemoving = SveltosFeatureStatus("Removing")
+
+	// SveltosStatusRemoved indicates that sveltos feature is removed
+	SveltosStatusRemoved = SveltosFeatureStatus("Removed")
+)
+
+type ClusterInfo struct {
+	// Cluster references the Cluster
+	Cluster corev1.ObjectReference `json:"cluster"`
+
+	// Hash represents the hash of the Classifier currently deployed
+	// in the Cluster
+	Hash []byte `json:"hash"`
+
+	// Status represents the state of the feature in the workload cluster
+	Status SveltosFeatureStatus `json:"status"`
+
+	// FailureMessage provides more information about the error.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
+}
