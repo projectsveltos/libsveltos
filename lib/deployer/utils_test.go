@@ -37,6 +37,15 @@ const (
 kind: Namespace
 metadata:
   name: %s`
+
+	viewClusterRole = `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: %s
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]`
 )
 
 var _ = Describe("Client", func() {
@@ -90,4 +99,29 @@ var _ = Describe("Client", func() {
 			Expect(exist).To(BeTrue())
 			Expect(hash).To(Equal(policyHash))
 		})
+
+	It("addOwnerReference adds an OwnerReference to an object. removeOwnerReference removes it", func() {
+		roleRequest := &libsveltosv1alpha1.RoleRequest{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: randomString(),
+			},
+		}
+		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
+
+		policy, err := utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
+		Expect(err).To(BeNil())
+		Expect(policy.GetKind()).To(Equal("ClusterRole"))
+
+		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
+
+		deployer.AddOwnerReference(policy, roleRequest)
+
+		Expect(policy.GetOwnerReferences()).ToNot(BeNil())
+		Expect(len(policy.GetOwnerReferences())).To(Equal(1))
+		Expect(policy.GetOwnerReferences()[0].Kind).To(Equal(libsveltosv1alpha1.RoleRequestKind))
+		Expect(policy.GetOwnerReferences()[0].Name).To(Equal(roleRequest.Name))
+
+		deployer.RemoveOwnerReference(policy, roleRequest)
+		Expect(len(policy.GetOwnerReferences())).To(Equal(0))
+	})
 })
