@@ -182,3 +182,30 @@ func AddOwnerReference(object *unstructured.Unstructured, owner client.Object) {
 
 	object.SetOwnerReferences(onwerReferences)
 }
+
+// RemoveOwnerReference removes Sveltos resource as an OwnerReference from object.
+// OwnerReferences are used as ref count. Different Sveltos resources might match same cluster and
+// reference same ConfigMap. This means a policy contained in a ConfigMap is deployed in a Cluster
+// because of different SveltosResources. When cleaning up, a policy can be removed only if no more
+// SveltosResources are listed as OwnerReferences.
+func RemoveOwnerReference(object *unstructured.Unstructured, owner client.Object) {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		return
+	}
+
+	_, kind := owner.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
+
+	for i := range onwerReferences {
+		ref := &onwerReferences[i]
+		if ref.Kind == kind &&
+			ref.Name == owner.GetName() {
+
+			onwerReferences[i] = onwerReferences[len(onwerReferences)-1]
+			onwerReferences = onwerReferences[:len(onwerReferences)-1]
+			break
+		}
+	}
+
+	object.SetOwnerReferences(onwerReferences)
+}
