@@ -24,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -112,4 +113,72 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 	}
 
 	return true, hash, nil
+}
+
+// GetOwnerMessage returns a message listing why this object is deployed. The message lists:
+// - which is currently causing it to be deployed (owner)
+// - which Secret/ConfigMap contains it
+func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
+	objectName string) (string, error) {
+
+	currentObject, err := dr.Get(ctx, objectName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return "", nil
+		}
+		return "", err
+	}
+
+	var message string
+
+	if labels := currentObject.GetLabels(); labels != nil {
+		kind := labels[ReferenceLabelKind]
+		namespace := labels[ReferenceLabelNamespace]
+		name := labels[ReferenceLabelName]
+
+		message += fmt.Sprintf("Object currently deployed because of %s %s/%s.", kind, namespace, name)
+	}
+
+	message += "List of Owners:"
+	ownerRefs := currentObject.GetOwnerReferences()
+	for i := range ownerRefs {
+		or := &ownerRefs[i]
+		message += fmt.Sprintf("%s %s;", or.Kind, or.Name)
+	}
+
+	return message, nil
+}
+
+// AddOwnerReference adds Sveltos resource owning a resource as an object's OwnerReference.
+// OwnerReferences are used as ref count. Different Sveltos resources might match same cluster and
+// reference same ConfigMap. This means a policy contained in a ConfigMap is deployed in a Cluster
+// because of different Sveltos resources.
+// When cleaning up, a policy can be removed only if no more Sveltos resources are listed as OwnerReferences.
+func AddOwnerReference(object *unstructured.Unstructured, owner client.Object) {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		onwerReferences = make([]metav1.OwnerReference, 0)
+	}
+
+	for i := range onwerReferences {
+		ref := &onwerReferences[i]
+		if ref.Kind == owner.GetObjectKind().GroupVersionKind().Kind &&
+			ref.Name == owner.GetName() {
+
+			return
+		}
+	}
+
+	apiVersion, kind := owner.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
+
+	onwerReferences = append(onwerReferences,
+		metav1.OwnerReference{
+			APIVersion: apiVersion,
+			Kind:       kind,
+			Name:       owner.GetName(),
+			UID:        owner.GetUID(),
+		},
+	)
+
+	object.SetOwnerReferences(onwerReferences)
 }
