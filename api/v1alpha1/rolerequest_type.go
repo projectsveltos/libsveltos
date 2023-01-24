@@ -29,6 +29,8 @@ const (
 	// RoleRequestLabelName is added to each object generated for a RoleRequest
 	// in both management and managed clusters
 	RoleRequestLabelName = "projectsveltos.io/role-request-name"
+
+	FeatureRoleRequest = "RoleRequest"
 )
 
 // RoleRequestSpec defines the desired state of RoleRequest
