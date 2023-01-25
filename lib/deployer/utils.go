@@ -48,11 +48,11 @@ const (
 	PolicyHash = "projectsveltos.io/hash"
 )
 
-type conflictError struct {
+type ConflictError struct {
 	message string
 }
 
-func (e *conflictError) Error() string {
+func (e *ConflictError) Error() string {
 	return e.message
 }
 
@@ -86,21 +86,21 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 
 		if kindOk {
 			if kind != referenceKind {
-				return true, "", &conflictError{
+				return true, "", &ConflictError{
 					message: fmt.Sprintf("conflict: policy (kind: %s) %s is currently deployed by %s: %s/%s",
 						object.GetKind(), object.GetName(), kind, namespace, name)}
 			}
 		}
 		if namespaceOk {
 			if namespace != referenceNamespace {
-				return true, "", &conflictError{
+				return true, "", &ConflictError{
 					message: fmt.Sprintf("conflict: policy (kind: %s) %s is currently deployed by %s: %s/%s",
 						object.GetKind(), object.GetName(), kind, namespace, name)}
 			}
 		}
 		if nameOk {
 			if name != referenceName {
-				return true, "", &conflictError{
+				return true, "", &ConflictError{
 					message: fmt.Sprintf("conflict: policy (kind: %s) %s is currently deployed by %s: %s/%s",
 						object.GetKind(), object.GetName(), kind, namespace, name)}
 			}
@@ -208,4 +208,22 @@ func RemoveOwnerReference(object *unstructured.Unstructured, owner client.Object
 	}
 
 	object.SetOwnerReferences(onwerReferences)
+}
+
+// IsOnlyOwnerReference returns true if clusterprofile is the only ownerreference for object
+func IsOnlyOwnerReference(object *unstructured.Unstructured, owner client.Object) bool {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		return false
+	}
+
+	if len(onwerReferences) != 1 {
+		return false
+	}
+
+	kind := owner.GetObjectKind().GroupVersionKind().Kind
+
+	ref := &onwerReferences[0]
+	return ref.Kind == kind &&
+		ref.Name == owner.GetName()
 }
