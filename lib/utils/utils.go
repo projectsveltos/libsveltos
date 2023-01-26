@@ -32,7 +32,6 @@ import (
 	"k8s.io/client-go/restmapper"
 	apiv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"k8s.io/kubectl/pkg/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -90,10 +89,9 @@ func GetDynamicResourceInterface(config *rest.Config, gvk schema.GroupVersionKin
 // username (e.g. user@example.org) and server with scheme, host, and port
 // (e.g.  https://127.0.0.1:1234) to return a kube-config with credentials set
 // for the user.
-func GetKubeconfigWithUserToken(ctx context.Context, c client.Client,
-	idToken, caData []byte,
-	userID, server string,
-) ([]byte, error) {
+func GetKubeconfigWithUserToken(ctx context.Context, idToken, caData []byte,
+	userID, server string) ([]byte, error) {
+
 	// Input validations.
 	if userID == "" || len(idToken) == 0 {
 		return nil,
