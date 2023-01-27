@@ -154,7 +154,7 @@ func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
 // reference same ConfigMap. This means a policy contained in a ConfigMap is deployed in a Cluster
 // because of different Sveltos resources.
 // When cleaning up, a policy can be removed only if no more Sveltos resources are listed as OwnerReferences.
-func AddOwnerReference(object *unstructured.Unstructured, owner client.Object) {
+func AddOwnerReference(object, owner client.Object) {
 	onwerReferences := object.GetOwnerReferences()
 	if onwerReferences == nil {
 		onwerReferences = make([]metav1.OwnerReference, 0)

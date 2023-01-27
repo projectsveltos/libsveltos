@@ -76,7 +76,7 @@ func GetSecret(ctx context.Context, c client.Client,
 // If Secret already exists, updates Data section if necessary (kubeconfig is different)
 func CreateSecret(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1alpha1.ClusterType,
-	kubeconfig []byte, ownerReference metav1.Object) (*corev1.Secret, error) {
+	kubeconfig []byte, owner client.Object) (*corev1.Secret, error) {
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName)...)
@@ -86,10 +86,10 @@ func CreateSecret(ctx context.Context, c client.Client,
 
 	switch len(secretList.Items) {
 	case 0:
-		return createSecret(ctx, c, clusterNamespace, clusterName, serviceAccountName, kubeconfig, ownerReference)
+		return createSecret(ctx, c, clusterNamespace, clusterName, serviceAccountName, kubeconfig, owner)
 	case 1:
-		if shouldUpdate(&secretList.Items[0], kubeconfig) {
-			return updateSecretData(ctx, c, &secretList.Items[0], kubeconfig)
+		if shouldUpdate(&secretList.Items[0], kubeconfig, owner) {
+			return updateSecret(ctx, c, &secretList.Items[0], kubeconfig, owner)
 		}
 		return &secretList.Items[0], nil
 	default:
@@ -213,8 +213,14 @@ func getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName s
 }
 
 // shouldUpdate returns true if secret needs to be updated, which happens
-// when kubeconfig stored in the secret and the new kubeconfig are different.
-func shouldUpdate(secret *corev1.Secret, kubeconfig []byte) bool {
+// when:
+// - kubeconfig stored in the secret and the new kubeconfig are different;
+// - owner is currently not one of the secret's ownerReferences
+func shouldUpdate(secret *corev1.Secret, kubeconfig []byte, owner client.Object) bool {
+	if !deployer.IsOwnerReference(secret, owner) {
+		return true
+	}
+
 	if secret.Data == nil {
 		return true
 	}
@@ -222,9 +228,11 @@ func shouldUpdate(secret *corev1.Secret, kubeconfig []byte) bool {
 	return !reflect.DeepEqual(secret.Data[key], kubeconfig)
 }
 
-// updateSecretData updates secret data section
-func updateSecretData(ctx context.Context, c client.Client,
-	secret *corev1.Secret, kubeconfig []byte) (*corev1.Secret, error) {
+// updateSecret updates secret data section
+func updateSecret(ctx context.Context, c client.Client, secret *corev1.Secret,
+	kubeconfig []byte, owner client.Object) (*corev1.Secret, error) {
+
+	deployer.AddOwnerReference(secret, owner)
 
 	secret.Data = map[string][]byte{
 		key: kubeconfig,

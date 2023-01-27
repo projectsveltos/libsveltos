@@ -111,9 +111,12 @@ var _ = Describe("Roles", func() {
 		v, ok = secret.Labels[roles.ClusterNameLabel]
 		Expect(ok).To(BeTrue())
 		Expect(v).To(Equal(clusterName))
+
+		Expect(secret.OwnerReferences).ToNot(BeNil())
+		Expect(len(secret.OwnerReferences)).To(Equal(1))
 	})
 
-	It("CreateSecret returns existing secret updating data section", func() {
+	It("CreateSecret returns existing secret updating data section and ownerreference", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
 		serviceaccountName := randomString()
@@ -165,6 +168,9 @@ var _ = Describe("Roles", func() {
 		currentKubeconfig, ok = currentSecret.Data[roles.Key]
 		Expect(ok).To(BeTrue())
 		Expect(reflect.DeepEqual(currentKubeconfig, kubeconfig)).To(BeTrue())
+
+		Expect(currentSecret.OwnerReferences).ToNot(BeNil())
+		Expect(len(currentSecret.OwnerReferences)).To(Equal(1))
 	})
 
 	It("DeleteSecret succeeds when secret does not exist", func() {
