@@ -24,7 +24,7 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
@@ -95,7 +95,7 @@ type Options struct {
 func (d *deployer) Deploy(
 	ctx context.Context,
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool,
 	f RequestHandler,
 	m MetricHandler,
@@ -144,7 +144,7 @@ func (d *deployer) Deploy(
 func (d *deployer) GetResult(
 	ctx context.Context,
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool,
 ) Result {
 
@@ -183,7 +183,7 @@ func (d *deployer) GetResult(
 
 func (d *deployer) IsInProgress(
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool,
 ) bool {
 
@@ -204,7 +204,7 @@ func (d *deployer) IsInProgress(
 
 func (d *deployer) CleanupEntries(
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool) {
 
 	key := GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)

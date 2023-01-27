@@ -152,4 +152,34 @@ var _ = Describe("Client", func() {
 		deployer.AddOwnerReference(policy, roleRequest2)
 		Expect(deployer.IsOnlyOwnerReference(policy, roleRequest)).To(BeFalse())
 	})
+
+	It("IsOwnerReference returns true when owner is present", func() {
+		roleRequest := &libsveltosv1alpha1.RoleRequest{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: randomString(),
+			},
+		}
+		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
+
+		roleRequest2 := &libsveltosv1alpha1.RoleRequest{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: randomString(),
+			},
+		}
+		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest2)).To(Succeed())
+
+		policy, err := utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
+		Expect(err).To(BeNil())
+		Expect(policy.GetKind()).To(Equal("ClusterRole"))
+
+		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
+
+		deployer.AddOwnerReference(policy, roleRequest)
+
+		Expect(deployer.IsOwnerReference(policy, roleRequest)).To(BeTrue())
+		Expect(deployer.IsOwnerReference(policy, roleRequest2)).To(BeFalse())
+
+		deployer.AddOwnerReference(policy, roleRequest2)
+		Expect(deployer.IsOwnerReference(policy, roleRequest)).To(BeTrue())
+	})
 })

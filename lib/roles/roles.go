@@ -25,8 +25,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	"github.com/projectsveltos/libsveltos/lib/deployer"
 )
 
 const (
@@ -50,7 +52,7 @@ const (
 // GetSecret returns the secret to be used to store kubeconfig for serviceAccountName
 // in cluster. It returns nil if it does not exist yet.
 func GetSecret(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1.ClusterType) (*corev1.Secret, error) {
+	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1alpha1.ClusterType) (*corev1.Secret, error) {
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName)...)
@@ -73,8 +75,8 @@ func GetSecret(ctx context.Context, c client.Client,
 // in cluster. It does create it if it does not exist yet.
 // If Secret already exists, updates Data section if necessary (kubeconfig is different)
 func CreateSecret(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1.ClusterType,
-	kubeconfig []byte) (*corev1.Secret, error) {
+	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1alpha1.ClusterType,
+	kubeconfig []byte, ownerReference metav1.Object) (*corev1.Secret, error) {
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName)...)
@@ -84,7 +86,7 @@ func CreateSecret(ctx context.Context, c client.Client,
 
 	switch len(secretList.Items) {
 	case 0:
-		return createSecret(ctx, c, clusterNamespace, clusterName, serviceAccountName, kubeconfig)
+		return createSecret(ctx, c, clusterNamespace, clusterName, serviceAccountName, kubeconfig, ownerReference)
 	case 1:
 		if shouldUpdate(&secretList.Items[0], kubeconfig) {
 			return updateSecretData(ctx, c, &secretList.Items[0], kubeconfig)
@@ -96,9 +98,10 @@ func CreateSecret(ctx context.Context, c client.Client,
 	}
 }
 
-// DeleteSecret deletes secret used to store kubeconfig for serviceAccountName in cluster
-func DeleteSecret(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1.ClusterType) error {
+// DeleteSecret finds Secret used to store kubeconfig for serviceAccountName in cluster.
+// Removes owner as one of the OwnerReferences for secret. If no more OwnerReferences are left, deletes secret.
+func DeleteSecret(ctx context.Context, c client.Client, clusterNamespace, clusterName, serviceAccountName string,
+	clusterType sveltosv1alpha1.ClusterType, owner client.Object) error {
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName)...)
@@ -107,6 +110,17 @@ func DeleteSecret(ctx context.Context, c client.Client,
 	}
 
 	for i := range secretList.Items {
+		deployer.RemoveOwnerReference(&secretList.Items[i], owner)
+
+		if len(secretList.Items[i].GetOwnerReferences()) != 0 {
+			err = c.Update(ctx, &secretList.Items[i])
+			if err != nil {
+				return err
+			}
+			// Other resources are still deploying this very same policy
+			continue
+		}
+
 		err = c.Delete(ctx, &secretList.Items[i])
 		if err != nil {
 			return err
@@ -116,6 +130,37 @@ func DeleteSecret(ctx context.Context, c client.Client,
 	return nil
 }
 
+func ListSecretForOwnner(ctx context.Context, c client.Client, owner client.Object) ([]corev1.Secret, error) {
+	listOption := []client.ListOption{
+		client.MatchingLabels{
+			sveltosv1alpha1.RoleRequestLabel: "ok",
+		},
+	}
+
+	secretList := &corev1.SecretList{}
+	err := c.List(ctx, secretList, listOption...)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]corev1.Secret, 0)
+
+	for i := range secretList.Items {
+		secret := &secretList.Items[i]
+		if secret.Labels == nil {
+			continue
+		}
+		if _, ok := secret.Labels[sveltosv1alpha1.RoleRequestLabel]; !ok {
+			continue
+		}
+		if deployer.IsOwnerReference(secret, owner) {
+			results = append(results, *secret)
+		}
+	}
+
+	return results, nil
+}
+
 func getSha256(text string) string {
 	h := sha256.New()
 	h.Write([]byte(text))
@@ -123,8 +168,8 @@ func getSha256(text string) string {
 	return fmt.Sprintf("%x", hash)
 }
 
-func createSecret(ctx context.Context, c client.Client,
-	namespace, clusterName, serviceAccountName string, kubeconfig []byte) (*corev1.Secret, error) {
+func createSecret(ctx context.Context, c client.Client, namespace, clusterName, serviceAccountName string,
+	kubeconfig []byte, ownerReference metav1.Object) (*corev1.Secret, error) {
 
 	var config string
 	config += clusterName
@@ -136,13 +181,18 @@ func createSecret(ctx context.Context, c client.Client,
 			Namespace: namespace,
 			Name:      name,
 			Labels: map[string]string{
-				clusterNameLabel:        clusterName,
-				serviceAccountNameLabel: serviceAccountName,
+				clusterNameLabel:                 clusterName,
+				serviceAccountNameLabel:          serviceAccountName,
+				sveltosv1alpha1.RoleRequestLabel: "ok",
 			},
 		},
 		Data: map[string][]byte{
 			key: kubeconfig,
 		},
+	}
+
+	if err := controllerutil.SetOwnerReference(ownerReference, secret, c.Scheme()); err != nil {
+		return nil, err
 	}
 
 	if err := c.Create(ctx, secret); err != nil {

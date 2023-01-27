@@ -22,8 +22,9 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	"github.com/projectsveltos/libsveltos/lib/deployer"
+
+	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 )
 
 // fakeDeployer is a fake provider that implements the DeployerInterface
@@ -63,7 +64,7 @@ func (d *fakeDeployer) RegisterFeatureID(
 func (d *fakeDeployer) Deploy(
 	ctx context.Context,
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool,
 	f deployer.RequestHandler,
 	m deployer.MetricHandler,
@@ -83,7 +84,7 @@ func (d *fakeDeployer) Deploy(
 func (d *fakeDeployer) GetResult(
 	ctx context.Context,
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool,
 ) deployer.Result {
 
@@ -106,7 +107,7 @@ func (d *fakeDeployer) GetResult(
 
 func (d *fakeDeployer) IsInProgress(
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool,
 ) bool {
 
@@ -121,7 +122,7 @@ func (d *fakeDeployer) IsInProgress(
 
 func (d *fakeDeployer) CleanupEntries(
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool) {
 
 	key := deployer.GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
@@ -133,7 +134,7 @@ func (d *fakeDeployer) CleanupEntries(
 // StoreResult store request result
 func (d *fakeDeployer) StoreResult(
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool,
 	err error,
 ) {
@@ -145,7 +146,7 @@ func (d *fakeDeployer) StoreResult(
 // StoreInProgress marks request as in progress
 func (d *fakeDeployer) StoreInProgress(
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1.ClusterType,
+	clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool,
 ) {
 
