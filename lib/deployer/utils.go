@@ -188,7 +188,7 @@ func AddOwnerReference(object *unstructured.Unstructured, owner client.Object) {
 // reference same ConfigMap. This means a policy contained in a ConfigMap is deployed in a Cluster
 // because of different SveltosResources. When cleaning up, a policy can be removed only if no more
 // SveltosResources are listed as OwnerReferences.
-func RemoveOwnerReference(object *unstructured.Unstructured, owner client.Object) {
+func RemoveOwnerReference(object, owner client.Object) {
 	onwerReferences := object.GetOwnerReferences()
 	if onwerReferences == nil {
 		return
@@ -211,7 +211,7 @@ func RemoveOwnerReference(object *unstructured.Unstructured, owner client.Object
 }
 
 // IsOnlyOwnerReference returns true if clusterprofile is the only ownerreference for object
-func IsOnlyOwnerReference(object *unstructured.Unstructured, owner client.Object) bool {
+func IsOnlyOwnerReference(object, owner client.Object) bool {
 	onwerReferences := object.GetOwnerReferences()
 	if onwerReferences == nil {
 		return false
@@ -226,4 +226,26 @@ func IsOnlyOwnerReference(object *unstructured.Unstructured, owner client.Object
 	ref := &onwerReferences[0]
 	return ref.Kind == kind &&
 		ref.Name == owner.GetName()
+}
+
+// IsOwnerReference returns true is owner is one of the OwnerReferences
+// for object
+func IsOwnerReference(object, owner client.Object) bool {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		return false
+	}
+
+	kind := owner.GetObjectKind().GroupVersionKind().Kind
+
+	for i := range onwerReferences {
+		ref := &onwerReferences[i]
+		if ref.Kind == kind &&
+			ref.Name == owner.GetName() {
+
+			return true
+		}
+	}
+
+	return false
 }

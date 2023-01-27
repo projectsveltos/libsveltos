@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
-	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	"github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
@@ -65,7 +65,7 @@ var _ = BeforeSuite(func() {
 	Expect(cfg).ToNot(BeNil())
 
 	Expect(v1.AddToScheme(scheme.Scheme)).To(Succeed())
-	Expect(sveltosv1.AddToScheme(scheme.Scheme)).To(Succeed())
+	Expect(sveltosv1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
 
 	// +kubebuilder:scaffold:scheme
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
@@ -75,7 +75,7 @@ var _ = BeforeSuite(func() {
 	klog.InitFlags(nil)
 	Expect(flag.Lookup("v").Value.Set("0")).To(BeNil())
 	instance = logsettings.RegisterForLogSettings(context.TODO(),
-		sveltosv1.ComponentSveltosManager, klogr.New(), cfg)
+		sveltosv1alpha1.ComponentSveltosManager, klogr.New(), cfg)
 })
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
