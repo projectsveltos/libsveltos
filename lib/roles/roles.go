@@ -161,6 +161,35 @@ func ListSecretForOwnner(ctx context.Context, c client.Client, owner client.Obje
 	return results, nil
 }
 
+// GetKubeconfig returns the kubeconfig for a given serviceAccount in a given cluster.
+// Returns nil if kubeconfig is not found. Returns an error if any occurred.
+func GetKubeconfig(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1alpha1.ClusterType) ([]byte, error) {
+
+	secretList := &corev1.SecretList{}
+	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName)...)
+	if err != nil {
+		return nil, err
+	}
+
+	switch len(secretList.Items) {
+	case 0:
+		return nil, nil
+	case 1:
+		if secretList.Items[0].Data == nil {
+			return nil, nil
+		}
+		kubeconfig, ok := secretList.Items[0].Data[key]
+		if !ok {
+			return nil, nil
+		}
+		return kubeconfig, nil
+	default:
+		return nil, fmt.Errorf("found more than one existing secret for %s in cluster %s/%s",
+			serviceAccountName, clusterNamespace, clusterName)
+	}
+}
+
 func getSha256(text string) string {
 	h := sha256.New()
 	h.Write([]byte(text))

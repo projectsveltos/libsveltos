@@ -19,7 +19,51 @@ import (
 )
 
 var _ = Describe("Roles", func() {
-	It("GetSecret returns  nil when secret does not exist", func() {
+	It("GetKubeconfig returns nil when secret does not exist", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		serviceaccountName := randomString()
+
+		c := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+		secret, err := roles.GetKubeconfig(context.TODO(), c,
+			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos)
+		Expect(err).To(BeNil())
+		Expect(secret).To(BeNil())
+	})
+
+	It("GetKubeconfig returns kubeconfig", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		serviceaccountName := randomString()
+		kubeconfig := []byte(randomString())
+
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      randomString(),
+				Labels: map[string]string{
+					roles.ClusterNameLabel:        clusterName,
+					roles.ServiceAccountNameLabel: serviceaccountName,
+				},
+			},
+			Data: map[string][]byte{
+				roles.Key: kubeconfig,
+			},
+		}
+
+		initObjects := []client.Object{secret}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		currentKubeconfig, err := roles.GetKubeconfig(context.TODO(), c,
+			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos)
+		Expect(err).To(BeNil())
+		Expect(currentKubeconfig).ToNot(BeNil())
+		Expect(reflect.DeepEqual(currentKubeconfig, kubeconfig)).To(BeTrue())
+	})
+
+	It("GetSecret returns nil when secret does not exist", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
 		serviceaccountName := randomString()
