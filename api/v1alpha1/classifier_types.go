@@ -58,30 +58,6 @@ func GetClusterInfo(clusterNamespace, clusterName string) string {
 	return fmt.Sprintf("%s--%s", clusterNamespace, clusterName)
 }
 
-// +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;Removing;Removed
-type ClassifierFeatureStatus string
-
-const (
-	// ClassifierStatusProvisioning indicates that classifier is being
-	// provisioned in the workload cluster
-	ClassifierStatusProvisioning = ClassifierFeatureStatus("Provisioning")
-
-	// ClassifierStatusProvisioned indicates that classifier has been
-	// provisioned in the workload cluster
-	ClassifierStatusProvisioned = ClassifierFeatureStatus("Provisioned")
-
-	// ClassifierStatusFailed indicates that configuring classifier
-	// in the workload cluster failed
-	ClassifierStatusFailed = ClassifierFeatureStatus("Failed")
-
-	// ClassifierStatusRemoving indicates that classifier is being
-	// removed
-	ClassifierStatusRemoving = ClassifierFeatureStatus("Removing")
-
-	// ClassifierStatusRemoved indicates that classifier is removed
-	ClassifierStatusRemoved = ClassifierFeatureStatus("Removed")
-)
-
 // Operation specifies
 // +kubebuilder:validation:Enum:=Equal;Different
 type Operation string
@@ -190,22 +166,6 @@ type ClassifierSpec struct {
 	// ClassifierLabels is set of labels, key,value pair, that will be added to each
 	// cluster matching Classifier instance
 	ClassifierLabels []ClassifierLabel `json:"classifierLabels"`
-}
-
-type ClusterInfo struct {
-	// Cluster references the Cluster
-	Cluster corev1.ObjectReference `json:"cluster"`
-
-	// Hash represents the hash of the Classifier currently deployed
-	// in the Cluster
-	Hash []byte `json:"hash"`
-
-	// Status represents the state of the feature in the workload cluster
-	Status ClassifierFeatureStatus `json:"status"`
-
-	// FailureMessage provides more information about the error.
-	// +optional
-	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 type UnManagedLabel struct {

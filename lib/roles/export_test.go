@@ -14,34 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package crd
+package roles
 
-//go:generate go run ../../generator.go
-
-func GetClassifierCRDYAML() []byte {
-	return ClassifierCRD
-}
-
-func GetClassifierReportCRDYAML() []byte {
-	return ClassifierReportCRD
-}
-
-func GetDebuggingConfigurationCRDYAML() []byte {
-	return DebuggingConfigurationCRD
-}
-
-func GetAccessRequestCRDYAML() []byte {
-	return AccessRequestCRD
-}
-
-func GetSveltosClusterCRDYAML() []byte {
-	return SveltosClusterCRD
-}
-
-func GetResourceSummaryCRDYAML() []byte {
-	return ResourceSummaryCRD
-}
-
-func GetRoleRequestCRDYAML() []byte {
-	return RoleRequestCRD
-}
+const (
+	ClusterNameLabel        = clusterNameLabel
+	ServiceAccountNameLabel = serviceAccountNameLabel
+	Key                     = key
+)

@@ -75,11 +75,11 @@ var _ = Describe("utils ", func() {
 	})
 
 	It("should validate UserID and IDToken input in GetKubeconfigWithUserToken()", func() {
-		_, err := utils.GetKubeconfigWithUserToken(ctx, testEnv.Client, nil, []byte(caData), "user@example.org", serverValue)
+		_, err := utils.GetKubeconfigWithUserToken(ctx, nil, []byte(caData), "user@example.org", serverValue)
 		Expect(err).NotTo(BeNil())
 		Expect(err.Error()).To(ContainSubstring("userID and IDToken cannot be empty"))
 
-		_, err = utils.GetKubeconfigWithUserToken(ctx, testEnv.Client, []byte("0x123456"), []byte(caData), "", serverValue)
+		_, err = utils.GetKubeconfigWithUserToken(ctx, []byte("0x123456"), []byte(caData), "", serverValue)
 		Expect(err).NotTo(BeNil())
 		Expect(err.Error()).To(ContainSubstring("userID and IDToken cannot be empty"))
 	})
@@ -88,7 +88,7 @@ var _ = Describe("utils ", func() {
 		server := serverValue
 
 		By("Calling GetKubeconfigWithUserToken()")
-		kubeconfig, err := utils.GetKubeconfigWithUserToken(ctx, testEnv.Client, []byte("0x123456"), []byte(caData), "user@example.org", server)
+		kubeconfig, err := utils.GetKubeconfigWithUserToken(ctx, []byte("0x123456"), []byte(caData), "user@example.org", server)
 		Expect(err).To(Succeed())
 		Expect(kubeconfig).ToNot(BeNil())
 

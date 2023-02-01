@@ -85,4 +85,15 @@ var _ = Describe("CRD", func() {
 
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
+
+	It("Gets the RoleRequest CustomResourceDefinition", func() {
+		yaml := crd.GetRoleRequestCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_rolerequests.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
 })

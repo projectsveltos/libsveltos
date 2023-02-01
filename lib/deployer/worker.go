@@ -27,7 +27,7 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	sveltosv1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
@@ -92,7 +92,7 @@ func (d *deployer) startWorkloadWorkers(ctx context.Context, numOfWorker int, lo
 // - clusterNamespace and clusterName which are the namespace/name of the
 // cluster where feature needs to be deployed;
 // - featureID is a unique identifier for the feature that needs to be deployed.
-func GetKey(clusterNamespace, clusterName, applicant, featureID string, clusterType sveltosv1.ClusterType, cleanup bool) string {
+func GetKey(clusterNamespace, clusterName, applicant, featureID string, clusterType sveltosv1alpha1.ClusterType, cleanup bool) string {
 	return clusterNamespace + separator + clusterName + separator + string(clusterType) + separator +
 		applicant + separator + featureID + separator + strconv.FormatBool(cleanup)
 }
@@ -114,7 +114,7 @@ func getClusterFromKey(key string) (namespace, name string, err error) {
 
 // getClusterTypeFromKey given a unique request key, returns:
 // - clusterType of the cluster where features need to be deployed
-func getClusterTypeFromKey(key string) (clusterType sveltosv1.ClusterType, err error) {
+func getClusterTypeFromKey(key string) (clusterType sveltosv1alpha1.ClusterType, err error) {
 	info := strings.Split(key, separator)
 	const length = 6
 	if len(info) != length {
@@ -122,7 +122,7 @@ func getClusterTypeFromKey(key string) (clusterType sveltosv1.ClusterType, err e
 		return
 	}
 	currentClusterType := info[2]
-	clusterType = sveltosv1.ClusterType(currentClusterType)
+	clusterType = sveltosv1alpha1.ClusterType(currentClusterType)
 	return
 }
 
@@ -262,7 +262,7 @@ func storeResult(d *deployer, key string, err error, handler RequestHandler, met
 // If result is available it returns the result.
 // If request is still queued, responseParams is nil and an error is nil.
 // If result is not available and request is neither queued nor already processed, it returns an error to indicate that.
-func getRequestStatus(d *deployer, clusterNamespace, clusterName, applicant, featureID string, clusterType sveltosv1.ClusterType,
+func getRequestStatus(d *deployer, clusterNamespace, clusterName, applicant, featureID string, clusterType sveltosv1alpha1.ClusterType,
 	cleanup bool) (*responseParams, error) {
 
 	key := GetKey(clusterNamespace, clusterName, applicant, featureID, clusterType, cleanup)
