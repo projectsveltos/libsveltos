@@ -35,7 +35,8 @@ import (
 )
 
 var (
-	serverRegExp = regexp.MustCompile(`^https://[0-9a-zA-Z][0-9a-zA-Z-.]+[0-9a-zA-Z]:\d+$`)
+	serverWithPortRegExp    = regexp.MustCompile(`^https://[0-9a-zA-Z][0-9a-zA-Z-.]+[0-9a-zA-Z]:\d+$`)
+	serverWithoutPortRegExp = regexp.MustCompile(`^https://[0-9a-zA-Z][0-9a-zA-Z-.]+[0-9a-zA-Z]$`)
 )
 
 // GetUnstructured returns an unstructured given a []bytes containing it
@@ -112,9 +113,9 @@ func getUserOrSAKubeconfig(
 		return nil, fmt.Errorf("server cannot be empty")
 	}
 
-	if !serverRegExp.MatchString(server) {
+	if !serverWithPortRegExp.MatchString(server) && !serverWithoutPortRegExp.MatchString(server) {
 		return nil,
-			fmt.Errorf("server value is invalid. valid values e.g. https://127.0.0.1:123, https://hostname:321")
+			fmt.Errorf("server value is invalid. valid values e.g. https://127.0.0.1:123, https://hostname:321, https://127.0.0.1")
 	}
 
 	config := apiv1.Config{
