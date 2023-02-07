@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"errors"
+
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -28,6 +30,16 @@ type ReferencedResourceKind string
 const (
 	SecretReferencedResourceKind    ReferencedResourceKind = "Secret"
 	ConfigMapReferencedResourceKind ReferencedResourceKind = "ConfigMap"
+)
+
+const (
+	// ClusterProfileSecretType is the only accepted type of secret in resources.
+	ClusterProfileSecretType corev1.SecretType = "addons.projectsveltos.io/cluster-profile"
+)
+
+var (
+	// ErrSecretTypeNotSupported signals that a Secret is not supported.
+	ErrSecretTypeNotSupported = errors.New("unsupported secret type")
 )
 
 type Selector string
