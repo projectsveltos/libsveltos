@@ -20,7 +20,8 @@ package v1alpha1
 // to deploy in matching Clusters.
 type PolicyRef struct {
 	// Namespace of the referenced resource.
-	// +kubebuilder:validation:MinLength=1
+	// Namespace can be left empty. In such a case, namespace will
+	// be implicit set to cluster's namespace.
 	Namespace string `json:"namespace"`
 
 	// Name of the rreferenced resource.
