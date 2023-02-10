@@ -45,3 +45,7 @@ func GetResourceSummaryCRDYAML() []byte {
 func GetRoleRequestCRDYAML() []byte {
 	return RoleRequestCRD
 }
+
+func GetClusterHealthCheckCRDYAML() []byte {
+	return ClusterHealthCheckCRD
+}
