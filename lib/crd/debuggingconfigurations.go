@@ -72,6 +72,7 @@ spec:
                       - SveltosClusterManager
                       - DriftDetectionManager
                       - AccessManager
+                      - HealthCheckManager
                       type: string
                     logLevel:
                       description: 'LogLevel is the log severity above which logs
