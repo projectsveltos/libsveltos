@@ -47,16 +47,6 @@ type ConditionType string
 
 // Condition defines an observation of a Cluster API resource operational state.
 type Condition struct {
-	// ClusterNamespace is the namespace of the Cluster this
-	// Condition is for.
-	ClusterNamespace string `json:"clusterNamespace"`
-
-	// ClusterName is the name of the Cluster this Condition is for.
-	ClusterName string `json:"clusterName"`
-
-	// ClusterType is the type of Cluster this Condition is for.
-	ClusterType ClusterType `json:"clusterType"`
-
 	// Type of condition in CamelCase or in foo.example.com/CamelCase.
 	Type ConditionType `json:"type"`
 
@@ -84,6 +74,22 @@ type Condition struct {
 	// This field may be empty.
 	// +optional
 	Message string `json:"message,omitempty"`
+}
+
+type ClusterCondition struct {
+	// ClusterNamespace is the namespace of the Cluster this
+	// Condition is for.
+	ClusterNamespace string `json:"clusterNamespace"`
+
+	// ClusterName is the name of the Cluster this Condition is for.
+	ClusterName string `json:"clusterName"`
+
+	// ClusterType is the type of Cluster this Condition is for.
+	ClusterType ClusterType `json:"clusterType"`
+
+	// Cluster conditions.
+	// +optional
+	Conditions []Condition `json:"conditions,omitempty"`
 }
 
 // Event specifies different type of liveness checks
@@ -138,9 +144,10 @@ type ClusterHealthCheckSpec struct {
 }
 
 type ClusterHealthCheckStatus struct {
-	// Current state ClusterHealthCheck.
+	// ClusterConditions contains conditions for all clusters matching
+	// ClusterHealthCheck instance
 	// +optional
-	Conditions []Condition `json:"conditions,omitempty"`
+	ClusterConditions []ClusterCondition `json:"clusterCondition,omitempty"`
 }
 
 //+kubebuilder:object:root=true
