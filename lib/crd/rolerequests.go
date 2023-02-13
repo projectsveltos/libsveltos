@@ -161,7 +161,6 @@ spec:
                   required:
                   - cluster
                   - hash
-                  - status
                   type: object
                 type: array
               failureMessage:
