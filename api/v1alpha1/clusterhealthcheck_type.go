@@ -22,7 +22,11 @@ import (
 )
 
 const (
-	HealthCheckKind = "HealthCheck"
+	// ClusterHealthCheckFinalizer allows ClusterHealthCheckReconciler to clean up resources associated with
+	// ClusterHealthCheck before removing it from the apiserver.
+	ClusterHealthCheckFinalizer = "clusterhcfinalizer.projectsveltos.io"
+
+	ClusterHealthCheckKind = "ClusterHealthCheck"
 )
 
 // ConditionSeverity expresses the severity of a Condition Type failing.
