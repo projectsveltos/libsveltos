@@ -209,6 +209,11 @@ spec:
                         - type
                         type: object
                       type: array
+                    hash:
+                      description: Hash represents of a unique value for a feature
+                        at a fixed point in time
+                      format: byte
+                      type: string
                   required:
                   - clusterName
                   - clusterNamespace

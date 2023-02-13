@@ -91,6 +91,11 @@ type ClusterCondition struct {
 	// ClusterType is the type of Cluster this Condition is for.
 	ClusterType ClusterType `json:"clusterType"`
 
+	// Hash represents of a unique value for a feature at a fixed point in
+	// time
+	// +optional
+	Hash []byte `json:"hash,omitempty"`
+
 	// Cluster conditions.
 	// +optional
 	Conditions []Condition `json:"conditions,omitempty"`
