@@ -83,15 +83,8 @@ type Condition struct {
 }
 
 type ClusterCondition struct {
-	// ClusterNamespace is the namespace of the Cluster this
-	// Condition is for.
-	ClusterNamespace string `json:"clusterNamespace"`
-
-	// ClusterName is the name of the Cluster this Condition is for.
-	ClusterName string `json:"clusterName"`
-
-	// ClusterType is the type of Cluster this Condition is for.
-	ClusterType ClusterType `json:"clusterType"`
+	// Cluster references the Cluster
+	Cluster corev1.ObjectReference `json:"cluster"`
 
 	// Hash represents of a unique value for a feature at a fixed point in
 	// time
