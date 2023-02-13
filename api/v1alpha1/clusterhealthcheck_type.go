@@ -27,6 +27,8 @@ const (
 	ClusterHealthCheckFinalizer = "clusterhcfinalizer.projectsveltos.io"
 
 	ClusterHealthCheckKind = "ClusterHealthCheck"
+
+	FeatureClusterHealthCheck = "ClusterHealthCheck"
 )
 
 // ConditionSeverity expresses the severity of a Condition Type failing.
