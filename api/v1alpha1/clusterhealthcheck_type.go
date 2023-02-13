@@ -83,13 +83,7 @@ type Condition struct {
 }
 
 type ClusterCondition struct {
-	// Cluster references the Cluster
-	Cluster corev1.ObjectReference `json:"cluster"`
-
-	// Hash represents of a unique value for a feature at a fixed point in
-	// time
-	// +optional
-	Hash []byte `json:"hash,omitempty"`
+	ClusterInfo ClusterInfo `json:"clusterInfo"`
 
 	// Cluster conditions.
 	// +optional

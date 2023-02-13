@@ -77,7 +77,8 @@ type ClusterInfo struct {
 	Hash []byte `json:"hash"`
 
 	// Status represents the state of the feature in the workload cluster
-	Status SveltosFeatureStatus `json:"status"`
+	// +optional
+	Status SveltosFeatureStatus `json:"status,omitempty"`
 
 	// FailureMessage provides more information about the error.
 	// +optional
