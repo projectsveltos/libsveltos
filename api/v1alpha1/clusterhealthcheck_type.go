@@ -148,6 +148,10 @@ type ClusterHealthCheckSpec struct {
 }
 
 type ClusterHealthCheckStatus struct {
+	// MatchingClusterRefs reference all the clusters currently matching
+	// ClusterHealthCheck ClusterSelector
+	MatchingClusterRefs []corev1.ObjectReference `json:"matchingClusters,omitempty"`
+
 	// ClusterConditions contains conditions for all clusters matching
 	// ClusterHealthCheck instance
 	// +optional
