@@ -100,6 +100,10 @@ const (
 )
 
 type LivenessCheck struct {
+	// Name of the liveness check.
+	// Must be a DNS_LABEL and unique within the ClusterHealthCheck.
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+
 	// Type specifies the type of liveness
 	Type LivenessType `json:"type"`
 
@@ -119,6 +123,10 @@ const (
 )
 
 type Notification struct {
+	// Name of the notification check.
+	// Must be a DNS_LABEL and unique within the ClusterHealthCheck.
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+
 	// NotificationType specifies the type of notification
 	Type NotificationType `json:"type"`
 
@@ -135,9 +143,13 @@ type ClusterHealthCheckSpec struct {
 
 	// LivenessChecks is a list of source of liveness checks to evaluate.
 	// Anytime one of those changes, notifications will be sent
+	// +patchMergeKey=name
+	// +patchStrategy=merge,retainKeys
 	LivenessChecks []LivenessCheck `json:"livenessChecks"`
 
 	// Notification is a list of source of events to evaluate.
+	// +patchMergeKey=name
+	// +patchStrategy=merge,retainKeys
 	Notifications []Notification `json:"notifications"`
 }
 
