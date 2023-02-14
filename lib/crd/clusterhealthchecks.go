@@ -102,12 +102,17 @@ spec:
                           description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                           type: string
                       type: object
+                    name:
+                      description: Name of the liveness check. Must be a DNS_LABEL
+                        and unique within the ClusterHealthCheck.
+                      type: string
                     type:
                       description: Type specifies the type of liveness
                       enum:
                       - Addons
                       type: string
                   required:
+                  - name
                   - type
                   type: object
                 type: array
@@ -115,6 +120,10 @@ spec:
                 description: Notification is a list of source of events to evaluate.
                 items:
                   properties:
+                    name:
+                      description: Name of the notification check. Must be a DNS_LABEL
+                        and unique within the ClusterHealthCheck.
+                      type: string
                     notificationRef:
                       description: NotificationRef is a reference to a notification-specific
                         resource that holds the details for the notification.
@@ -159,6 +168,7 @@ spec:
                       - KubernetesEvent
                       type: string
                   required:
+                  - name
                   - type
                   type: object
                 type: array
