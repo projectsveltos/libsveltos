@@ -357,6 +357,29 @@ spec:
                       type: string
                   type: object
                 type: array
+              notificationSummaries:
+                description: NotificationSummaries contains status information on
+                  notifications
+                items:
+                  properties:
+                    failureMessage:
+                      description: FailureMessage is a human consumable message explaining
+                        the misconfiguration
+                      type: string
+                    name:
+                      description: Name of the notification check.
+                      type: string
+                    status:
+                      description: NotificationStatus specifies the notification status
+                      enum:
+                      - Delivered
+                      - FailedToDeliver
+                      type: string
+                  required:
+                  - name
+                  - status
+                  type: object
+                type: array
             type: object
         type: object
     served: true
