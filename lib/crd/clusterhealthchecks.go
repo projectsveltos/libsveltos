@@ -180,8 +180,8 @@ spec:
           status:
             properties:
               clusterCondition:
-                description: ClusterConditions contains conditions for all clusters
-                  matching ClusterHealthCheck instance
+                description: ClusterConditions contains conditions and notification
+                  status for all clusters matching ClusterHealthCheck instance
                 items:
                   properties:
                     clusterInfo:
@@ -289,6 +289,30 @@ spec:
                         - type
                         type: object
                       type: array
+                    notificationSummaries:
+                      description: NotificationSummaries contains status information
+                        on notifications
+                      items:
+                        properties:
+                          failureMessage:
+                            description: FailureMessage is a human consumable message
+                              explaining the misconfiguration
+                            type: string
+                          name:
+                            description: Name of the notification check.
+                            type: string
+                          status:
+                            description: NotificationStatus specifies the notification
+                              status
+                            enum:
+                            - Delivered
+                            - FailedToDeliver
+                            type: string
+                        required:
+                        - name
+                        - status
+                        type: object
+                      type: array
                   required:
                   - clusterInfo
                   type: object
@@ -355,29 +379,6 @@ spec:
                     uid:
                       description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                       type: string
-                  type: object
-                type: array
-              notificationSummaries:
-                description: NotificationSummaries contains status information on
-                  notifications
-                items:
-                  properties:
-                    failureMessage:
-                      description: FailureMessage is a human consumable message explaining
-                        the misconfiguration
-                      type: string
-                    name:
-                      description: Name of the notification check.
-                      type: string
-                    status:
-                      description: NotificationStatus specifies the notification status
-                      enum:
-                      - Delivered
-                      - FailedToDeliver
-                      type: string
-                  required:
-                  - name
-                  - status
                   type: object
                 type: array
             type: object
