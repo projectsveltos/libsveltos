@@ -136,6 +136,32 @@ type Notification struct {
 	NotificationRef *corev1.ObjectReference `json:"notificationRef,omitempty"`
 }
 
+// NotificationStatus specifies status of notifications
+// +kubebuilder:validation:Enum:=Delivered;FailedToDeliver
+type NotificationStatus string
+
+const (
+	// NotificationStatusDelivered indicates notification has been delivered
+	NotificationStatusDelivered = NotificationStatus("Delivered")
+
+	// NotificationStatusFailedToDeliver indicates notification was not delivered
+	// due to an error
+	NotificationStatusFailedToDeliver = NotificationStatus("FailedToDeliver")
+)
+
+type NotificationSummary struct {
+	// Name of the notification check.
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+
+	// NotificationStatus specifies the notification status
+	Status NotificationStatus `json:"status"`
+
+	// FailureMessage is a human consumable message explaining the
+	// misconfiguration
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
+}
+
 // ClusterHealthCheckSpec defines the desired state of ClusterHealthCheck
 type ClusterHealthCheckSpec struct {
 	// ClusterSelector identifies clusters to associate to.
@@ -162,6 +188,10 @@ type ClusterHealthCheckStatus struct {
 	// ClusterHealthCheck instance
 	// +optional
 	ClusterConditions []ClusterCondition `json:"clusterCondition,omitempty"`
+
+	// NotificationSummaries contains status information on notifications
+	// +optional
+	NotificationSummaries []NotificationSummary `json:"notificationSummaries,omitempty"`
 }
 
 //+kubebuilder:object:root=true
