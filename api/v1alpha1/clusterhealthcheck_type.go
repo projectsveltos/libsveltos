@@ -166,6 +166,7 @@ type ClusterHealthCheckStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=clusterhealthchecks,scope=Cluster
+//+kubebuilder:subresource:status
 
 // ClusterHealthCheck is the Schema for the clusterhealthchecks API
 type ClusterHealthCheck struct {
