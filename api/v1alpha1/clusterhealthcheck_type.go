@@ -88,6 +88,10 @@ type ClusterCondition struct {
 	// Cluster conditions.
 	// +optional
 	Conditions []Condition `json:"conditions,omitempty"`
+
+	// NotificationSummaries contains status information on notifications
+	// +optional
+	NotificationSummaries []NotificationSummary `json:"notificationSummaries,omitempty"`
 }
 
 // Event specifies different type of liveness checks
@@ -184,14 +188,10 @@ type ClusterHealthCheckStatus struct {
 	// ClusterHealthCheck ClusterSelector
 	MatchingClusterRefs []corev1.ObjectReference `json:"matchingClusters,omitempty"`
 
-	// ClusterConditions contains conditions for all clusters matching
-	// ClusterHealthCheck instance
+	// ClusterConditions contains conditions and notification status for all clusters
+	// matching ClusterHealthCheck instance
 	// +optional
 	ClusterConditions []ClusterCondition `json:"clusterCondition,omitempty"`
-
-	// NotificationSummaries contains status information on notifications
-	// +optional
-	NotificationSummaries []NotificationSummary `json:"notificationSummaries,omitempty"`
 }
 
 //+kubebuilder:object:root=true
