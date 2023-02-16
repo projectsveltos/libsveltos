@@ -166,6 +166,7 @@ spec:
                       description: NotificationType specifies the type of notification
                       enum:
                       - KubernetesEvent
+                      - Slack
                       type: string
                   required:
                   - name

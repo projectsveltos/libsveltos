@@ -31,6 +31,14 @@ const (
 	FeatureClusterHealthCheck = "ClusterHealthCheck"
 )
 
+// Slack constant
+// To have Sveltos sends a slack notification, create a Secret of type "addons.projectsveltos.io/cluster-profile"
+// In the data section set both slack token and slack channel id
+const (
+	SlackToken     = "SLACK_TOKEN"
+	SlackChannelID = "SLACK_CHANNEL_ID"
+)
+
 // ConditionSeverity expresses the severity of a Condition Type failing.
 type ConditionSeverity string
 
@@ -118,12 +126,15 @@ type LivenessCheck struct {
 }
 
 // NotificationType specifies different type of notifications
-// +kubebuilder:validation:Enum:=KubernetesEvent
+// +kubebuilder:validation:Enum:=KubernetesEvent;Slack
 type NotificationType string
 
 const (
 	// NotificationTypeKubernetesEvent refers to generating a Kubernetes event
 	NotificationTypeKubernetesEvent = NotificationType("KubernetesEvent")
+
+	// NotificationTypeSlack refers to generating a Slack message
+	NotificationTypeSlack = NotificationType("Slack")
 )
 
 type Notification struct {
