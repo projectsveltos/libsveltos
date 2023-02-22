@@ -167,6 +167,7 @@ spec:
                       enum:
                       - KubernetesEvent
                       - Slack
+                      - Webex
                       type: string
                   required:
                   - name
