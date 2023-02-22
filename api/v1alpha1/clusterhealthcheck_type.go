@@ -39,6 +39,14 @@ const (
 	SlackChannelID = "SLACK_CHANNEL_ID"
 )
 
+// Webex constant
+// To have Sveltos sends a webex notification, create a Secret of type "addons.projectsveltos.io/cluster-profile"
+// In the data section set both webex token and webex room ID
+const (
+	WebexToken  = "WEBEX_TOKEN"
+	WebexRoomID = "WEBEX_ROOM_ID"
+)
+
 // ConditionSeverity expresses the severity of a Condition Type failing.
 type ConditionSeverity string
 
@@ -126,7 +134,7 @@ type LivenessCheck struct {
 }
 
 // NotificationType specifies different type of notifications
-// +kubebuilder:validation:Enum:=KubernetesEvent;Slack
+// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex
 type NotificationType string
 
 const (
@@ -135,6 +143,9 @@ const (
 
 	// NotificationTypeSlack refers to generating a Slack message
 	NotificationTypeSlack = NotificationType("Slack")
+
+	// NotificationTypeWebex refers to generating a Webex message
+	NotificationTypeWebex = NotificationType("Webex")
 )
 
 type Notification struct {
