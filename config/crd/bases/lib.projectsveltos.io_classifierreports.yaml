@@ -33,7 +33,6 @@ spec:
           metadata:
             type: object
           spec:
-            description: ClassifierReportSpec defines the desired state of ClassifierReport
             properties:
               classifierName:
                 description: ClassifierName is the name of the Classifier instance

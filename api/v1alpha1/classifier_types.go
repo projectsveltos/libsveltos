@@ -30,10 +30,10 @@ const (
 	ClassifierFinalizer = "classifierfinalizer.projectsveltos.io"
 
 	// ClassifierReportClusterNameLabel is added to each ClassifierReport
-	ClassifierReportClusterNameLabel = "projectsveltos.io/cluster-name"
+	ClassifierReportClusterNameLabel = "classifier.projectsveltos.io/cluster-name"
 
 	// ClassifierReportClusterTypeLabel is added to each ClassifierReport
-	ClassifierReportClusterTypeLabel = "projectsveltos.io/cluster-type"
+	ClassifierReportClusterTypeLabel = "classifier.projectsveltos.io/cluster-type"
 
 	ClassifierKind = "Classifier"
 
