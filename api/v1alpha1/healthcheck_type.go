@@ -49,10 +49,8 @@ type HealthCheckSpec struct {
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	// PolicyRef references the ConfigMaps/Secrets containing lua script
-	// that need to be evaluated in managed clusters for resources.
-	// +optional
-	PolicyRef *PolicyRef `json:"policyRef,omitempty"`
+	// Script is a text containing the lua script
+	Script string `json:"script,omitempty"`
 }
 
 //+kubebuilder:object:root=true
