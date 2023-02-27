@@ -110,6 +110,12 @@ func main() {
 	roleRequestFile := "../../config/crd/bases/lib.projectsveltos.io_rolerequests.yaml"
 	generate(roleRequestFile, "rolerequests", "RoleRequest")
 
-	healthCheckFile := "../../config/crd/bases/lib.projectsveltos.io_clusterhealthchecks.yaml"
-	generate(healthCheckFile, "clusterhealthchecks", "ClusterHealthCheck")
+	clusterHealthCheckFile := "../../config/crd/bases/lib.projectsveltos.io_clusterhealthchecks.yaml"
+	generate(clusterHealthCheckFile, "clusterhealthchecks", "ClusterHealthCheck")
+
+	healthCheckFile := "../../config/crd/bases/lib.projectsveltos.io_healthchecks.yaml"
+	generate(healthCheckFile, "healthchecks", "HealthCheck")
+
+	healthCheckReportFile := "../../config/crd/bases/lib.projectsveltos.io_healthcheckreports.yaml"
+	generate(healthCheckReportFile, "healthcheckreports", "HealthCheckReport")
 }

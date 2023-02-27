@@ -49,3 +49,11 @@ func GetRoleRequestCRDYAML() []byte {
 func GetClusterHealthCheckCRDYAML() []byte {
 	return ClusterHealthCheckCRD
 }
+
+func GetHealthCheckCRDYAML() []byte {
+	return HealthCheckCRD
+}
+
+func GetHealthCheckReportCRDYAML() []byte {
+	return HealthCheckReportCRD
+}
