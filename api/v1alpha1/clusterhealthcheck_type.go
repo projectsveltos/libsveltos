@@ -111,12 +111,15 @@ type ClusterCondition struct {
 }
 
 // Event specifies different type of liveness checks
-// +kubebuilder:validation:Enum:=Addons
+// +kubebuilder:validation:Enum:=Addons;HealthCheck
 type LivenessType string
 
 const (
 	// LivenessTypeAddons refers to add-ons deployment state.
 	LivenessTypeAddons = LivenessType("Addons")
+
+	// LivenessTypeHealthCheck refers to HealthCheck state.
+	LivenessTypeHealthCheck = LivenessType("HealthCheck")
 )
 
 type LivenessCheck struct {

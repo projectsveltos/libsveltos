@@ -110,6 +110,7 @@ spec:
                       description: Type specifies the type of liveness
                       enum:
                       - Addons
+                      - HealthCheck
                       type: string
                   required:
                   - name
