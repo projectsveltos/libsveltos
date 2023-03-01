@@ -69,6 +69,9 @@ type ConditionType string
 
 // Condition defines an observation of a Cluster API resource operational state.
 type Condition struct {
+	// Condition name
+	Name string `json:"name"`
+
 	// Type of condition in CamelCase or in foo.example.com/CamelCase.
 	Type ConditionType `json:"type"`
 
