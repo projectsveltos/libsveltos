@@ -25,7 +25,7 @@ const (
 	// HealthCheck before removing it from the apiserver.
 	HealthCheckFinalizer = "healthcheck.finalizer.projectsveltos.io"
 
-	HealthCheckKind = "Health"
+	HealthCheckKind = "HealthCheck"
 )
 
 // HealthCheckSpec defines the desired state of HealthCheck
