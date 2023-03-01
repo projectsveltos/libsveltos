@@ -28,11 +28,7 @@ const (
 
 	ClusterHealthCheckKind = "ClusterHealthCheck"
 
-	// Used to deploy ClusterHealthCheck resources in managed nodes
-	FeatureClusterHealthCheckDeployment = "ClusterHealthCheck-Deployment"
-
-	// Used to evaluate ClusterHealthCheck liveness checks and send notifications
-	FeatureClusterHealthCheckEvaluation = "ClusterHealthCheck-Evaluation"
+	FeatureClusterHealthCheck = "ClusterHealthCheck"
 )
 
 // Slack constant
