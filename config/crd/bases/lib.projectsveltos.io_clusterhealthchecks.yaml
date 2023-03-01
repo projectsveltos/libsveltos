@@ -248,6 +248,9 @@ spec:
                             description: A human readable message indicating details
                               about the transition. This field may be empty.
                             type: string
+                          name:
+                            description: Condition name
+                            type: string
                           reason:
                             description: The reason for the condition's last transition
                               in CamelCase. The specific API may choose whether or
@@ -269,6 +272,7 @@ spec:
                             type: string
                         required:
                         - lastTransitionTime
+                        - name
                         - status
                         - type
                         type: object
