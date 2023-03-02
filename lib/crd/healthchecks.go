@@ -37,7 +37,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: HealthCheck is the Schema for the classifiers API
+        description: HealthCheck is the Schema for the HealthCheck API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -89,7 +89,8 @@ spec:
                   for resources scoped at cluster level.
                 type: string
               script:
-                description: Script is a text containing the lua script
+                description: Script is a text containing the lua script Must return
+                  one of the HealthStatus values.
                 type: string
               version:
                 description: Version of the resource deployed in the Cluster.

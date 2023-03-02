@@ -21,15 +21,15 @@ import (
 )
 
 const (
-	// HealthCheckFinalizer allows HealthReconciler to clean up resources associated with
-	// HealthCheck before removing it from the apiserver.
-	HealthCheckFinalizer = "healthcheck.finalizer.projectsveltos.io"
+	// EventSourceFinalizer allows EventSourceReconciler to clean up resources associated with
+	// EventSource before removing it from the apiserver.
+	EventSourceFinalizer = "eventsource.finalizer.projectsveltos.io"
 
-	HealthCheckKind = "HealthCheck"
+	EventSourceKind = "EventSource"
 )
 
-// HealthCheckSpec defines the desired state of HealthCheck
-type HealthCheckSpec struct {
+// EventSourceSpec defines the desired state of EventSource
+type EventSourceSpec struct {
 	// Group of the resource deployed in the Cluster.
 	Group string `json:"group"`
 
@@ -49,31 +49,32 @@ type HealthCheckSpec struct {
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	// Script is a text containing the lua script
-	// Must return one of the HealthStatus values.
+	// Script is a text containing the lua script.
+	// Must return true or false indicating whether obj is
+	// a match or not.
 	Script string `json:"script,omitempty"`
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=healthchecks,scope=Cluster
+//+kubebuilder:resource:path=eventsources,scope=Cluster
 
-// HealthCheck is the Schema for the HealthCheck API
-type HealthCheck struct {
+// EventSource is the Schema for the EventSource API
+type EventSource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec HealthCheckSpec `json:"spec,omitempty"`
+	Spec EventSourceSpec `json:"spec,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// HealthCheckList contains a list of Event
-type HealthCheckList struct {
+// EventSourceList contains a list of EventSource
+type EventSourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []HealthCheck `json:"items"`
+	Items           []EventSource `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&HealthCheck{}, &HealthCheckList{})
+	SchemeBuilder.Register(&EventSource{}, &EventSourceList{})
 }

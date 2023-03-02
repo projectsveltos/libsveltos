@@ -57,3 +57,11 @@ func GetHealthCheckCRDYAML() []byte {
 func GetHealthCheckReportCRDYAML() []byte {
 	return HealthCheckReportCRD
 }
+
+func GetEventSourceCRDYAML() []byte {
+	return EventSourceCRD
+}
+
+func GetEventReportCRDYAML() []byte {
+	return EventReportCRD
+}
