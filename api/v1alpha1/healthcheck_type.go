@@ -49,8 +49,9 @@ type HealthCheckSpec struct {
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	// Script is a text containing the lua script
-	// Must return one of the HealthStatus values.
+	// Script is a text containing a lua script.
+	// Must return a struct with field "status"
+	// set to one of the possible value of HealthStatus.
 	Script string `json:"script,omitempty"`
 }
 
