@@ -89,8 +89,9 @@ spec:
                   for resources scoped at cluster level.
                 type: string
               script:
-                description: Script is a text containing the lua script Must return
-                  one of the HealthStatus values.
+                description: Script is a text containing a lua script. Must return
+                  a struct with field "status" set to one of the possible value of
+                  HealthStatus.
                 type: string
               version:
                 description: Version of the resource deployed in the Cluster.

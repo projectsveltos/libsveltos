@@ -49,9 +49,9 @@ type EventSourceSpec struct {
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	// Script is a text containing the lua script.
-	// Must return true or false indicating whether obj is
-	// a match or not.
+	// Script is a text containing a lua script.
+	// Must return struct with field "matching"
+	// representing whether object is a match.
 	Script string `json:"script,omitempty"`
 }
 
