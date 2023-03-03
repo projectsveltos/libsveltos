@@ -133,6 +133,12 @@ spec:
                       type: string
                   type: object
                 type: array
+              resources:
+                description: If EventSource Spec.CollectResources is set to true,
+                  all matching resources will be collected and contained in the Resources
+                  field.
+                format: byte
+                type: string
             required:
             - clusterName
             - clusterNamespace

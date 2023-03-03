@@ -76,6 +76,11 @@ type EventReportSpec struct {
 	// MatchingResources contains a list of resources matching an event
 	// +optional
 	MatchingResources []corev1.ObjectReference `json:"matchingResources,omitempty"`
+
+	// If EventSource Spec.CollectResources is set to true, all matching resources
+	// will be collected and contained in the Resources field.
+	// +optional
+	Resources []byte `json:"resources,omitempty"`
 }
 
 // EventReportStatus defines the observed state of EventReport

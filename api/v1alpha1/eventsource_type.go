@@ -52,7 +52,14 @@ type EventSourceSpec struct {
 	// Script is a text containing a lua script.
 	// Must return struct with field "matching"
 	// representing whether object is a match.
+	// +optional
 	Script string `json:"script,omitempty"`
+
+	// CollectResources indicates whether matching resources need
+	// to be collected and added to EventReport.
+	// +kubebuilder:default:=false
+	// +optional
+	CollectResources bool `json:"collectResources:omitempty"`
 }
 
 //+kubebuilder:object:root=true
