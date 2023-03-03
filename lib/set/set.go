@@ -36,6 +36,20 @@ func (s *Set) Insert(entry *corev1.ObjectReference) {
 	s.data[*entry] = true
 }
 
+// Append adds entries to set
+func (s *Set) Append(entries *Set) {
+	s.init()
+
+	if entries == nil {
+		return
+	}
+
+	items := entries.Items()
+	for i := range items {
+		s.data[items[i]] = true
+	}
+}
+
 // Erase removes entry from set
 func (s *Set) Erase(entry *corev1.ObjectReference) {
 	s.init()

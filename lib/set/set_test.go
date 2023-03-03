@@ -84,4 +84,22 @@ var _ = Describe("Set", func() {
 		Expect(entries).To(ContainElement(*entry0))
 		Expect(entries).To(ContainElement(*entry1))
 	})
+
+	It("append adds to Set", func() {
+		s := &set.Set{}
+		entry0 := getEntry()
+		s.Insert(entry0)
+		entry1 := getEntry()
+		s.Insert(entry1)
+
+		final := &set.Set{}
+		entry3 := getEntry()
+		final.Insert(entry3)
+		final.Append(s)
+
+		entries := final.Items()
+		Expect(entries).To(ContainElement(*entry0))
+		Expect(entries).To(ContainElement(*entry1))
+		Expect(entries).To(ContainElement(*entry3))
+	})
 })
