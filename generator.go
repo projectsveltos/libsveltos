@@ -118,4 +118,10 @@ func main() {
 
 	healthCheckReportFile := "../../config/crd/bases/lib.projectsveltos.io_healthcheckreports.yaml"
 	generate(healthCheckReportFile, "healthcheckreports", "HealthCheckReport")
+
+	eventSourceFile := "../../config/crd/bases/lib.projectsveltos.io_eventsources.yaml"
+	generate(eventSourceFile, "eventsources", "EventSource")
+
+	eventReportFile := "../../config/crd/bases/lib.projectsveltos.io_eventreports.yaml"
+	generate(eventReportFile, "eventreports", "EventReport")
 }

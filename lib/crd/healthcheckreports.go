@@ -65,7 +65,7 @@ spec:
                 description: ClusterType is the type of Cluster this HealthCheckReport
                   is for.
                 type: string
-              healthName:
+              healthCheckName:
                 description: HealthName is the name of the HealthCheck instance this
                   report is for.
                 type: string
@@ -131,7 +131,7 @@ spec:
             - clusterName
             - clusterNamespace
             - clusterType
-            - healthName
+            - healthCheckName
             type: object
           status:
             description: HealthCheckReportStatus defines the observed state of HealthCheckReport

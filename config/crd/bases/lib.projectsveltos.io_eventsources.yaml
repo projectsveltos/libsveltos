@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: healthchecks.lib.projectsveltos.io
+  name: eventsources.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
   names:
-    kind: HealthCheck
-    listKind: HealthCheckList
-    plural: healthchecks
-    singular: healthcheck
+    kind: EventSource
+    listKind: EventSourceList
+    plural: eventsources
+    singular: eventsource
   scope: Cluster
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: HealthCheck is the Schema for the HealthCheck API
+        description: EventSource is the Schema for the EventSource API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,7 +33,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: HealthCheckSpec defines the desired state of HealthCheck
+            description: EventSourceSpec defines the desired state of EventSource
             properties:
               group:
                 description: Group of the resource deployed in the Cluster.
@@ -70,8 +70,8 @@ spec:
                   for resources scoped at cluster level.
                 type: string
               script:
-                description: Script is a text containing the lua script Must return
-                  one of the HealthStatus values.
+                description: Script is a text containing the lua script. Must return
+                  true or false indicating whether obj is a match or not.
                 type: string
               version:
                 description: Version of the resource deployed in the Cluster.

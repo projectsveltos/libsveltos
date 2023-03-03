@@ -42,15 +42,15 @@ const (
 	HealthCheckReportClusterTypeLabel = "healthcheckreport.projectsveltos.io/cluster-type"
 )
 
-func GetHealthCheckReportName(healthName, clusterName string, clusterType *ClusterType) string {
+func GetHealthCheckReportName(healthCheckName, clusterName string, clusterType *ClusterType) string {
 	// TODO: shorten this
 	return fmt.Sprintf("%s--%s--%s",
-		strings.ToLower(string(*clusterType)), healthName, clusterName)
+		strings.ToLower(string(*clusterType)), healthCheckName, clusterName)
 }
 
-func GetHealthCheckReportLabels(healthName, clusterName string, clusterType *ClusterType) map[string]string {
+func GetHealthCheckReportLabels(healthCheckName, clusterName string, clusterType *ClusterType) map[string]string {
 	return map[string]string{
-		HealthCheckLabelName:              healthName,
+		HealthCheckLabelName:              healthCheckName,
 		HealthCheckReportClusterNameLabel: clusterName,
 		HealthCheckReportClusterTypeLabel: strings.ToLower(string(*clusterType)),
 	}
@@ -101,7 +101,7 @@ type HealthCheckReportSpec struct {
 
 	// HealthName is the name of the HealthCheck instance this report
 	// is for.
-	HealthCheckName string `json:"healthName"`
+	HealthCheckName string `json:"healthCheckName"`
 
 	// ResourceStatuses contains a list of resources with their status
 	// +optional
@@ -130,7 +130,7 @@ type HealthCheckReport struct {
 
 //+kubebuilder:object:root=true
 
-// HealthCheckReportList contains a list of HealthReport
+// HealthCheckReportList contains a list of HealthCheckReport
 type HealthCheckReportList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
