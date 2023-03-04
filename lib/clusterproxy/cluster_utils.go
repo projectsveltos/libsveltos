@@ -21,6 +21,7 @@ import (
 	"os"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
@@ -311,4 +312,93 @@ func GetListOfClusters(ctx context.Context, c client.Client, logger logr.Logger,
 
 	clusters = append(clusters, tmpClusters...)
 	return clusters, nil
+}
+
+func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labels.Selector,
+	logger logr.Logger) ([]corev1.ObjectReference, error) {
+
+	clusterList := &clusterv1.ClusterList{}
+	if err := c.List(ctx, clusterList); err != nil {
+		logger.Error(err, "failed to list all Cluster")
+		return nil, err
+	}
+
+	matching := make([]corev1.ObjectReference, 0)
+
+	for i := range clusterList.Items {
+		cluster := &clusterList.Items[i]
+
+		if !cluster.DeletionTimestamp.IsZero() {
+			// Only existing cluster can match
+			continue
+		}
+
+		addTypeInformationToObject(c.Scheme(), cluster)
+		if selector.Matches(labels.Set(cluster.Labels)) {
+			matching = append(matching, corev1.ObjectReference{
+				Kind:       cluster.Kind,
+				Namespace:  cluster.Namespace,
+				Name:       cluster.Name,
+				APIVersion: cluster.APIVersion,
+			})
+		}
+	}
+
+	return matching, nil
+}
+
+func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector labels.Selector,
+	logger logr.Logger) ([]corev1.ObjectReference, error) {
+
+	clusterList := &libsveltosv1alpha1.SveltosClusterList{}
+	if err := c.List(ctx, clusterList); err != nil {
+		logger.Error(err, "failed to list all Cluster")
+		return nil, err
+	}
+
+	matching := make([]corev1.ObjectReference, 0)
+
+	for i := range clusterList.Items {
+		cluster := &clusterList.Items[i]
+
+		if !cluster.DeletionTimestamp.IsZero() {
+			// Only existing cluster can match
+			continue
+		}
+
+		addTypeInformationToObject(c.Scheme(), cluster)
+		if selector.Matches(labels.Set(cluster.Labels)) {
+			matching = append(matching, corev1.ObjectReference{
+				Kind:       cluster.Kind,
+				Namespace:  cluster.Namespace,
+				Name:       cluster.Name,
+				APIVersion: cluster.APIVersion,
+			})
+		}
+	}
+
+	return matching, nil
+}
+
+// GetMatchingClusters returns all Sveltos/CAPI Clusters currently matching selector
+func GetMatchingClusters(ctx context.Context, c client.Client, selector labels.Selector,
+	logger logr.Logger) ([]corev1.ObjectReference, error) {
+
+	matching := make([]corev1.ObjectReference, 0)
+
+	tmpMatching, err := getMatchingCAPIClusters(ctx, c, selector, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	matching = append(matching, tmpMatching...)
+
+	tmpMatching, err = getMatchingSveltosClusters(ctx, c, selector, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	matching = append(matching, tmpMatching...)
+
+	return matching, nil
 }
