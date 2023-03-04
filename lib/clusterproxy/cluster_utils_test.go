@@ -24,6 +24,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/klog/v2/klogr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -167,5 +168,51 @@ var _ = Describe("Cluster utils", func() {
 		matches, err := clusterproxy.GetListOfClusters(context.TODO(), c, klogr.New())
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(2))
+	})
+
+	It("getMatchingClusters returns matchin CAPI Cluster", func() {
+		selector := libsveltosv1alpha1.Selector("env=qa,zone=west")
+
+		currentLabels := map[string]string{
+			"env":  "qa",
+			"zone": "west",
+		}
+
+		sveltosCluster := &libsveltosv1alpha1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+				Labels:    currentLabels,
+			},
+		}
+
+		nonMatchingSveltosCluster := &libsveltosv1alpha1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+			},
+		}
+
+		cluster.Labels = currentLabels
+
+		initObjects := []client.Object{
+			cluster,
+			sveltosCluster,
+			nonMatchingSveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		parsedSelector, _ := labels.Parse(string(selector))
+
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(2))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name,
+				Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String()}))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
+				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
 	})
 })
