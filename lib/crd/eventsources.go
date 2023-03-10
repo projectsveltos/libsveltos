@@ -54,7 +54,7 @@ spec:
           spec:
             description: EventSourceSpec defines the desired state of EventSource
             properties:
-              collectResources:omitempty:
+              collectResources:
                 default: false
                 description: CollectResources indicates whether matching resources
                   need to be collected and added to EventReport.

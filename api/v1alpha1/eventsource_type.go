@@ -59,7 +59,7 @@ type EventSourceSpec struct {
 	// to be collected and added to EventReport.
 	// +kubebuilder:default:=false
 	// +optional
-	CollectResources bool `json:"collectResources:omitempty"`
+	CollectResources bool `json:"collectResources,omitempty"`
 }
 
 //+kubebuilder:object:root=true
