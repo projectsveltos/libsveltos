@@ -62,7 +62,7 @@ spec:
               type:
                 description: Type represent the type of the request
                 enum:
-                - ClassifierAgent
+                - SveltosAgent
                 - Different
                 type: string
             required:
