@@ -22,7 +22,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
   name: clusterhealthchecks.lib.projectsveltos.io
 spec:
@@ -102,6 +102,7 @@ spec:
                           description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                           type: string
                       type: object
+                      x-kubernetes-map-type: atomic
                     name:
                       description: Name of the liveness check. Must be a DNS_LABEL
                         and unique within the ClusterHealthCheck.
@@ -163,6 +164,7 @@ spec:
                           description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                           type: string
                       type: object
+                      x-kubernetes-map-type: atomic
                     type:
                       description: NotificationType specifies the type of notification
                       enum:
@@ -227,6 +229,7 @@ spec:
                               description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                               type: string
                           type: object
+                          x-kubernetes-map-type: atomic
                         failureMessage:
                           description: FailureMessage provides more information about
                             the error.
@@ -387,6 +390,7 @@ spec:
                       description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                       type: string
                   type: object
+                  x-kubernetes-map-type: atomic
                 type: array
             type: object
         type: object
@@ -394,10 +398,4 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 `)

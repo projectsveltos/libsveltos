@@ -22,7 +22,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
   name: eventreports.lib.projectsveltos.io
 spec:
@@ -132,6 +132,7 @@ spec:
                       description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                       type: string
                   type: object
+                  x-kubernetes-map-type: atomic
                 type: array
               resources:
                 description: If EventSource Spec.CollectResources is set to true,
@@ -161,10 +162,4 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 `)
