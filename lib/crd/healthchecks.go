@@ -16,29 +16,28 @@ limitations under the License.
 */
 package crd
 
-var DebuggingConfigurationFile = "../../config/crd/bases/lib.projectsveltos.io_debuggingconfigurations.yaml"
-var DebuggingConfigurationCRD = []byte(`---
+var HealthCheckFile = "../../config/crd/bases/lib.projectsveltos.io_healthchecks.yaml"
+var HealthCheckCRD = []byte(`---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.10.0
   creationTimestamp: null
-  name: debuggingconfigurations.lib.projectsveltos.io
+  name: healthchecks.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
   names:
-    kind: DebuggingConfiguration
-    listKind: DebuggingConfigurationList
-    plural: debuggingconfigurations
-    singular: debuggingconfiguration
+    kind: HealthCheck
+    listKind: HealthCheckList
+    plural: healthchecks
+    singular: healthcheck
   scope: Cluster
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: DebuggingConfiguration is the Schema for the debuggingconfigurations
-          API
+        description: HealthCheck is the Schema for the HealthCheck API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -53,42 +52,54 @@ spec:
           metadata:
             type: object
           spec:
-            description: DebuggingConfigurationSpec defines the desired state of DebuggingConfiguration
+            description: HealthCheckSpec defines the desired state of HealthCheck
             properties:
-              configuration:
-                description: Configuration contains debugging configuration as granular
-                  as per component.
+              group:
+                description: Group of the resource deployed in the Cluster.
+                type: string
+              kind:
+                description: Kind of the resource deployed in the Cluster.
+                minLength: 1
+                type: string
+              labelFilters:
+                description: LabelFilters allows to filter resources based on current
+                  labels.
                 items:
-                  description: ComponentConfiguration is the debugging configuration
-                    to be applied to a Sveltos component.
                   properties:
-                    component:
-                      description: Component indicates which Sveltos component the
-                        configuration applies to.
-                      enum:
-                      - SveltosManager
-                      - Classifier
-                      - ClassifierAgent
-                      - SveltosClusterManager
-                      - DriftDetectionManager
-                      - AccessManager
-                      - HealthCheckManager
-                      - EventManager
+                    key:
+                      description: Key is the label key
                       type: string
-                    logLevel:
-                      description: 'LogLevel is the log severity above which logs
-                        are sent to the stdout. [Default: Info]'
+                    operation:
+                      description: Operation is the comparison operation
                       enum:
-                      - LogLevelNotSet
-                      - LogLevelInfo
-                      - LogLevelDebug
-                      - LogLevelVerbose
+                      - Equal
+                      - Different
+                      type: string
+                    value:
+                      description: Value is the label value
                       type: string
                   required:
-                  - component
+                  - key
+                  - operation
+                  - value
                   type: object
                 type: array
-                x-kubernetes-list-type: atomic
+              namespace:
+                description: Namespace of the resource deployed in the  Cluster. Empty
+                  for resources scoped at cluster level.
+                type: string
+              script:
+                description: Script is a text containing a lua script. Must return
+                  a struct with field "status" set to one of the possible value of
+                  HealthStatus.
+                type: string
+              version:
+                description: Version of the resource deployed in the Cluster.
+                type: string
+            required:
+            - group
+            - kind
+            - version
             type: object
         type: object
     served: true

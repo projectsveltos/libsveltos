@@ -69,6 +69,9 @@ type ConditionType string
 
 // Condition defines an observation of a Cluster API resource operational state.
 type Condition struct {
+	// Condition name
+	Name string `json:"name"`
+
 	// Type of condition in CamelCase or in foo.example.com/CamelCase.
 	Type ConditionType `json:"type"`
 
@@ -111,12 +114,15 @@ type ClusterCondition struct {
 }
 
 // Event specifies different type of liveness checks
-// +kubebuilder:validation:Enum:=Addons
+// +kubebuilder:validation:Enum:=Addons;HealthCheck
 type LivenessType string
 
 const (
 	// LivenessTypeAddons refers to add-ons deployment state.
 	LivenessTypeAddons = LivenessType("Addons")
+
+	// LivenessTypeHealthCheck refers to HealthCheck state.
+	LivenessTypeHealthCheck = LivenessType("HealthCheck")
 )
 
 type LivenessCheck struct {

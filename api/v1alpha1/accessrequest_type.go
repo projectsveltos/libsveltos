@@ -32,13 +32,13 @@ const (
 )
 
 // RequestType specifies the type of AccessRequest
-// +kubebuilder:validation:Enum:=ClassifierAgent;Different
+// +kubebuilder:validation:Enum:=SveltosAgent;Different
 type RequestType string
 
 const (
-	// ClassifierAgent is the request type to generate kubeconfig
-	// for classifier agent
-	ClassifierAgentRequest = RequestType("ClassifierAgent")
+	// SveltosAgent is the request type to generate kubeconfig
+	// for sveltos agent
+	SveltosAgentRequest = RequestType("SveltosAgent")
 )
 
 // AccessRequestSpec defines the desired state of AccessRequest

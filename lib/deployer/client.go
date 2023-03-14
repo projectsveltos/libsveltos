@@ -218,14 +218,22 @@ func (d *deployer) CleanupEntries(
 		if d.dirty[i] != key {
 			continue
 		}
-		d.dirty = append(d.dirty[:i], d.dirty[i+1:]...)
+		if i < len(d.dirty) {
+			d.dirty = append(d.dirty[:i], d.dirty[i+1:]...)
+		} else {
+			d.dirty = d.dirty[:i]
+		}
 	}
 
 	for i := range d.jobQueue {
 		if d.jobQueue[i].key != key {
 			continue
 		}
-		d.jobQueue = append(d.jobQueue[:i], d.jobQueue[i+1:]...)
+		if i < len(d.jobQueue) {
+			d.jobQueue = append(d.jobQueue[:i], d.jobQueue[i+1:]...)
+		} else {
+			d.jobQueue = d.jobQueue[:i]
+		}
 	}
 
 	delete(d.results, key)

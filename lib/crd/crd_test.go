@@ -106,4 +106,43 @@ var _ = Describe("CRD", func() {
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
 
+	It("Gets the HealthCheck CustomResourceDefinition", func() {
+		yaml := crd.GetHealthCheckCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_healthchecks.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the HealthCheckReport CustomResourceDefinition", func() {
+		yaml := crd.GetHealthCheckReportCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_healthcheckreports.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the EventSource CustomResourceDefinition", func() {
+		yaml := crd.GetEventSourceCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_eventsources.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the EventReport CustomResourceDefinition", func() {
+		yaml := crd.GetEventReportCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_eventreports.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
 })

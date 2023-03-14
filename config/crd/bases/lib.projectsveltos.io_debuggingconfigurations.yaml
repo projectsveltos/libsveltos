@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.10.0
   creationTimestamp: null
   name: debuggingconfigurations.lib.projectsveltos.io
 spec:
@@ -54,6 +54,7 @@ spec:
                       - DriftDetectionManager
                       - AccessManager
                       - HealthCheckManager
+                      - EventManager
                       type: string
                     logLevel:
                       description: 'LogLevel is the log severity above which logs
@@ -73,9 +74,3 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

@@ -22,7 +22,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.10.0
   creationTimestamp: null
   name: classifierreports.lib.projectsveltos.io
 spec:
@@ -52,7 +52,6 @@ spec:
           metadata:
             type: object
           spec:
-            description: ClassifierReportSpec defines the desired state of ClassifierReport
             properties:
               classifierName:
                 description: ClassifierName is the name of the Classifier instance
@@ -96,10 +95,4 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 `)
