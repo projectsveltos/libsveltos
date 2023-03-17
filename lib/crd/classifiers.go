@@ -142,6 +142,11 @@ spec:
                       description: Namespace of the resource deployed in the  Cluster.
                         Empty for resources scoped at cluster level.
                       type: string
+                    script:
+                      description: Script is a text containing a lua script. Must
+                        return struct with field "matching" representing whether object
+                        is a match.
+                      type: string
                     version:
                       description: Version of the resource deployed in the Cluster.
                       type: string
