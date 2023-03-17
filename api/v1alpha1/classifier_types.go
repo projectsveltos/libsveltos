@@ -132,6 +132,12 @@ type DeployedResourceConstraint struct {
 	// MaxCount is the maximun number of resources to match
 	// +optional
 	MaxCount *int `json:"maxCount,omitempty"`
+
+	// Script is a text containing a lua script.
+	// Must return struct with field "matching"
+	// representing whether object is a match.
+	// +optional
+	Script string `json:"script,omitempty"`
 }
 
 type KubernetesComparison string
