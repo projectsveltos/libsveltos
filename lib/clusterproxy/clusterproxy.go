@@ -240,7 +240,7 @@ func GetMachinesForCluster(
 
 	listOptions := []client.ListOption{
 		client.InNamespace(cluster.Namespace),
-		client.MatchingLabels{clusterv1.ClusterLabelName: cluster.Name},
+		client.MatchingLabels{clusterv1.ClusterNameLabel: cluster.Name},
 	}
 	var machineList clusterv1.MachineList
 	if err := c.List(ctx, &machineList, listOptions...); err != nil {
