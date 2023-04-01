@@ -203,7 +203,10 @@ func runDebuggingConfigurationInformer(
 			UpdateLogLevel(d)
 		},
 	}
-	s.AddEventHandler(handlers)
+	_, err := s.AddEventHandler(handlers)
+	if err != nil {
+		panic(1)
+	}
 	s.Run(stopCh)
 }
 

@@ -183,8 +183,8 @@ var _ = Describe("clusterproxy ", func() {
 				Namespace: cluster.Namespace,
 				Name:      cluster.Name + randomString(),
 				Labels: map[string]string{
-					clusterv1.ClusterLabelName:             cluster.Name,
-					clusterv1.MachineControlPlaneLabelName: "ok",
+					clusterv1.ClusterNameLabel:         cluster.Name,
+					clusterv1.MachineControlPlaneLabel: "ok",
 				},
 			},
 		}
@@ -193,7 +193,7 @@ var _ = Describe("clusterproxy ", func() {
 				Namespace: cluster.Namespace,
 				Name:      cluster.Name + randomString(),
 				Labels: map[string]string{
-					clusterv1.ClusterLabelName: cluster.Name,
+					clusterv1.ClusterNameLabel: cluster.Name,
 				},
 			},
 		}
@@ -217,8 +217,8 @@ var _ = Describe("clusterproxy ", func() {
 				Namespace: cluster.Namespace,
 				Name:      cluster.Name + randomString(),
 				Labels: map[string]string{
-					clusterv1.ClusterLabelName:             cluster.Name,
-					clusterv1.MachineControlPlaneLabelName: "ok",
+					clusterv1.ClusterNameLabel:         cluster.Name,
+					clusterv1.MachineControlPlaneLabel: "ok",
 				},
 			},
 		}
@@ -229,7 +229,7 @@ var _ = Describe("clusterproxy ", func() {
 				Namespace: cluster.Namespace,
 				Name:      cluster.Name + randomString(),
 				Labels: map[string]string{
-					clusterv1.ClusterLabelName: cluster.Name,
+					clusterv1.ClusterNameLabel: cluster.Name,
 				},
 			},
 		}
@@ -252,8 +252,8 @@ var _ = Describe("clusterproxy ", func() {
 				Namespace: cluster.Namespace,
 				Name:      cluster.Name + randomString(),
 				Labels: map[string]string{
-					clusterv1.ClusterLabelName:             cluster.Name,
-					clusterv1.MachineControlPlaneLabelName: "ok",
+					clusterv1.ClusterNameLabel:         cluster.Name,
+					clusterv1.MachineControlPlaneLabel: "ok",
 				},
 			},
 		}
@@ -262,7 +262,7 @@ var _ = Describe("clusterproxy ", func() {
 				Namespace: cluster.Namespace,
 				Name:      cluster.Name + randomString(),
 				Labels: map[string]string{
-					clusterv1.ClusterLabelName: cluster.Name,
+					clusterv1.ClusterNameLabel: cluster.Name,
 				},
 			},
 			Status: clusterv1.MachineStatus{

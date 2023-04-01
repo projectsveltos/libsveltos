@@ -22,6 +22,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+const (
+	// AdminLabel can be set on various Sveltos resources (ClusterProfile/EventSource/...)
+	// to indicate which admin is creating it.
+	// AdminLabel used along with RoleRequest is Sveltos solution for multi tenancy.
+	AdminLabel = "projectsveltos.io/admin-name"
+)
+
 // ReferencedResourceKind is a string representation of allowed kind of resources
 // that can be referenced in a ClusterProfile
 type ReferencedResourceKind string
