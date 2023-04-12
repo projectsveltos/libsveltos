@@ -22,12 +22,14 @@ var _ = Describe("Roles", func() {
 	It("GetKubeconfig returns nil when secret does not exist", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
+		serviceAccountNamespace := randomString()
 		serviceaccountName := randomString()
 
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 		secret, err := roles.GetKubeconfig(context.TODO(), c,
-			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos)
+			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
+			sveltosv1alpha1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(secret).To(BeNil())
 	})
@@ -35,6 +37,7 @@ var _ = Describe("Roles", func() {
 	It("GetKubeconfig returns kubeconfig", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
+		serviceAccountNamespace := randomString()
 		serviceaccountName := randomString()
 		kubeconfig := []byte(randomString())
 
@@ -43,8 +46,9 @@ var _ = Describe("Roles", func() {
 				Namespace: clusterNamespace,
 				Name:      randomString(),
 				Labels: map[string]string{
-					roles.ClusterNameLabel:        clusterName,
-					roles.ServiceAccountNameLabel: serviceaccountName,
+					roles.ClusterNameLabel:             clusterName,
+					roles.ServiceAccountNameLabel:      serviceaccountName,
+					roles.ServiceAccountNamespaceLabel: serviceAccountNamespace,
 				},
 			},
 			Data: map[string][]byte{
@@ -57,7 +61,8 @@ var _ = Describe("Roles", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		currentKubeconfig, err := roles.GetKubeconfig(context.TODO(), c,
-			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos)
+			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
+			sveltosv1alpha1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(currentKubeconfig).ToNot(BeNil())
 		Expect(reflect.DeepEqual(currentKubeconfig, kubeconfig)).To(BeTrue())
@@ -66,12 +71,14 @@ var _ = Describe("Roles", func() {
 	It("GetSecret returns nil when secret does not exist", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
+		serviceAccountNamespace := randomString()
 		serviceaccountName := randomString()
 
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 		secret, err := roles.GetSecret(context.TODO(), c,
-			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos)
+			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
+			sveltosv1alpha1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(secret).To(BeNil())
 	})
@@ -79,6 +86,7 @@ var _ = Describe("Roles", func() {
 	It("GetSecret returns existing secret", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
+		serviceAccountNamespace := randomString()
 		serviceaccountName := randomString()
 		kubeconfig := []byte(randomString())
 
@@ -87,8 +95,9 @@ var _ = Describe("Roles", func() {
 				Namespace: clusterNamespace,
 				Name:      randomString(),
 				Labels: map[string]string{
-					roles.ClusterNameLabel:        clusterName,
-					roles.ServiceAccountNameLabel: serviceaccountName,
+					roles.ClusterNameLabel:             clusterName,
+					roles.ServiceAccountNameLabel:      serviceaccountName,
+					roles.ServiceAccountNamespaceLabel: serviceAccountNamespace,
 				},
 			},
 			Data: map[string][]byte{
@@ -101,7 +110,8 @@ var _ = Describe("Roles", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		currentSecret, err := roles.GetSecret(context.TODO(), c,
-			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos)
+			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
+			sveltosv1alpha1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(currentSecret).ToNot(BeNil())
 		Expect(currentSecret.Namespace).To(Equal(clusterNamespace))
@@ -111,6 +121,10 @@ var _ = Describe("Roles", func() {
 		v, ok := currentSecret.Labels[roles.ServiceAccountNameLabel]
 		Expect(ok).To(BeTrue())
 		Expect(v).To(Equal(serviceaccountName))
+
+		v, ok = currentSecret.Labels[roles.ServiceAccountNamespaceLabel]
+		Expect(ok).To(BeTrue())
+		Expect(v).To(Equal(serviceAccountNamespace))
 
 		v, ok = currentSecret.Labels[roles.ClusterNameLabel]
 		Expect(ok).To(BeTrue())
@@ -126,6 +140,7 @@ var _ = Describe("Roles", func() {
 	It("CreateSecret creates secret and returns it", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
+		serviceAccountNamespace := randomString()
 		serviceaccountName := randomString()
 
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
@@ -141,8 +156,8 @@ var _ = Describe("Roles", func() {
 		}
 
 		secret, err := roles.CreateSecret(context.TODO(), c,
-			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos,
-			[]byte(randomString()), roleRequest)
+			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
+			sveltosv1alpha1.ClusterTypeSveltos, []byte(randomString()), roleRequest)
 		Expect(err).To(BeNil())
 		Expect(secret).ToNot(BeNil())
 		Expect(secret.Namespace).To(Equal(clusterNamespace))
@@ -151,6 +166,10 @@ var _ = Describe("Roles", func() {
 		v, ok := secret.Labels[roles.ServiceAccountNameLabel]
 		Expect(ok).To(BeTrue())
 		Expect(v).To(Equal(serviceaccountName))
+
+		v, ok = secret.Labels[roles.ServiceAccountNamespaceLabel]
+		Expect(ok).To(BeTrue())
+		Expect(v).To(Equal(serviceAccountNamespace))
 
 		v, ok = secret.Labels[roles.ClusterNameLabel]
 		Expect(ok).To(BeTrue())
@@ -163,6 +182,7 @@ var _ = Describe("Roles", func() {
 	It("CreateSecret returns existing secret updating data section and ownerreference", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
+		serviceAccountNamespace := randomString()
 		serviceaccountName := randomString()
 		kubeconfig := []byte(randomString())
 
@@ -171,8 +191,9 @@ var _ = Describe("Roles", func() {
 				Namespace: clusterNamespace,
 				Name:      randomString(),
 				Labels: map[string]string{
-					roles.ClusterNameLabel:        clusterName,
-					roles.ServiceAccountNameLabel: serviceaccountName,
+					roles.ClusterNameLabel:             clusterName,
+					roles.ServiceAccountNameLabel:      serviceaccountName,
+					roles.ServiceAccountNamespaceLabel: serviceAccountNamespace,
 				},
 			},
 			Data: map[string][]byte{
@@ -191,8 +212,8 @@ var _ = Describe("Roles", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		currentSecret, err := roles.CreateSecret(context.TODO(), c,
-			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos,
-			kubeconfig, roleRequest)
+			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
+			sveltosv1alpha1.ClusterTypeSveltos, kubeconfig, roleRequest)
 		Expect(err).To(BeNil())
 		Expect(currentSecret).ToNot(BeNil())
 		Expect(currentSecret.Namespace).To(Equal(clusterNamespace))
@@ -202,6 +223,10 @@ var _ = Describe("Roles", func() {
 		v, ok := currentSecret.Labels[roles.ServiceAccountNameLabel]
 		Expect(ok).To(BeTrue())
 		Expect(v).To(Equal(serviceaccountName))
+
+		v, ok = currentSecret.Labels[roles.ServiceAccountNamespaceLabel]
+		Expect(ok).To(BeTrue())
+		Expect(v).To(Equal(serviceAccountNamespace))
 
 		v, ok = currentSecret.Labels[roles.ClusterNameLabel]
 		Expect(ok).To(BeTrue())
@@ -220,6 +245,7 @@ var _ = Describe("Roles", func() {
 	It("DeleteSecret succeeds when secret does not exist", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
+		serviceaccountNamespace := randomString()
 		serviceaccountName := randomString()
 
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
@@ -232,13 +258,15 @@ var _ = Describe("Roles", func() {
 		Expect(addTypeInformationToObject(scheme, roleRequest)).To(Succeed())
 
 		err := roles.DeleteSecret(context.TODO(), c,
-			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos, roleRequest)
+			clusterNamespace, clusterName, serviceaccountNamespace, serviceaccountName,
+			sveltosv1alpha1.ClusterTypeSveltos, roleRequest)
 		Expect(err).To(BeNil())
 	})
 
 	It("DeleteSecret deletes existing secret", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
+		serviceaccountNamespace := randomString()
 		serviceaccountName := randomString()
 
 		roleRequest := &sveltosv1alpha1.RoleRequest{
@@ -253,8 +281,9 @@ var _ = Describe("Roles", func() {
 				Namespace: clusterNamespace,
 				Name:      randomString(),
 				Labels: map[string]string{
-					roles.ClusterNameLabel:        clusterName,
-					roles.ServiceAccountNameLabel: serviceaccountName,
+					roles.ClusterNameLabel:             clusterName,
+					roles.ServiceAccountNameLabel:      serviceaccountName,
+					roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 				},
 				OwnerReferences: []metav1.OwnerReference{
 					{APIVersion: roleRequest.APIVersion, Kind: sveltosv1alpha1.RoleRequestKind, Name: roleRequest.Name},
@@ -267,14 +296,16 @@ var _ = Describe("Roles", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		err := roles.DeleteSecret(context.TODO(), c,
-			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos, roleRequest)
+			clusterNamespace, clusterName, serviceaccountNamespace, serviceaccountName,
+			sveltosv1alpha1.ClusterTypeSveltos, roleRequest)
 		Expect(err).To(BeNil())
 
 		listOptions := []client.ListOption{
 			client.InNamespace(clusterNamespace),
 			client.MatchingLabels{
-				roles.ClusterNameLabel:        clusterName,
-				roles.ServiceAccountNameLabel: serviceaccountName,
+				roles.ClusterNameLabel:             clusterName,
+				roles.ServiceAccountNameLabel:      serviceaccountName,
+				roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 			},
 		}
 
@@ -286,6 +317,7 @@ var _ = Describe("Roles", func() {
 	It("DeleteSecret does not delete existing secret with multiple owners", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
+		serviceaccountNamespace := randomString()
 		serviceaccountName := randomString()
 
 		roleRequest1 := &sveltosv1alpha1.RoleRequest{
@@ -307,8 +339,9 @@ var _ = Describe("Roles", func() {
 				Namespace: clusterNamespace,
 				Name:      randomString(),
 				Labels: map[string]string{
-					roles.ClusterNameLabel:        clusterName,
-					roles.ServiceAccountNameLabel: serviceaccountName,
+					roles.ClusterNameLabel:             clusterName,
+					roles.ServiceAccountNameLabel:      serviceaccountName,
+					roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 				},
 				OwnerReferences: []metav1.OwnerReference{
 					{APIVersion: roleRequest1.APIVersion, Kind: sveltosv1alpha1.RoleRequestKind, Name: roleRequest1.Name},
@@ -322,14 +355,16 @@ var _ = Describe("Roles", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		err := roles.DeleteSecret(context.TODO(), c,
-			clusterNamespace, clusterName, serviceaccountName, sveltosv1alpha1.ClusterTypeSveltos, roleRequest1)
+			clusterNamespace, clusterName, serviceaccountNamespace, serviceaccountName,
+			sveltosv1alpha1.ClusterTypeSveltos, roleRequest1)
 		Expect(err).To(BeNil())
 
 		listOptions := []client.ListOption{
 			client.InNamespace(clusterNamespace),
 			client.MatchingLabels{
-				roles.ClusterNameLabel:        clusterName,
-				roles.ServiceAccountNameLabel: serviceaccountName,
+				roles.ClusterNameLabel:             clusterName,
+				roles.ServiceAccountNameLabel:      serviceaccountName,
+				roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 			},
 		}
 

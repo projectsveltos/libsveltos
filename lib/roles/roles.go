@@ -34,7 +34,9 @@ import (
 const (
 	clusterNameLabel = "projectsveltos.io/role-cluster"
 
-	serviceAccountNameLabel = "projectsveltos.io/role-service-account"
+	serviceAccountNameLabel = "projectsveltos.io/role-service-account-name"
+
+	serviceAccountNamespaceLabel = "projectsveltos.io/role-service-account-namespace"
 
 	key = "kubeconfig"
 )
@@ -52,10 +54,12 @@ const (
 // GetSecret returns the secret to be used to store kubeconfig for serviceAccountName
 // in cluster. It returns nil if it does not exist yet.
 func GetSecret(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1alpha1.ClusterType) (*corev1.Secret, error) {
+	clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
+	clusterType sveltosv1alpha1.ClusterType) (*corev1.Secret, error) {
 
 	secretList := &corev1.SecretList{}
-	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName)...)
+	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
+		serviceAccountNamespace, serviceAccountName)...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,22 +75,24 @@ func GetSecret(ctx context.Context, c client.Client,
 	}
 }
 
-// CreateSecret returns the secret to be used to store kubeconfig for serviceAccountName
+// CreateSecret returns the secret to be used to store kubeconfig for serviceAccountNamespace/serviceAccountName
 // in cluster. It does create it if it does not exist yet.
 // If Secret already exists, updates Data section if necessary (kubeconfig is different)
 func CreateSecret(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1alpha1.ClusterType,
-	kubeconfig []byte, owner client.Object) (*corev1.Secret, error) {
+	clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
+	clusterType sveltosv1alpha1.ClusterType, kubeconfig []byte, owner client.Object) (*corev1.Secret, error) {
 
 	secretList := &corev1.SecretList{}
-	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName)...)
+	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
+		serviceAccountNamespace, serviceAccountName)...)
 	if err != nil {
 		return nil, err
 	}
 
 	switch len(secretList.Items) {
 	case 0:
-		return createSecret(ctx, c, clusterNamespace, clusterName, serviceAccountName, kubeconfig, owner)
+		return createSecret(ctx, c, clusterNamespace, clusterName, serviceAccountNamespace,
+			serviceAccountName, kubeconfig, owner)
 	case 1:
 		if shouldUpdate(&secretList.Items[0], kubeconfig, owner) {
 			return updateSecret(ctx, c, &secretList.Items[0], kubeconfig, owner)
@@ -98,13 +104,15 @@ func CreateSecret(ctx context.Context, c client.Client,
 	}
 }
 
-// DeleteSecret finds Secret used to store kubeconfig for serviceAccountName in cluster.
+// DeleteSecret finds Secret used to store kubeconfig for serviceAccountNamespace/serviceAccountName in cluster.
 // Removes owner as one of the OwnerReferences for secret. If no more OwnerReferences are left, deletes secret.
-func DeleteSecret(ctx context.Context, c client.Client, clusterNamespace, clusterName, serviceAccountName string,
+func DeleteSecret(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
 	clusterType sveltosv1alpha1.ClusterType, owner client.Object) error {
 
 	secretList := &corev1.SecretList{}
-	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName)...)
+	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
+		serviceAccountNamespace, serviceAccountName)...)
 	if err != nil {
 		return nil
 	}
@@ -164,10 +172,11 @@ func ListSecretForOwnner(ctx context.Context, c client.Client, owner client.Obje
 // GetKubeconfig returns the kubeconfig for a given serviceAccount in a given cluster.
 // Returns nil if kubeconfig is not found. Returns an error if any occurred.
 func GetKubeconfig(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName, serviceAccountName string, clusterType sveltosv1alpha1.ClusterType) ([]byte, error) {
+	clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
+	clusterType sveltosv1alpha1.ClusterType) ([]byte, error) {
 
 	secretList := &corev1.SecretList{}
-	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName)...)
+	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName)...)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +206,8 @@ func getSha256(text string) string {
 	return fmt.Sprintf("%x", hash)
 }
 
-func createSecret(ctx context.Context, c client.Client, namespace, clusterName, serviceAccountName string,
+func createSecret(ctx context.Context, c client.Client,
+	namespace, clusterName, serviceAccountNamespace, serviceAccountName string,
 	kubeconfig []byte, ownerReference metav1.Object) (*corev1.Secret, error) {
 
 	var config string
@@ -212,6 +222,7 @@ func createSecret(ctx context.Context, c client.Client, namespace, clusterName, 
 			Labels: map[string]string{
 				clusterNameLabel:                 clusterName,
 				serviceAccountNameLabel:          serviceAccountName,
+				serviceAccountNamespaceLabel:     serviceAccountNamespace,
 				sveltosv1alpha1.RoleRequestLabel: "ok",
 			},
 		},
@@ -231,12 +242,15 @@ func createSecret(ctx context.Context, c client.Client, namespace, clusterName, 
 	return secret, nil
 }
 
-func getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountName string) []client.ListOption {
+func getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
+) []client.ListOption {
+
 	return []client.ListOption{
 		client.InNamespace(clusterNamespace),
 		client.MatchingLabels{
-			clusterNameLabel:        clusterName,
-			serviceAccountNameLabel: serviceAccountName,
+			clusterNameLabel:             clusterName,
+			serviceAccountNameLabel:      serviceAccountName,
+			serviceAccountNamespaceLabel: serviceAccountNamespace,
 		},
 	}
 }
