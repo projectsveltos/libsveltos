@@ -54,10 +54,6 @@ spec:
           spec:
             description: RoleRequestSpec defines the desired state of RoleRequest
             properties:
-              admin:
-                description: Admin is the name of the admin for which those permissions
-                  are requested
-                type: string
               clusterSelector:
                 description: ClusterSelector identifies clusters where permissions
                   requestes in this instance will be granted
@@ -91,6 +87,14 @@ spec:
                   - namespace
                   type: object
                 type: array
+              serviceAccountName:
+                description: ServiceAccountName is the name of the ServiceAccount
+                  representing a tenant admin for which those permissions are requested
+                type: string
+              serviceAccountNamespace:
+                description: ServiceAccountNamespace is the name of the ServiceAccount
+                  representing a tenant admin for which those permissions are requested
+                type: string
             required:
             - clusterSelector
             type: object
