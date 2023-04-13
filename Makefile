@@ -12,7 +12,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: crd build
+all: crds build
 
 TOOLS_DIR := hack/tools
 TOOLS_BIN_DIR := $(TOOLS_DIR)/bin
@@ -71,7 +71,7 @@ manifests: $(CONTROLLER_GEN) ## Generate WebhookConfiguration, ClusterRole and C
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 ## Generate go code for library.
-crd: generate ## Generates go code (crd) for library
+crds: generate ## Generates go code (crds) for library
 	cd lib/crd; go generate
 
 .PHONY: generate
