@@ -212,6 +212,7 @@ func createSecret(ctx context.Context, c client.Client,
 
 	var config string
 	config += clusterName
+	config += serviceAccountNamespace
 	config += serviceAccountName
 	name := fmt.Sprintf("sveltos-%s", getSha256(config))
 
