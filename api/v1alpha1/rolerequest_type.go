@@ -41,15 +41,16 @@ type RoleRequestSpec struct {
 
 	// PolicyRefs references all the ConfigMaps containing kubernetes Roles/ClusterRoles
 	// that need to be deployed in the matching clusters.
+	// +optional
 	RoleRefs []PolicyRef `json:"roleRefs,omitempty"`
 
 	// ServiceAccountName is the name of the ServiceAccount representing a tenant admin for which
 	// those permissions are requested
-	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+	ServiceAccountName string `json:"serviceAccountName"`
 
 	// ServiceAccountNamespace is the name of the ServiceAccount representing a tenant admin
 	// for which those permissions are requested
-	ServiceAccountNamespace string `json:"serviceAccountNamespace,omitempty"`
+	ServiceAccountNamespace string `json:"serviceAccountNamespace"`
 }
 
 // RoleRequestStatus defines the status of RoleRequest
