@@ -199,6 +199,21 @@ func GetKubeconfig(ctx context.Context, c client.Client,
 	}
 }
 
+// GetServiceAccountNameInManagedCluster given:
+// -namespace
+// -name
+// of a ServiceAccount in the management cluster that created a Sveltos resource,
+// returns the name of the ServiceAccount in the managed cluster.
+func GetServiceAccountNameInManagedCluster(namespace, name string) string {
+	// A RoleRequest contains the Namespace/Name of the ServiceAccount in the management
+	// cluster for which a RoleRequest was issued (request to grant permission in managed clusters).
+	// When processing a RoleRequest, Sveltos creates a ServiceAccount in the managed cluster.
+	// Such ServiceAccount is created in the "projectsveltos" namespace.
+	// This method returns the name of the ServiceAccount in the managed cluster (name cannot
+	// match the one in the management cluster to avoid clashes)
+	return fmt.Sprintf("%s--%s", namespace, name)
+}
+
 func getSha256(text string) string {
 	h := sha256.New()
 	h.Write([]byte(text))
