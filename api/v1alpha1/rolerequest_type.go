@@ -43,8 +43,13 @@ type RoleRequestSpec struct {
 	// that need to be deployed in the matching clusters.
 	RoleRefs []PolicyRef `json:"roleRefs,omitempty"`
 
-	// Admin is the name of the admin for which those permissions are requested
-	Admin string `json:"admin,omitempty"`
+	// ServiceAccountName is the name of the ServiceAccount representing a tenant admin for which
+	// those permissions are requested
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+
+	// ServiceAccountNamespace is the name of the ServiceAccount representing a tenant admin
+	// for which those permissions are requested
+	ServiceAccountNamespace string `json:"serviceAccountNamespace,omitempty"`
 }
 
 // RoleRequestStatus defines the status of RoleRequest
