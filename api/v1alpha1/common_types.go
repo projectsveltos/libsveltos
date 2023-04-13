@@ -23,15 +23,15 @@ import (
 )
 
 const (
-	// AdminNameLabel can be set on various Sveltos resources (ClusterProfile/EventSource/...)
-	// to indicate which admin is creating it (service account name).
-	// AdminNameLabel used along with RoleRequest is Sveltos solution for multi tenancy.
-	AdminNameLabel = "projectsveltos.io/admin-name"
+	// ServiceAccountNameLabel can be set on various Sveltos resources (ClusterProfile/EventSource/...)
+	// to indicate which admin (represented by a ServiceAccount) is creating it (service account name).
+	// ServiceAccountNameLabel used along with RoleRequest is Sveltos solution for multi tenancy.
+	ServiceAccountNameLabel = "projectsveltos.io/serviceaccount-name"
 
-	// AdminNamespaceLabel can be set on various Sveltos resources (ClusterProfile/EventSource/...)
-	// to indicate which admin is creating it (service account namespace).
-	// AdminNamespaceLabel used along with RoleRequest is Sveltos solution for multi tenancy.
-	AdminNamespaceLabel = "projectsveltos.io/admin-namespace"
+	// ServiceAccountNamespaceLabel can be set on various Sveltos resources (ClusterProfile/EventSource/...)
+	// to indicate which admin (represented by a ServiceAccount) is creating it (service account namespace).
+	// ServiceAccountNamespaceLabel used along with RoleRequest is Sveltos solution for multi tenancy.
+	ServiceAccountNamespaceLabel = "projectsveltos.io/serviceaccount-namespace"
 )
 
 // ReferencedResourceKind is a string representation of allowed kind of resources
