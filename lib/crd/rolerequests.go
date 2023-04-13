@@ -97,6 +97,8 @@ spec:
                 type: string
             required:
             - clusterSelector
+            - serviceAccountName
+            - serviceAccountNamespace
             type: object
           status:
             description: RoleRequestStatus defines the status of RoleRequest
