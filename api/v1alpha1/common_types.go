@@ -23,6 +23,15 @@ import (
 )
 
 const (
+	// DeployedBySveltosAnnotation is an annotation Sveltos adds to
+	// EventSource/HealthCheck/Classifier/ResourceSummary instances deployed
+	// by sveltos in managed clusters. Those resources, once deployed in a
+	// managed cluster, are evaluated by sveltos services (sveltos-agent and
+	// drift-detection-manager) running in the managed cluster
+	DeployedBySveltosAnnotation = "projectsveltos.io/deployed-by-sveltos"
+)
+
+const (
 	// ServiceAccountNameLabel can be set on various Sveltos resources (ClusterProfile/EventSource/...)
 	// to indicate which admin (represented by a ServiceAccount) is creating it (service account name).
 	// ServiceAccountNameLabel used along with RoleRequest is Sveltos solution for multi tenancy.
