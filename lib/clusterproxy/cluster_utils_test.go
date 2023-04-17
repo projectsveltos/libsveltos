@@ -132,13 +132,13 @@ var _ = Describe("Cluster utils", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		data, err := clusterproxy.GetSecretData(context.TODO(), c, cluster.Namespace, cluster.Name, "",
-			libsveltosv1alpha1.ClusterTypeCapi, klogr.New())
+		data, err := clusterproxy.GetSecretData(context.TODO(), c, cluster.Namespace, cluster.Name,
+			"", "", libsveltosv1alpha1.ClusterTypeCapi, klogr.New())
 		Expect(err).To(BeNil())
 		Expect(data).To(Equal(randomData))
 
-		data, err = clusterproxy.GetSecretData(context.TODO(), c, sveltosCluster.Namespace, sveltosCluster.Name, "",
-			libsveltosv1alpha1.ClusterTypeSveltos, klogr.New())
+		data, err = clusterproxy.GetSecretData(context.TODO(), c, sveltosCluster.Namespace, sveltosCluster.Name,
+			"", "", libsveltosv1alpha1.ClusterTypeSveltos, klogr.New())
 		Expect(err).To(BeNil())
 		Expect(data).To(Equal(randomData))
 	})
