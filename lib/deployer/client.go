@@ -223,6 +223,7 @@ func (d *deployer) CleanupEntries(
 		} else {
 			d.dirty = d.dirty[:i]
 		}
+		break
 	}
 
 	for i := range d.jobQueue {
@@ -234,6 +235,7 @@ func (d *deployer) CleanupEntries(
 		} else {
 			d.jobQueue = d.jobQueue[:i]
 		}
+		break
 	}
 
 	delete(d.results, key)

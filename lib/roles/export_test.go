@@ -17,7 +17,8 @@ limitations under the License.
 package roles
 
 const (
-	ClusterNameLabel        = clusterNameLabel
-	ServiceAccountNameLabel = serviceAccountNameLabel
-	Key                     = key
+	ClusterNameLabel             = clusterNameLabel
+	ServiceAccountNameLabel      = serviceAccountNameLabel
+	ServiceAccountNamespaceLabel = serviceAccountNamespaceLabel
+	Key                          = key
 )
