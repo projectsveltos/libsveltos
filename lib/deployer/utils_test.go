@@ -63,9 +63,9 @@ var _ = Describe("Client", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
 					Labels: map[string]string{
-						deployer.ReferenceLabelKind:      string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
-						deployer.ReferenceLabelName:      configMapName,
-						deployer.ReferenceLabelNamespace: configMapNs,
+						deployer.ReferenceKindLabel:      string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
+						deployer.ReferenceNameLabel:      configMapName,
+						deployer.ReferenceNamespaceLabel: configMapNs,
 					},
 					Annotations: map[string]string{
 						deployer.PolicyHash: policyHash,

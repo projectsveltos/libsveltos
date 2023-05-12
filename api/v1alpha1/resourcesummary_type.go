@@ -1,5 +1,5 @@
 /*
-Copyright 2022. projectsveltos.io. All rights reserved.
+Copyright 2022-23. projectsveltos.io. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -86,6 +86,11 @@ type ResourceSummarySpec struct {
 	// +optional
 	Resources []Resource `json:"resources,omitempty"`
 
+	// KustomizeResources deployed by ClusterSummary because of referenced
+	// KustomizationRef
+	// +optional
+	KustomizeResources []Resource `json:"kustomizeResources,omitempty"`
+
 	// Resources deployed by ClusterSummary because of referenced Helm charts
 	// +optional
 	ChartResources []HelmResources `json:"chartResources,omitempty"`
@@ -97,12 +102,19 @@ type ResourceSummaryStatus struct {
 	// +optional
 	ResourcesChanged bool `json:"resourcesChanged,omitempty"`
 
+	// KustomizeResources changed.
+	// +optional
+	KustomizeResourcesChanged bool `json:"kustomizeResourcesChanged,omitempty"`
+
 	// Helm Resources changed.
 	// +optional
 	HelmResourcesChanged bool `json:"helmResourcesChanged,omitempty"`
 
 	// ResourceHashes specifies a list of resource plus hash
 	ResourceHashes []ResourceHash `json:"resourceHashes,omitempty"`
+
+	// KustomizeResourceHashes specifies a list of resource plus hash
+	KustomizeResourceHashes []ResourceHash `json:"kustomizeResourceHashes,omitempty"`
 
 	// HelmResourceHashes specifies list of resource plus hash.
 	HelmResourceHashes []ResourceHash `json:"helmResourceHashes,omitempty"`

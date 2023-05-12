@@ -108,6 +108,36 @@ spec:
                   - releaseNamespace
                   type: object
                 type: array
+              kustomizeResources:
+                description: KustomizeResources deployed by ClusterSummary because
+                  of referenced KustomizationRef
+                items:
+                  properties:
+                    group:
+                      description: Group of the resource deployed in the Cluster.
+                      type: string
+                    kind:
+                      description: Kind of the resource deployed in the Cluster.
+                      minLength: 1
+                      type: string
+                    name:
+                      description: Name of the resource deployed in the Cluster.
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: Namespace of the resource deployed in the Cluster.
+                        Empty for resources scoped at cluster level.
+                      type: string
+                    version:
+                      description: Version of the resource deployed in the Cluster.
+                      type: string
+                  required:
+                  - group
+                  - kind
+                  - name
+                  - version
+                  type: object
+                type: array
               resources:
                 description: Resources deployed by ClusterSummary because of referenced
                   ConfigMaps/Secrets
@@ -176,6 +206,42 @@ spec:
                 type: array
               helmResourcesChanged:
                 description: Helm Resources changed.
+                type: boolean
+              kustomizeResourceHashes:
+                description: KustomizeResourceHashes specifies a list of resource
+                  plus hash
+                items:
+                  properties:
+                    group:
+                      description: Group of the resource deployed in the Cluster.
+                      type: string
+                    hash:
+                      description: Hash is the hash of a resource's data.
+                      type: string
+                    kind:
+                      description: Kind of the resource deployed in the Cluster.
+                      minLength: 1
+                      type: string
+                    name:
+                      description: Name of the resource deployed in the Cluster.
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: Namespace of the resource deployed in the Cluster.
+                        Empty for resources scoped at cluster level.
+                      type: string
+                    version:
+                      description: Version of the resource deployed in the Cluster.
+                      type: string
+                  required:
+                  - group
+                  - kind
+                  - name
+                  - version
+                  type: object
+                type: array
+              kustomizeResourcesChanged:
+                description: KustomizeResources changed.
                 type: boolean
               resourceHashes:
                 description: ResourceHashes specifies a list of resource plus hash
