@@ -31,17 +31,17 @@ const (
 	// ReferenceLabelKind is added to each policy deployed by a ClusterSummary
 	// instance to a CAPI Cluster. Indicates the Kind (ConfigMap or Secret)
 	// containing the policy.
-	ReferenceLabelKind = "projectsveltos.io/reference-kind"
+	ReferenceKindLabel = "projectsveltos.io/reference-kind"
 
-	// ReferenceLabelName is added to each policy deployed by a ClusterSummary
+	// ReferenceNameLabel is added to each policy deployed by a ClusterSummary
 	// instance to a CAPI Cluster. Indicates the name of the ConfigMap/Secret
 	// containing the policy.
-	ReferenceLabelName = "projectsveltos.io/reference-name"
+	ReferenceNameLabel = "projectsveltos.io/reference-name"
 
-	// ReferenceLabelNamespace is added to each policy deployed by a ClusterSummary
+	// ReferenceNamespaceLabel is added to each policy deployed by a ClusterSummary
 	// instance to a CAPI Cluster. Indicates the namespace of the ConfigMap/Secret
 	// containing the policy.
-	ReferenceLabelNamespace = "projectsveltos.io/reference-namespace"
+	ReferenceNamespaceLabel = "projectsveltos.io/reference-namespace"
 
 	// PolicyHash is the annotation set on a policy when deployed in a CAPI
 	// cluster.
@@ -80,9 +80,9 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 	}
 
 	if labels := currentObject.GetLabels(); labels != nil {
-		kind, kindOk := labels[ReferenceLabelKind]
-		namespace, namespaceOk := labels[ReferenceLabelNamespace]
-		name, nameOk := labels[ReferenceLabelName]
+		kind, kindOk := labels[ReferenceKindLabel]
+		namespace, namespaceOk := labels[ReferenceNamespaceLabel]
+		name, nameOk := labels[ReferenceNameLabel]
 
 		if kindOk {
 			if kind != referenceKind {
@@ -132,9 +132,9 @@ func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
 	var message string
 
 	if labels := currentObject.GetLabels(); labels != nil {
-		kind := labels[ReferenceLabelKind]
-		namespace := labels[ReferenceLabelNamespace]
-		name := labels[ReferenceLabelName]
+		kind := labels[ReferenceKindLabel]
+		namespace := labels[ReferenceNamespaceLabel]
+		name := labels[ReferenceNameLabel]
 
 		message += fmt.Sprintf("Object currently deployed because of %s %s/%s.", kind, namespace, name)
 	}

@@ -1311,6 +1311,11 @@ func (in *ResourceSummarySpec) DeepCopyInto(out *ResourceSummarySpec) {
 		*out = make([]Resource, len(*in))
 		copy(*out, *in)
 	}
+	if in.KustomizeResources != nil {
+		in, out := &in.KustomizeResources, &out.KustomizeResources
+		*out = make([]Resource, len(*in))
+		copy(*out, *in)
+	}
 	if in.ChartResources != nil {
 		in, out := &in.ChartResources, &out.ChartResources
 		*out = make([]HelmResources, len(*in))
@@ -1335,6 +1340,11 @@ func (in *ResourceSummaryStatus) DeepCopyInto(out *ResourceSummaryStatus) {
 	*out = *in
 	if in.ResourceHashes != nil {
 		in, out := &in.ResourceHashes, &out.ResourceHashes
+		*out = make([]ResourceHash, len(*in))
+		copy(*out, *in)
+	}
+	if in.KustomizeResourceHashes != nil {
+		in, out := &in.KustomizeResourceHashes, &out.KustomizeResourceHashes
 		*out = make([]ResourceHash, len(*in))
 		copy(*out, *in)
 	}
