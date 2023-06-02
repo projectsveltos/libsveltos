@@ -65,3 +65,7 @@ func GetEventSourceCRDYAML() []byte {
 func GetEventReportCRDYAML() []byte {
 	return EventReportCRD
 }
+
+func GetAddonConstraintCRDYAML() []byte {
+	return AddonConstraintCRD
+}

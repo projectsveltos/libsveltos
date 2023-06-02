@@ -16,28 +16,28 @@ limitations under the License.
 */
 package crd
 
-var EventReportFile = "../../config/crd/bases/lib.projectsveltos.io_eventreports.yaml"
-var EventReportCRD = []byte(`---
+var AddonConstraintFile = "../../config/crd/bases/lib.projectsveltos.io_addonconstraints.yaml"
+var AddonConstraintCRD = []byte(`---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: eventreports.lib.projectsveltos.io
+  name: addonconstraints.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
   names:
-    kind: EventReport
-    listKind: EventReportList
-    plural: eventreports
-    singular: eventreport
-  scope: Namespaced
+    kind: AddonConstraint
+    listKind: AddonConstraintList
+    plural: addonconstraints
+    singular: addonconstraint
+  scope: Cluster
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: EventReport is the Schema for the EventReport API
+        description: AddonConstraint is the Schema for the AddonConstraint API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -52,26 +52,49 @@ spec:
           metadata:
             type: object
           spec:
+            description: AddonConstraintSpec defines the desired state of AddonConstraint
             properties:
-              clusterName:
-                description: ClusterName is the name of the Cluster this EventReport
-                  is for.
+              clusterSelector:
+                description: ClusterSelector identifies clusters to associate to.
                 type: string
-              clusterNamespace:
-                description: ClusterNamespace is the namespace of the Cluster this
-                  EventReport is for.
-                type: string
-              clusterType:
-                description: ClusterType is the type of Cluster this EventReport is
-                  for.
-                type: string
-              eventSourceName:
-                description: EventSourceName is the name of the EventSource instance
-                  this report is for.
-                type: string
-              matchingResources:
-                description: MatchingResources contains a list of resources matching
-                  an event
+              openAPIValidationRefs:
+                description: OpenAPIValidationRefs is a list of OpenAPI validations.
+                  In the matching clusters, add-ons will be deployed only if all validations
+                  pass.
+                items:
+                  properties:
+                    kind:
+                      description: 'Kind of the resource. Supported kinds are: - flux
+                        GitRepository;OCIRepository;Bucket - ConfigMap/Secret'
+                      enum:
+                      - GitRepository
+                      - OCIRepository
+                      - Bucket
+                      - ConfigMap
+                      - Secret
+                      type: string
+                    name:
+                      description: Name of the referenced resource.
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: Namespace of the referenced resource. Namespace
+                        can be left empty. In such a case, namespace will be implicit
+                        set to cluster's namespace.
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+          status:
+            description: AddonConstraintStatus defines the observed state of AddonConstraint
+            properties:
+              matchingClusters:
+                description: MatchingClusterRefs reference all the clusters currently
+                  matching ClusterSelector
                 items:
                   description: "ObjectReference contains enough information to let
                     you inspect or modify the referred object. --- New uses of this
@@ -134,28 +157,6 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
-              resources:
-                description: If EventSource Spec.CollectResources is set to true,
-                  all matching resources will be collected and contained in the Resources
-                  field.
-                format: byte
-                type: string
-            required:
-            - clusterName
-            - clusterNamespace
-            - clusterType
-            - eventSourceName
-            type: object
-          status:
-            description: EventReportStatus defines the observed state of EventReport
-            properties:
-              phase:
-                description: Phase represents the current phase of report.
-                enum:
-                - WaitingForDelivery
-                - Delivering
-                - Processed
-                type: string
             type: object
         type: object
     served: true
