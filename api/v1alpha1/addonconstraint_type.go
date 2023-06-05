@@ -39,8 +39,7 @@ func GetClusterLabel(clusterNamespace, clusterName string, clusterType *ClusterT
 
 type OpenAPIValidationRef struct {
 	// Namespace of the referenced resource.
-	// Namespace can be left empty. In such a case, namespace will
-	// be implicit set to cluster's namespace.
+	// +kubebuilder:validation:MinLength=1
 	Namespace string `json:"namespace"`
 
 	// Name of the referenced resource.
@@ -70,6 +69,10 @@ type AddonConstraintStatus struct {
 	// MatchingClusterRefs reference all the clusters currently matching
 	// ClusterSelector
 	MatchingClusterRefs []corev1.ObjectReference `json:"matchingClusters,omitempty"`
+
+	// OpenapiValidations contains all validations collected from all existing
+	// referenced resources
+	OpenapiValidations map[string][]byte `json:"ppenapiValidations,omitempty"`
 }
 
 //+kubebuilder:object:root=true

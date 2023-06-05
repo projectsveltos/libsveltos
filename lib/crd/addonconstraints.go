@@ -78,9 +78,8 @@ spec:
                       minLength: 1
                       type: string
                     namespace:
-                      description: Namespace of the referenced resource. Namespace
-                        can be left empty. In such a case, namespace will be implicit
-                        set to cluster's namespace.
+                      description: Namespace of the referenced resource.
+                      minLength: 1
                       type: string
                   required:
                   - kind
@@ -157,6 +156,13 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
+              ppenapiValidations:
+                additionalProperties:
+                  format: byte
+                  type: string
+                description: OpenapiValidations contains all validations collected
+                  from all existing referenced resources
+                type: object
             type: object
         type: object
     served: true
