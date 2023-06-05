@@ -62,6 +62,11 @@ spec:
                       description: Namespace of the referenced resource.
                       minLength: 1
                       type: string
+                    path:
+                      description: Path to the directory containing the openapi validations.
+                        Defaults to 'None', which translates to the root path of the
+                        SourceRef. Ignored for ConfigMap/Secret.
+                      type: string
                   required:
                   - kind
                   - name

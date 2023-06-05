@@ -51,6 +51,12 @@ type OpenAPIValidationRef struct {
 	// - ConfigMap/Secret
 	// +kubebuilder:validation:Enum=GitRepository;OCIRepository;Bucket;ConfigMap;Secret
 	Kind string `json:"kind"`
+
+	// Path to the directory containing the openapi validations.
+	// Defaults to 'None', which translates to the root path of the SourceRef.
+	// Ignored for ConfigMap/Secret.
+	// +optional
+	Path string `json:"path,omitempty"`
 }
 
 // AddonConstraintSpec defines the desired state of AddonConstraint
