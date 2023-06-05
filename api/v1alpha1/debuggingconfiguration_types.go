@@ -51,7 +51,7 @@ const (
 	ComponentSveltosManager = Component("SveltosManager")
 
 	// AddonConstraintManager is the addon-constraint pod
-	AddonConstraintManager = Component("AddonConstraintManager")
+	ComponentAddonConstraintManager = Component("AddonConstraintManager")
 
 	// Classifier is the classifier pod
 	ComponentClassifier = Component("Classifier")
