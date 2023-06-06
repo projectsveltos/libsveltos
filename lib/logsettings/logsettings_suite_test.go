@@ -75,7 +75,7 @@ var _ = BeforeSuite(func() {
 	klog.InitFlags(nil)
 	Expect(flag.Lookup("v").Value.Set("0")).To(BeNil())
 	instance = logsettings.RegisterForLogSettings(context.TODO(),
-		sveltosv1alpha1.ComponentSveltosManager, klogr.New(), cfg)
+		sveltosv1alpha1.ComponentAddonManager, klogr.New(), cfg)
 })
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
