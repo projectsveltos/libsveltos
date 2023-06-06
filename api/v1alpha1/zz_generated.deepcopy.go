@@ -160,7 +160,7 @@ func (in *AddonConstraintList) DeepCopyInto(out *AddonConstraintList) {
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
-		*out = make([]Classifier, len(*in))
+		*out = make([]AddonConstraint, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
