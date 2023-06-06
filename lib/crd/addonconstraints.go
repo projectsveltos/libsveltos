@@ -225,7 +225,7 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
-              ppenapiValidations:
+              openapiValidations:
                 additionalProperties:
                   format: byte
                   type: string

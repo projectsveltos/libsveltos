@@ -82,7 +82,7 @@ type AddonConstraintStatus struct {
 
 	// OpenapiValidations contains all validations collected from all existing
 	// referenced resources
-	OpenapiValidations map[string][]byte `json:"ppenapiValidations,omitempty"`
+	OpenapiValidations map[string][]byte `json:"openapiValidations,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -104,7 +104,7 @@ type AddonConstraint struct {
 type AddonConstraintList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Classifier `json:"items"`
+	Items           []AddonConstraint `json:"items"`
 }
 
 func init() {
