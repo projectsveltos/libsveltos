@@ -37,7 +37,7 @@ var _ = Describe("Logsettings", func() {
 			},
 			Spec: sveltosv1alpha1.DebuggingConfigurationSpec{
 				Configuration: []sveltosv1alpha1.ComponentConfiguration{
-					{Component: sveltosv1alpha1.ComponentSveltosManager, LogLevel: sveltosv1alpha1.LogLevelDebug},
+					{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelDebug},
 				},
 			},
 		}
@@ -48,7 +48,7 @@ var _ = Describe("Logsettings", func() {
 		Expect(f.Value.String()).To(Equal(strconv.Itoa(logsettings.LogDebug)))
 
 		conf.Spec.Configuration = []sveltosv1alpha1.ComponentConfiguration{
-			{Component: sveltosv1alpha1.ComponentSveltosManager, LogLevel: sveltosv1alpha1.LogLevelInfo},
+			{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelInfo},
 		}
 
 		logsettings.UpdateLogLevel(conf)
@@ -57,7 +57,7 @@ var _ = Describe("Logsettings", func() {
 		Expect(f.Value.String()).To(Equal(strconv.Itoa(logsettings.LogInfo)))
 
 		conf.Spec.Configuration = []sveltosv1alpha1.ComponentConfiguration{
-			{Component: sveltosv1alpha1.ComponentSveltosManager, LogLevel: sveltosv1alpha1.LogLevelVerbose},
+			{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelVerbose},
 		}
 
 		logsettings.UpdateLogLevel(conf)
@@ -68,7 +68,7 @@ var _ = Describe("Logsettings", func() {
 		newDebugValue := 8
 		instance.SetDebugValue(newDebugValue)
 		conf.Spec.Configuration = []sveltosv1alpha1.ComponentConfiguration{
-			{Component: sveltosv1alpha1.ComponentSveltosManager, LogLevel: sveltosv1alpha1.LogLevelDebug},
+			{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelDebug},
 		}
 
 		logsettings.UpdateLogLevel(conf)
@@ -79,7 +79,7 @@ var _ = Describe("Logsettings", func() {
 		newInfoValue := 5
 		instance.SetInfoValue(newInfoValue)
 		conf.Spec.Configuration = []sveltosv1alpha1.ComponentConfiguration{
-			{Component: sveltosv1alpha1.ComponentSveltosManager, LogLevel: sveltosv1alpha1.LogLevelInfo},
+			{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelInfo},
 		}
 
 		logsettings.UpdateLogLevel(conf)

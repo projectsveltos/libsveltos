@@ -66,7 +66,7 @@ spec:
                       description: Component indicates which Sveltos component the
                         configuration applies to.
                       enum:
-                      - SveltosManager
+                      - AddonManager
                       - AddonConstraintManager
                       - Classifier
                       - ClassifierAgent
