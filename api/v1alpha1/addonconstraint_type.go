@@ -37,6 +37,12 @@ func GetClusterLabel(clusterNamespace, clusterName string, clusterType *ClusterT
 		strings.ToLower(string(*clusterType)), clusterNamespace, clusterName)
 }
 
+// GetClusterAnnotation returns the annotation added on each cluster that indicates
+// addon constraints for this cluster, if any, are ready
+func GetClusterAnnotation() string {
+	return "addon-constraints-ready"
+}
+
 type OpenAPIValidationRef struct {
 	// Namespace of the referenced resource.
 	// +kubebuilder:validation:MinLength=1
