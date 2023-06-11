@@ -160,6 +160,10 @@ spec:
           status:
             description: AddonConstraintStatus defines the observed state of AddonConstraint
             properties:
+              failureMessage:
+                description: FailureMessage provides more information if an error
+                  occurs.
+                type: string
               matchingClusters:
                 description: MatchingClusterRefs reference all the clusters currently
                   matching ClusterSelector

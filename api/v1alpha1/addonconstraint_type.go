@@ -89,6 +89,10 @@ type AddonConstraintStatus struct {
 	// OpenapiValidations contains all validations collected from all existing
 	// referenced resources
 	OpenapiValidations map[string][]byte `json:"openapiValidations,omitempty"`
+
+	// FailureMessage provides more information if an error occurs.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
