@@ -145,4 +145,14 @@ var _ = Describe("CRD", func() {
 
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
+
+	It("Gets the AddonConstraint CustomResourceDefinition", func() {
+		yaml := crd.GetAddonConstraintCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_addonconstraints.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
 })
