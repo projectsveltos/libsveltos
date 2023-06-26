@@ -125,6 +125,6 @@ func main() {
 	eventReportFile := "../../config/crd/bases/lib.projectsveltos.io_eventreports.yaml"
 	generate(eventReportFile, "eventreports", "EventReport")
 
-	addonConstraintFile := "../../config/crd/bases/lib.projectsveltos.io_addonconstraints.yaml"
-	generate(addonConstraintFile, "addonconstraints", "AddonConstraint")
+	addonComplianceFile := "../../config/crd/bases/lib.projectsveltos.io_addoncompliances.yaml"
+	generate(addonComplianceFile, "addoncompliances", "AddonCompliance")
 }

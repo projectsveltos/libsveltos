@@ -67,7 +67,7 @@ spec:
                         configuration applies to.
                       enum:
                       - AddonManager
-                      - AddonConstraintManager
+                      - AddonComplianceManager
                       - Classifier
                       - ClassifierAgent
                       - SveltosClusterManager
