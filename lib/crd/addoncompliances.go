@@ -16,28 +16,28 @@ limitations under the License.
 */
 package crd
 
-var AddonConstraintFile = "../../config/crd/bases/lib.projectsveltos.io_addonconstraints.yaml"
-var AddonConstraintCRD = []byte(`---
+var AddonComplianceFile = "../../config/crd/bases/lib.projectsveltos.io_addoncompliances.yaml"
+var AddonComplianceCRD = []byte(`---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: addonconstraints.lib.projectsveltos.io
+  name: addoncompliances.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
   names:
-    kind: AddonConstraint
-    listKind: AddonConstraintList
-    plural: addonconstraints
-    singular: addonconstraint
+    kind: AddonCompliance
+    listKind: AddonComplianceList
+    plural: addoncompliances
+    singular: addoncompliance
   scope: Cluster
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: AddonConstraint is the Schema for the AddonConstraint API
+        description: AddonCompliance is the Schema for the AddonCompliance API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -52,7 +52,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: AddonConstraintSpec defines the desired state of AddonConstraint
+            description: AddonComplianceSpec defines the desired state of AddonCompliance
             properties:
               clusterRefs:
                 description: ClusterRefs identifies clusters to associate to.
@@ -158,7 +158,7 @@ spec:
                 type: array
             type: object
           status:
-            description: AddonConstraintStatus defines the observed state of AddonConstraint
+            description: AddonComplianceStatus defines the observed state of AddonCompliance
             properties:
               failureMessage:
                 description: FailureMessage provides more information if an error

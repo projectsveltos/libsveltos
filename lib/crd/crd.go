@@ -66,6 +66,6 @@ func GetEventReportCRDYAML() []byte {
 	return EventReportCRD
 }
 
-func GetAddonConstraintCRDYAML() []byte {
-	return AddonConstraintCRD
+func GetAddonComplianceCRDYAML() []byte {
+	return AddonComplianceCRD
 }

@@ -42,7 +42,7 @@ const (
 )
 
 //nolint:lll // kubebuilder marker
-// +kubebuilder:validation:Enum:=AddonManager;AddonConstraintManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager
+// +kubebuilder:validation:Enum:=AddonManager;AddonComplianceManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager
 
 type Component string
 
@@ -50,8 +50,8 @@ const (
 	// ComponentAddonManager is the addon-manager pod
 	ComponentAddonManager = Component("AddonManager")
 
-	// AddonConstraintManager is the addon-constraint pod
-	ComponentAddonConstraintManager = Component("AddonConstraintManager")
+	// AddonComplianceManager is the addon-conmpliance pod
+	ComponentAddonComplianceManager = Component("AddonComplianceManager")
 
 	// Classifier is the classifier pod
 	ComponentClassifier = Component("Classifier")
