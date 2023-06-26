@@ -121,6 +121,41 @@ spec:
               clusterSelector:
                 description: ClusterSelector identifies clusters to associate to.
                 type: string
+              luaValidationRef:
+                description: LuaValidationRefs is a list of validations defined in
+                  Lua language. In the matching clusters, add-ons will be deployed
+                  only if all validations pass.
+                items:
+                  properties:
+                    kind:
+                      description: 'Kind of the resource. Supported kinds are: - flux
+                        GitRepository;OCIRepository;Bucket - ConfigMap/Secret'
+                      enum:
+                      - GitRepository
+                      - OCIRepository
+                      - Bucket
+                      - ConfigMap
+                      - Secret
+                      type: string
+                    name:
+                      description: Name of the referenced resource.
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: Namespace of the referenced resource.
+                      minLength: 1
+                      type: string
+                    path:
+                      description: Path to the directory containing the openapi validations.
+                        Defaults to 'None', which translates to the root path of the
+                        SourceRef. Ignored for ConfigMap/Secret.
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  - namespace
+                  type: object
+                type: array
               openAPIValidationRefs:
                 description: OpenAPIValidationRefs is a list of OpenAPI validations.
                   In the matching clusters, add-ons will be deployed only if all validations
@@ -164,6 +199,13 @@ spec:
                 description: FailureMessage provides more information if an error
                   occurs.
                 type: string
+              luaValidations:
+                additionalProperties:
+                  format: byte
+                  type: string
+                description: LuaValidations contains all validations collected from
+                  all existing referenced resources
+                type: object
               matchingClusters:
                 description: MatchingClusterRefs reference all the clusters currently
                   matching ClusterSelector

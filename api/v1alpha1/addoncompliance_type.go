@@ -65,6 +65,28 @@ type OpenAPIValidationRef struct {
 	Path string `json:"path,omitempty"`
 }
 
+type LuaValidationRef struct {
+	// Namespace of the referenced resource.
+	// +kubebuilder:validation:MinLength=1
+	Namespace string `json:"namespace"`
+
+	// Name of the referenced resource.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Kind of the resource. Supported kinds are:
+	// - flux GitRepository;OCIRepository;Bucket
+	// - ConfigMap/Secret
+	// +kubebuilder:validation:Enum=GitRepository;OCIRepository;Bucket;ConfigMap;Secret
+	Kind string `json:"kind"`
+
+	// Path to the directory containing the openapi validations.
+	// Defaults to 'None', which translates to the root path of the SourceRef.
+	// Ignored for ConfigMap/Secret.
+	// +optional
+	Path string `json:"path,omitempty"`
+}
+
 // AddonComplianceSpec defines the desired state of AddonCompliance
 type AddonComplianceSpec struct {
 	// ClusterSelector identifies clusters to associate to.
@@ -78,6 +100,10 @@ type AddonComplianceSpec struct {
 	// OpenAPIValidationRefs is a list of OpenAPI validations. In the matching clusters, add-ons
 	// will be deployed only if all validations pass.
 	OpenAPIValidationRefs []OpenAPIValidationRef `json:"openAPIValidationRefs,omitempty"`
+
+	// LuaValidationRefs is a list of validations defined in Lua language. In the matching clusters,
+	// add-ons will be deployed only if all validations pass.
+	LuaValidationRefs []LuaValidationRef `json:"luaValidationRef,omitempty"`
 }
 
 // AddonComplianceStatus defines the observed state of AddonCompliance
@@ -89,6 +115,10 @@ type AddonComplianceStatus struct {
 	// OpenapiValidations contains all validations collected from all existing
 	// referenced resources
 	OpenapiValidations map[string][]byte `json:"openapiValidations,omitempty"`
+
+	// LuaValidations contains all validations collected from all existing
+	// referenced resources
+	LuaValidations map[string][]byte `json:"luaValidations,omitempty"`
 
 	// FailureMessage provides more information if an error occurs.
 	// +optional
