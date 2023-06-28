@@ -345,7 +345,7 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(ready).To(Equal(true))
 
 		sveltosCluster.Status.Ready = false
-		Expect(c.Status().Update(context.TODO(), sveltosCluster)).To(Succeed())
+		Expect(c.Update(context.TODO(), sveltosCluster)).To(Succeed())
 
 		ready, err = clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
 			&corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name, Kind: libsveltosv1alpha1.SveltosClusterKind},

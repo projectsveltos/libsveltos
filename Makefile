@@ -48,6 +48,9 @@ $(GOIMPORTS):
 $(GINKGO): $(TOOLS_DIR)/go.mod
 	cd $(TOOLS_DIR) && $(GOBUILD) -tags tools -o $(subst hack/tools/,,$@) github.com/onsi/ginkgo/v2/ginkgo
 
+$(KUSTOMIZE): $(TOOLS_DIR)/go.mod # Build kustomize from tools folder.
+	cd $(TOOLS_DIR); $(GOBUILD) -tags=tools -o $(BIN_DIR)/kustomize sigs.k8s.io/kustomize/kustomize/v5
+
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
@@ -138,7 +141,7 @@ $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
 .PHONY: tools
-tools: $(CONTROLLER_GEN) $(ENVSUBST) $(GOLANGCI_LINT) $(SETUP_ENVTEST) $(GOIMPORTS) $(GINKGO) ## build all tools
+tools: $(CONTROLLER_GEN) $(ENVSUBST) $(GOLANGCI_LINT) $(SETUP_ENVTEST) $(GOIMPORTS) $(GINKGO) $(KUSTOMIZE) ## build all tools
 
 .PHONY: clean
 clean: ## Remove all built tools
