@@ -28,5 +28,4 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/azure"
 	_ "sigs.k8s.io/controller-runtime/tools/setup-envtest"
 	_ "sigs.k8s.io/controller-tools/cmd/controller-gen"
-	_ "sigs.k8s.io/kustomize/kustomize/v5"
 )
