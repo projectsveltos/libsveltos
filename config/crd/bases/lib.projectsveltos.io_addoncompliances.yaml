@@ -101,7 +101,7 @@ spec:
               clusterSelector:
                 description: ClusterSelector identifies clusters to associate to.
                 type: string
-              luaValidationRef:
+              luaValidationRefs:
                 description: LuaValidationRefs is a list of validations defined in
                   Lua language. In the matching clusters, add-ons will be deployed
                   only if all validations pass.
