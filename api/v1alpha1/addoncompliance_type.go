@@ -99,11 +99,13 @@ type AddonComplianceSpec struct {
 
 	// OpenAPIValidationRefs is a list of OpenAPI validations. In the matching clusters, add-ons
 	// will be deployed only if all validations pass.
+	// +omitempty
 	OpenAPIValidationRefs []OpenAPIValidationRef `json:"openAPIValidationRefs,omitempty"`
 
 	// LuaValidationRefs is a list of validations defined in Lua language. In the matching clusters,
 	// add-ons will be deployed only if all validations pass.
-	LuaValidationRefs []LuaValidationRef `json:"luaValidationRef,omitempty"`
+	// +omitempty
+	LuaValidationRefs []LuaValidationRef `json:"luaValidationRefs,omitempty"`
 }
 
 // AddonComplianceStatus defines the observed state of AddonCompliance
