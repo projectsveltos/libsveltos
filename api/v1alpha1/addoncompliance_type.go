@@ -25,22 +25,22 @@ import (
 )
 
 const (
-	// AddonConstraintFinalizer finalizer for AddonConstraint instances
-	AddonConstraintFinalizer = "addonconstraintfinalizer.projectsveltos.io"
+	// AddonComplianceFinalizer finalizer for AddonCompliance instances
+	AddonComplianceFinalizer = "addoncompliancefinalizer.projectsveltos.io"
 
-	AddonConstraintKind = "AddonConstraint"
+	AddonComplianceKind = "AddonCompliance"
 )
 
-// A label with this key is added to AddonConstraint instances for each matching cluster
+// A label with this key is added to AddonCompliance instances for each matching cluster
 func GetClusterLabel(clusterNamespace, clusterName string, clusterType *ClusterType) string {
 	return fmt.Sprintf("%s--%s--%s",
 		strings.ToLower(string(*clusterType)), clusterNamespace, clusterName)
 }
 
 // GetClusterAnnotation returns the annotation added on each cluster that indicates
-// addon constraints for this cluster, if any, are ready
+// addon compliances for this cluster, if any, are ready
 func GetClusterAnnotation() string {
-	return "addon-constraints-ready"
+	return "addon-compliance-ready"
 }
 
 type OpenAPIValidationRef struct {
@@ -65,8 +65,30 @@ type OpenAPIValidationRef struct {
 	Path string `json:"path,omitempty"`
 }
 
-// AddonConstraintSpec defines the desired state of AddonConstraint
-type AddonConstraintSpec struct {
+type LuaValidationRef struct {
+	// Namespace of the referenced resource.
+	// +kubebuilder:validation:MinLength=1
+	Namespace string `json:"namespace"`
+
+	// Name of the referenced resource.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Kind of the resource. Supported kinds are:
+	// - flux GitRepository;OCIRepository;Bucket
+	// - ConfigMap/Secret
+	// +kubebuilder:validation:Enum=GitRepository;OCIRepository;Bucket;ConfigMap;Secret
+	Kind string `json:"kind"`
+
+	// Path to the directory containing the openapi validations.
+	// Defaults to 'None', which translates to the root path of the SourceRef.
+	// Ignored for ConfigMap/Secret.
+	// +optional
+	Path string `json:"path,omitempty"`
+}
+
+// AddonComplianceSpec defines the desired state of AddonCompliance
+type AddonComplianceSpec struct {
 	// ClusterSelector identifies clusters to associate to.
 	// +optional
 	ClusterSelector Selector `json:"clusterSelector,omitempty"`
@@ -77,11 +99,17 @@ type AddonConstraintSpec struct {
 
 	// OpenAPIValidationRefs is a list of OpenAPI validations. In the matching clusters, add-ons
 	// will be deployed only if all validations pass.
+	// +omitempty
 	OpenAPIValidationRefs []OpenAPIValidationRef `json:"openAPIValidationRefs,omitempty"`
+
+	// LuaValidationRefs is a list of validations defined in Lua language. In the matching clusters,
+	// add-ons will be deployed only if all validations pass.
+	// +omitempty
+	LuaValidationRefs []LuaValidationRef `json:"luaValidationRefs,omitempty"`
 }
 
-// AddonConstraintStatus defines the observed state of AddonConstraint
-type AddonConstraintStatus struct {
+// AddonComplianceStatus defines the observed state of AddonCompliance
+type AddonComplianceStatus struct {
 	// MatchingClusterRefs reference all the clusters currently matching
 	// ClusterSelector
 	MatchingClusterRefs []corev1.ObjectReference `json:"matchingClusters,omitempty"`
@@ -90,33 +118,37 @@ type AddonConstraintStatus struct {
 	// referenced resources
 	OpenapiValidations map[string][]byte `json:"openapiValidations,omitempty"`
 
+	// LuaValidations contains all validations collected from all existing
+	// referenced resources
+	LuaValidations map[string][]byte `json:"luaValidations,omitempty"`
+
 	// FailureMessage provides more information if an error occurs.
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=addonconstraints,scope=Cluster
+//+kubebuilder:resource:path=addoncompliances,scope=Cluster
 //+kubebuilder:subresource:status
 
-// AddonConstraint is the Schema for the AddonConstraint API
-type AddonConstraint struct {
+// AddonCompliance is the Schema for the AddonCompliance API
+type AddonCompliance struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AddonConstraintSpec   `json:"spec,omitempty"`
-	Status AddonConstraintStatus `json:"status,omitempty"`
+	Spec   AddonComplianceSpec   `json:"spec,omitempty"`
+	Status AddonComplianceStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// AddonConstraintList contains a list of AddonConstraints
-type AddonConstraintList struct {
+// AddonComplianceList contains a list of AddonCompliances
+type AddonComplianceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []AddonConstraint `json:"items"`
+	Items           []AddonCompliance `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&AddonConstraint{}, &AddonConstraintList{})
+	SchemeBuilder.Register(&AddonCompliance{}, &AddonComplianceList{})
 }
