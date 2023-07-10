@@ -78,6 +78,11 @@ type ResourceStatus struct {
 	// ObjectRef for which status is reported
 	ObjectRef corev1.ObjectReference `json:"objectRef"`
 
+	// If HealthCheck Spec.CollectResources is set to true, resource
+	// will be collected and contained in the Resource field.
+	// +optional
+	Resource []byte `json:"resource,omitempty"`
+
 	// HealthStatus is the health status of the object
 	HealthStatus HealthStatus `json:"healthStatus"`
 

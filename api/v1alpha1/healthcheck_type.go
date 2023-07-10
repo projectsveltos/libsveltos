@@ -53,6 +53,12 @@ type HealthCheckSpec struct {
 	// Must return a struct with field "status"
 	// set to one of the possible value of HealthStatus.
 	Script string `json:"script,omitempty"`
+
+	// CollectResources indicates whether matching resources need
+	// to be collected and added to EventReport.
+	// +kubebuilder:default:=false
+	// +optional
+	CollectResources bool `json:"collectResources,omitempty"`
 }
 
 //+kubebuilder:object:root=true
