@@ -39,10 +39,15 @@ type RoleRequestSpec struct {
 	// in this instance will be granted
 	ClusterSelector Selector `json:"clusterSelector"`
 
-	// PolicyRefs references all the ConfigMaps containing kubernetes Roles/ClusterRoles
-	// that need to be deployed in the matching clusters.
+	// RoleRefs references all the Secret/ConfigMaps containing kubernetes
+	// Roles/ClusterRoles that need to be deployed in the matching clusters.
 	// +optional
 	RoleRefs []PolicyRef `json:"roleRefs,omitempty"`
+
+	// ExpirationSeconds is the requested duration of validity of the TokenRequest
+	// associated to ServiceAccount. If not specified, default value is used
+	// +optional
+	ExpirationSeconds *int64 `json:"expirationSeconds,omitempty"`
 
 	// ServiceAccountName is the name of the ServiceAccount representing a tenant admin for which
 	// those permissions are requested
