@@ -138,7 +138,7 @@ func DeleteSecret(ctx context.Context, c client.Client,
 	return nil
 }
 
-func ListSecretForOwnner(ctx context.Context, c client.Client, owner client.Object) ([]corev1.Secret, error) {
+func ListSecretForOwner(ctx context.Context, c client.Client, owner client.Object) ([]corev1.Secret, error) {
 	listOption := []client.ListOption{
 		client.MatchingLabels{
 			sveltosv1alpha1.RoleRequestLabel: "ok",

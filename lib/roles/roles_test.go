@@ -376,7 +376,7 @@ var _ = Describe("Roles", func() {
 		Expect(secretList.Items[0].OwnerReferences[0].Name).To(Equal(roleRequest2.Name))
 	})
 
-	It("ListSecretForOwnner returns all secret for which owner is one of the OnwerReferences", func() {
+	It("ListSecretForOwner returns all secret for which owner is one of the OnwerReferences", func() {
 		roleRequest1 := &sveltosv1alpha1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
@@ -420,7 +420,7 @@ var _ = Describe("Roles", func() {
 		initObjects := []client.Object{secret1, secret2, secret3}
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-		list, err := roles.ListSecretForOwnner(context.TODO(), c, roleRequest1)
+		list, err := roles.ListSecretForOwner(context.TODO(), c, roleRequest1)
 		Expect(err).To(BeNil())
 		Expect(len(list)).To(Equal(1))
 		Expect(list[0].Name).To(Equal(secret1.Name))
