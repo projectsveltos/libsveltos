@@ -206,7 +206,9 @@ func isSveltosClusterReadyToBeConfigured(
 	return sveltosCluster.Status.Ready, nil
 }
 
-// isCAPIClusterReadyToBeConfigured checks whether Cluster Status.ControlPlaneReady is set to true
+// isCAPIClusterReadyToBeConfigured checks whether Cluster:
+// - ControlPlaneInitialized condition is set to true on Cluster object or
+// - Status.ControlPlaneReady is set to true
 func isCAPIClusterReadyToBeConfigured(
 	ctx context.Context, c client.Client,
 	cluster *corev1.ObjectReference, logger logr.Logger,
@@ -217,6 +219,15 @@ func isCAPIClusterReadyToBeConfigured(
 	if err != nil {
 		logger.Info(fmt.Sprintf("Failed to get Cluster %v", err))
 		return false, err
+	}
+
+	for i := range capiCluster.Status.Conditions {
+		c := capiCluster.Status.Conditions[i]
+		if c.Type == clusterv1.ControlPlaneInitializedCondition &&
+			c.Status == corev1.ConditionTrue {
+
+			return true, nil
+		}
 	}
 
 	return capiCluster.Status.ControlPlaneReady, nil

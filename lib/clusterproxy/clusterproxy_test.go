@@ -239,6 +239,26 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(ready).To(Equal(true))
 	})
 
+	It("IsCAPIClusterReadyToBeConfigured returns true for a cluster when ControlPlaneInitialized is true", func() {
+		cluster.Status.Conditions = []clusterv1.Condition{
+			{
+				Type:   clusterv1.ControlPlaneInitializedCondition,
+				Status: corev1.ConditionTrue,
+			},
+		}
+
+		initObjects := []client.Object{
+			cluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(ready).To(Equal(true))
+	})
+
 	It("getSveltosSecretData returns an error when cluster does not exist", func() {
 		initObjects := []client.Object{}
 
