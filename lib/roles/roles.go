@@ -155,12 +155,6 @@ func ListSecretForOwnner(ctx context.Context, c client.Client, owner client.Obje
 
 	for i := range secretList.Items {
 		secret := &secretList.Items[i]
-		if secret.Labels == nil {
-			continue
-		}
-		if _, ok := secret.Labels[sveltosv1alpha1.RoleRequestLabel]; !ok {
-			continue
-		}
 		if deployer.IsOwnerReference(secret, owner) {
 			results = append(results, *secret)
 		}
