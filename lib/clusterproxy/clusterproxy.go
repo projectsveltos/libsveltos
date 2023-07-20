@@ -30,7 +30,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
@@ -187,7 +186,7 @@ func IsClusterReadyToBeConfigured(
 		return isSveltosClusterReadyToBeConfigured(ctx, c, cluster, logger)
 	}
 
-	return isCAPIClusterReadyToBeConfigured(ctx, c, cluster, logger)
+	return IsCAPIClusterReadyToBeConfigured(ctx, c, cluster, logger)
 }
 
 // isSveltosClusterReadyToBeConfigured  returns true if SveltosCluster
@@ -207,50 +206,18 @@ func isSveltosClusterReadyToBeConfigured(
 	return sveltosCluster.Status.Ready, nil
 }
 
-// isCAPIClusterReadyToBeConfigured gets all Machines for a given CAPI Cluster and returns true
-// if at least one control plane machine is in running phase
-func isCAPIClusterReadyToBeConfigured(
+// IsCAPIClusterReadyToBeConfigured retrieves the status for the given CAPI Cluster
+// and returns true if the Control Plane is in ready phase
+func IsCAPIClusterReadyToBeConfigured(
 	ctx context.Context, c client.Client,
 	cluster *corev1.ObjectReference, logger logr.Logger,
 ) (bool, error) {
-
-	machineList, err := GetMachinesForCluster(ctx, c, cluster, logger)
-	if err != nil {
+	capiCluster := clusterv1.Cluster{}
+	if err := c.Get(ctx, types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}, &capiCluster); err != nil {
 		return false, err
 	}
 
-	for i := range machineList.Items {
-		if util.IsControlPlaneMachine(&machineList.Items[i]) {
-			if machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseRunning ||
-				machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseProvisioned {
-
-				return true, nil
-			}
-		}
-	}
-
-	return false, nil
-}
-
-// GetMachinesForCluster find all Machines for a given CAPI Cluster.
-func GetMachinesForCluster(
-	ctx context.Context, c client.Client,
-	cluster *corev1.ObjectReference, logger logr.Logger,
-) (*clusterv1.MachineList, error) {
-
-	listOptions := []client.ListOption{
-		client.InNamespace(cluster.Namespace),
-		client.MatchingLabels{clusterv1.ClusterNameLabel: cluster.Name},
-	}
-	var machineList clusterv1.MachineList
-	if err := c.List(ctx, &machineList, listOptions...); err != nil {
-		logger.Error(err, fmt.Sprintf("unable to list Machines for CAPI Cluster %s/%s",
-			cluster.Namespace, cluster.Name))
-		return nil, err
-	}
-	logger.V(logs.LogDebug).Info(fmt.Sprintf("Found %d machine", len(machineList.Items)))
-
-	return &machineList, nil
+	return capiCluster.Status.ControlPlaneReady, nil
 }
 
 // CreateKubeconfig creates a temporary file with the Kubeconfig to access CAPI cluster

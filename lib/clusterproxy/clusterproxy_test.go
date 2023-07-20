@@ -82,6 +82,9 @@ var _ = Describe("clusterproxy ", func() {
 					"dc": "eng",
 				},
 			},
+			Status: clusterv1.ClusterStatus{
+				ControlPlaneReady: true,
+			},
 		}
 
 		sveltosCluster = &libsveltosv1alpha1.SveltosCluster{
@@ -177,109 +180,47 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(wcClient).ToNot(BeNil())
 	})
 
-	It("getMachinesForCluster returns list of all machines for a CPI cluster", func() {
-		cpMachine := &clusterv1.Machine{
+	It("IsCAPIClusterReadyToBeConfigured returns true a CPI cluster with initialized control plane", func() {
+		okCluster := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: cluster.Namespace,
-				Name:      cluster.Name + randomString(),
-				Labels: map[string]string{
-					clusterv1.ClusterNameLabel:         cluster.Name,
-					clusterv1.MachineControlPlaneLabel: "ok",
-				},
+				Name:      upstreamClusterNamePrefix + randomString(),
+				Namespace: namespace,
+			},
+			Status: clusterv1.ClusterStatus{
+				ControlPlaneReady: true,
 			},
 		}
-		workerMachine := &clusterv1.Machine{
+
+		koCluster := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: cluster.Namespace,
-				Name:      cluster.Name + randomString(),
-				Labels: map[string]string{
-					clusterv1.ClusterNameLabel: cluster.Name,
-				},
+				Name:      upstreamClusterNamePrefix + randomString(),
+				Namespace: namespace,
+			},
+			Status: clusterv1.ClusterStatus{
+				ControlPlaneReady: false,
 			},
 		}
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(okCluster, koCluster).Build()
 
-		initObjects := []client.Object{
-			workerMachine,
-			cpMachine,
-		}
+		By("retrieving ready cluster", func() {
+			ok, err := clusterproxy.IsCAPIClusterReadyToBeConfigured(context.TODO(), c,
+				&corev1.ObjectReference{Namespace: okCluster.Namespace, Name: okCluster.Name}, klogr.New())
+			if err != nil {
+				panic(err)
+			}
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeTrue())
+		})
 
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-
-		cps, err := clusterproxy.GetMachinesForCluster(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
-		Expect(err).To(BeNil())
-		Expect(len(cps.Items)).To(Equal(2))
-	})
-
-	It("IsCAPIClusterReadyToBeConfigured returns true for a cluster with one control plane machine in running phase", func() {
-		cpMachine := &clusterv1.Machine{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: cluster.Namespace,
-				Name:      cluster.Name + randomString(),
-				Labels: map[string]string{
-					clusterv1.ClusterNameLabel:         cluster.Name,
-					clusterv1.MachineControlPlaneLabel: "ok",
-				},
-			},
-		}
-		cpMachine.Status.SetTypedPhase(clusterv1.MachinePhaseRunning)
-
-		workerMachine := &clusterv1.Machine{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: cluster.Namespace,
-				Name:      cluster.Name + randomString(),
-				Labels: map[string]string{
-					clusterv1.ClusterNameLabel: cluster.Name,
-				},
-			},
-		}
-		initObjects := []client.Object{
-			workerMachine,
-			cpMachine,
-		}
-
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-
-		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name, Kind: "Cluster"}, klogr.New())
-		Expect(err).To(BeNil())
-		Expect(ready).To(Equal(true))
-	})
-
-	It("IsCAPIClusterReadyToBeConfigured returns false for a cluster with no control plane machine in running phase", func() {
-		cpMachine := &clusterv1.Machine{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: cluster.Namespace,
-				Name:      cluster.Name + randomString(),
-				Labels: map[string]string{
-					clusterv1.ClusterNameLabel:         cluster.Name,
-					clusterv1.MachineControlPlaneLabel: "ok",
-				},
-			},
-		}
-		workerMachine := &clusterv1.Machine{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: cluster.Namespace,
-				Name:      cluster.Name + randomString(),
-				Labels: map[string]string{
-					clusterv1.ClusterNameLabel: cluster.Name,
-				},
-			},
-			Status: clusterv1.MachineStatus{
-				Phase: "Runnning",
-			},
-		}
-		initObjects := []client.Object{
-			workerMachine,
-			cpMachine,
-		}
-
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-
-		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
-		Expect(err).To(BeNil())
-		Expect(ready).To(Equal(false))
+		By("retrieving non-ready cluster", func() {
+			ok, err := clusterproxy.IsCAPIClusterReadyToBeConfigured(context.TODO(), c,
+				&corev1.ObjectReference{Namespace: koCluster.Namespace, Name: koCluster.Name}, klogr.New())
+			if err != nil {
+				panic(err)
+			}
+			Expect(err).To(BeNil())
+			Expect(ok).To(BeFalse())
+		})
 	})
 
 	It("getSveltosSecretData returns an error when cluster does not exist", func() {
