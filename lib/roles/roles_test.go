@@ -426,4 +426,41 @@ var _ = Describe("Roles", func() {
 		Expect(list[0].Name).To(Equal(secret1.Name))
 		Expect(list[0].Namespace).To(Equal(secret1.Namespace))
 	})
+
+	It("ListSecrets returns all secret created for any RoleRequest", func() {
+		initObjects := []client.Object{}
+
+		expectedSecret := 5
+		for i := 0; i < expectedSecret; i++ {
+			roleRequestSecret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: randomString(),
+					Name:      randomString(),
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: sveltosv1alpha1.GroupVersion.String(),
+							Kind:       sveltosv1alpha1.RoleRequestKind,
+							Name:       randomString()},
+					},
+					Labels: map[string]string{
+						sveltosv1alpha1.RoleRequestLabel: "ok",
+					},
+				},
+			}
+
+			normalSecret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: randomString(),
+					Name:      randomString(),
+				},
+			}
+
+			initObjects = append(initObjects, roleRequestSecret, normalSecret)
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+		list, err := roles.ListSecrets(context.TODO(), c)
+		Expect(err).To(BeNil())
+		Expect(len(list)).To(Equal(expectedSecret))
+	})
 })
