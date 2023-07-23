@@ -138,7 +138,8 @@ func DeleteSecret(ctx context.Context, c client.Client,
 	return nil
 }
 
-func ListSecretForOwnner(ctx context.Context, c client.Client, owner client.Object) ([]corev1.Secret, error) {
+// ListSecretForOwner returns all Secrets created for a specific RoleRequests.
+func ListSecretForOwner(ctx context.Context, c client.Client, owner client.Object) ([]corev1.Secret, error) {
 	listOption := []client.ListOption{
 		client.MatchingLabels{
 			sveltosv1alpha1.RoleRequestLabel: "ok",
@@ -155,15 +156,33 @@ func ListSecretForOwnner(ctx context.Context, c client.Client, owner client.Obje
 
 	for i := range secretList.Items {
 		secret := &secretList.Items[i]
-		if secret.Labels == nil {
-			continue
-		}
-		if _, ok := secret.Labels[sveltosv1alpha1.RoleRequestLabel]; !ok {
-			continue
-		}
 		if deployer.IsOwnerReference(secret, owner) {
 			results = append(results, *secret)
 		}
+	}
+
+	return results, nil
+}
+
+// ListSecrets returns all Secrets created for RoleRequests.
+func ListSecrets(ctx context.Context, c client.Client) ([]corev1.Secret, error) {
+	listOption := []client.ListOption{
+		client.MatchingLabels{
+			sveltosv1alpha1.RoleRequestLabel: "ok",
+		},
+	}
+
+	secretList := &corev1.SecretList{}
+	err := c.List(ctx, secretList, listOption...)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]corev1.Secret, 0)
+
+	for i := range secretList.Items {
+		secret := &secretList.Items[i]
+		results = append(results, *secret)
 	}
 
 	return results, nil

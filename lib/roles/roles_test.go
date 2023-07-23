@@ -376,7 +376,7 @@ var _ = Describe("Roles", func() {
 		Expect(secretList.Items[0].OwnerReferences[0].Name).To(Equal(roleRequest2.Name))
 	})
 
-	It("ListSecretForOwnner returns all secret for which owner is one of the OnwerReferences", func() {
+	It("ListSecretForOwner returns all secret for which owner is one of the OnwerReferences", func() {
 		roleRequest1 := &sveltosv1alpha1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
@@ -420,10 +420,47 @@ var _ = Describe("Roles", func() {
 		initObjects := []client.Object{secret1, secret2, secret3}
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-		list, err := roles.ListSecretForOwnner(context.TODO(), c, roleRequest1)
+		list, err := roles.ListSecretForOwner(context.TODO(), c, roleRequest1)
 		Expect(err).To(BeNil())
 		Expect(len(list)).To(Equal(1))
 		Expect(list[0].Name).To(Equal(secret1.Name))
 		Expect(list[0].Namespace).To(Equal(secret1.Namespace))
+	})
+
+	It("ListSecrets returns all secret created for any RoleRequest", func() {
+		initObjects := []client.Object{}
+
+		expectedSecret := 5
+		for i := 0; i < expectedSecret; i++ {
+			roleRequestSecret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: randomString(),
+					Name:      randomString(),
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: sveltosv1alpha1.GroupVersion.String(),
+							Kind:       sveltosv1alpha1.RoleRequestKind,
+							Name:       randomString()},
+					},
+					Labels: map[string]string{
+						sveltosv1alpha1.RoleRequestLabel: "ok",
+					},
+				},
+			}
+
+			normalSecret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: randomString(),
+					Name:      randomString(),
+				},
+			}
+
+			initObjects = append(initObjects, roleRequestSecret, normalSecret)
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+		list, err := roles.ListSecrets(context.TODO(), c)
+		Expect(err).To(BeNil())
+		Expect(len(list)).To(Equal(expectedSecret))
 	})
 })

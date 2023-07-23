@@ -30,7 +30,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
@@ -207,29 +206,31 @@ func isSveltosClusterReadyToBeConfigured(
 	return sveltosCluster.Status.Ready, nil
 }
 
-// isCAPIClusterReadyToBeConfigured gets all Machines for a given CAPI Cluster and returns true
-// if at least one control plane machine is in running phase
+// isCAPIClusterReadyToBeConfigured checks whether Cluster:
+// - ControlPlaneInitialized condition is set to true on Cluster object or
+// - Status.ControlPlaneReady is set to true
 func isCAPIClusterReadyToBeConfigured(
 	ctx context.Context, c client.Client,
 	cluster *corev1.ObjectReference, logger logr.Logger,
 ) (bool, error) {
 
-	machineList, err := GetMachinesForCluster(ctx, c, cluster, logger)
+	capiCluster := &clusterv1.Cluster{}
+	err := c.Get(ctx, types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Name}, capiCluster)
 	if err != nil {
+		logger.Info(fmt.Sprintf("Failed to get Cluster %v", err))
 		return false, err
 	}
 
-	for i := range machineList.Items {
-		if util.IsControlPlaneMachine(&machineList.Items[i]) {
-			if machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseRunning ||
-				machineList.Items[i].Status.GetTypedPhase() == clusterv1.MachinePhaseProvisioned {
+	for i := range capiCluster.Status.Conditions {
+		c := capiCluster.Status.Conditions[i]
+		if c.Type == clusterv1.ControlPlaneInitializedCondition &&
+			c.Status == corev1.ConditionTrue {
 
-				return true, nil
-			}
+			return true, nil
 		}
 	}
 
-	return false, nil
+	return capiCluster.Status.ControlPlaneReady, nil
 }
 
 // GetMachinesForCluster find all Machines for a given CAPI Cluster.
