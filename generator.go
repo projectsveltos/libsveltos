@@ -127,4 +127,11 @@ func main() {
 
 	addonComplianceFile := "../../config/crd/bases/lib.projectsveltos.io_addoncompliances.yaml"
 	generate(addonComplianceFile, "addoncompliances", "AddonCompliance")
+
+	reloaderFile := "../../config/crd/bases/lib.projectsveltos.io_reloaders.yaml"
+	generate(reloaderFile, "reloaders", "Reloader")
+
+	reloaderReportFile := "../../config/crd/bases/lib.projectsveltos.io_reloaderreports.yaml"
+	generate(reloaderReportFile, "reloaderreports", "ReloaderReport")
+
 }
