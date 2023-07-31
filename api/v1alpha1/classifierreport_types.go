@@ -44,7 +44,7 @@ const (
 	ClassifierSecretNamespace = "projectsveltos"
 )
 
-// ReportPhase describes the state of a classifierReport/healthReport.
+// ReportPhase describes the state of a classifierReport/healthReport/eventReport/reloaderReport.
 // +kubebuilder:validation:Enum:=WaitingForDelivery;Delivering;Processed
 type ReportPhase string
 
