@@ -64,9 +64,9 @@ spec:
                 description: ClusterType is the type of Cluster this ReloaderReport
                   is for.
                 type: string
-              reloaderInfo:
-                description: MatchingResources contains a list of resources matching
-                  an reloader
+              resourcesToReload:
+                description: ResourcesToReload contains a list of resources that requires
+                  rolling upgrade
                 items:
                   description: ReloaderInfo represents a resource that need to be
                     reloaded if any mounted ConfigMap/Secret changes.
