@@ -91,9 +91,10 @@ type ReloaderReportSpec struct {
 	// is for.
 	ClusterType ClusterType `json:"clusterType"`
 
-	// MatchingResources contains a list of resources matching an reloader
+	// ResourcesToReload contains a list of resources that requires
+	// rolling upgrade
 	// +optional
-	ResourcesToReload []ReloaderInfo `json:"reloaderInfo,omitempty"`
+	ResourcesToReload []ReloaderInfo `json:"resourcesToReload,omitempty"`
 }
 
 // ReloaderReportStatus defines the observed state of ReloaderReport
