@@ -19,8 +19,11 @@ package clusterproxy
 import (
 	"context"
 	"os"
+	"sync/atomic"
 
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,12 +36,18 @@ import (
 	"github.com/pkg/errors"
 
 	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	"github.com/projectsveltos/libsveltos/lib/logsettings"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 	"github.com/projectsveltos/libsveltos/lib/roles"
 )
 
 const (
 	kubernetesAdmin = "kubernetes-admin"
+)
+
+var (
+	checkedCAPIPresence int32
+	capiPresent         int32
 )
 
 // getSveltosCluster returns SveltosCluster
@@ -242,6 +251,16 @@ func addTypeInformationToObject(scheme *runtime.Scheme, obj client.Object) {
 func getListOfCAPICluster(ctx context.Context, c client.Client, logger logr.Logger,
 ) ([]corev1.ObjectReference, error) {
 
+	present, err := isCAPIPresent(ctx, c, logger)
+	if err != nil {
+		logger.Error(err, "failed to verify if ClusterAPI Cluster CRD is installed")
+		return nil, err
+	}
+
+	if !present {
+		return nil, nil
+	}
+
 	clusterList := &clusterv1.ClusterList{}
 	if err := c.List(ctx, clusterList); err != nil {
 		logger.Error(err, "failed to list all Cluster")
@@ -327,6 +346,16 @@ func GetListOfClusters(ctx context.Context, c client.Client, logger logr.Logger,
 func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labels.Selector,
 	logger logr.Logger) ([]corev1.ObjectReference, error) {
 
+	present, err := isCAPIPresent(ctx, c, logger)
+	if err != nil {
+		logger.Error(err, "failed to verify if ClusterAPI Cluster CRD is installed")
+		return nil, err
+	}
+
+	if !present {
+		return nil, nil
+	}
+
 	clusterList := &clusterv1.ClusterList{}
 	if err := c.List(ctx, clusterList); err != nil {
 		logger.Error(err, "failed to list all Cluster")
@@ -411,4 +440,31 @@ func GetMatchingClusters(ctx context.Context, c client.Client, selector labels.S
 	matching = append(matching, tmpMatching...)
 
 	return matching, nil
+}
+
+// isCAPIPresent returns whether clusterAPI CRDs are present.
+// This is checked only once. In a situation where clusterAPI is not originally
+// present and installed later on, all sveltos components that depend on that
+// are restarted.
+func isCAPIPresent(ctx context.Context, c client.Client, logger logr.Logger) (bool, error) {
+	checked := atomic.LoadInt32(&checkedCAPIPresence)
+	if checked == 0 {
+		clusterCRD := &apiextensionsv1.CustomResourceDefinition{}
+		err := c.Get(ctx,
+			types.NamespacedName{Name: "clusters.cluster.x-k8s.io"}, clusterCRD)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.V(logsettings.LogDebug).Info("clusterCRD CRD not present")
+				atomic.StoreInt32(&checkedCAPIPresence, 1)
+				atomic.StoreInt32(&capiPresent, 0)
+				return false, nil
+			}
+			return false, err
+		}
+		atomic.StoreInt32(&checkedCAPIPresence, 1)
+		atomic.StoreInt32(&capiPresent, 1)
+	}
+
+	present := atomic.LoadInt32(&capiPresent)
+	return present != 0, nil
 }

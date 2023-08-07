@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	"github.com/projectsveltos/libsveltos/internal/test/helpers/external"
 	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
 )
 
@@ -158,7 +159,10 @@ var _ = Describe("Cluster utils", func() {
 			},
 		}
 
+		clusterCRD := external.TestClusterCRD.DeepCopy()
+
 		initObjects := []client.Object{
+			clusterCRD,
 			cluster1,
 			cluster2,
 		}
