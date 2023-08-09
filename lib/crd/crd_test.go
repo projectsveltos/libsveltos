@@ -155,4 +155,24 @@ var _ = Describe("CRD", func() {
 
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
+
+	It("Gets the Reloader CustomResourceDefinition", func() {
+		yaml := crd.GetReloaderCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_reloaders.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the ReloaderReport CustomResourceDefinition", func() {
+		yaml := crd.GetReloaderReportCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_reloaderreports.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
 })

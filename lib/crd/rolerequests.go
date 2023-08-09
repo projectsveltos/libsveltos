@@ -79,7 +79,7 @@ spec:
                       - ConfigMap
                       type: string
                     name:
-                      description: Name of the rreferenced resource.
+                      description: Name of the referenced resource.
                       minLength: 1
                       type: string
                     namespace:

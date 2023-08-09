@@ -24,7 +24,7 @@ type PolicyRef struct {
 	// be implicit set to cluster's namespace.
 	Namespace string `json:"namespace"`
 
-	// Name of the rreferenced resource.
+	// Name of the referenced resource.
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 
