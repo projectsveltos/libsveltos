@@ -22,9 +22,11 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
@@ -32,6 +34,8 @@ import (
 	"k8s.io/client-go/restmapper"
 	apiv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"k8s.io/kubectl/pkg/scheme"
+
+	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 var (
@@ -161,4 +165,22 @@ func getUserOrSAKubeconfig(
 	}
 
 	return kubeconfig, nil
+}
+
+func GetKubernetesVersion(ctx context.Context, cfg *rest.Config, logger logr.Logger) (string, error) {
+	discClient, err := discovery.NewDiscoveryClientForConfig(cfg)
+	if err != nil {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get discovery client: %v", err))
+		return "", err
+	}
+
+	var k8sVersion *version.Info
+	k8sVersion, err = discClient.ServerVersion()
+	if err != nil {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get version from discovery client: %v", err))
+		return "", err
+	}
+
+	logger.V(logs.LogDebug).Info(fmt.Sprintf("cluster version: %s", k8sVersion.String()))
+	return k8sVersion.String(), nil
 }
