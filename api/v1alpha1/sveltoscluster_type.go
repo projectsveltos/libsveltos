@@ -34,6 +34,10 @@ type SveltosClusterSpec struct {
 
 // SveltosClusterStatus defines the status of SveltosCluster
 type SveltosClusterStatus struct {
+	// The Kubernetes version of the cluster.
+	// +optional
+	Version string `json:"version,omitempty"`
+
 	// Ready is the state of the cluster.
 	// +optional
 	Ready bool `json:"ready,omitempty"`
@@ -47,6 +51,8 @@ type SveltosClusterStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:path=sveltosclusters,scope=Namespaced
 //+kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready",description="Indicates whether cluster is ready to be managed by sveltos"
+// +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Kubernetes version associated with this Cluster"
 
 // SveltosCluster is the Schema for the SveltosCluster API
 type SveltosCluster struct {
