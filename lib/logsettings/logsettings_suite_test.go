@@ -19,66 +19,89 @@ package logsettings_test
 import (
 	"context"
 	"flag"
-	"path/filepath"
+	"fmt"
+	"path"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/rest"
+
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
-	"k8s.io/kubectl/pkg/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	"github.com/projectsveltos/libsveltos/internal/test/helpers"
 	"github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 var (
-	cfg       *rest.Config
-	k8sClient client.Client
-	testEnv   *envtest.Environment
-	instance  *logsettings.LogSetter
+	instance *logsettings.LogSetter
+	testEnv  *helpers.TestEnvironment
+	cancel   context.CancelFunc
+	ctx      context.Context
+	scheme   *runtime.Scheme
 )
 
-func TestLogsettings(t *testing.T) {
+func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
-	// fetch the current config
-	suiteConfig, reporterConfig := GinkgoConfiguration()
-	// pass it in to RunSpecs
-	RunSpecs(t, "Logsettings Suite", suiteConfig, reporterConfig)
+	RunSpecs(t, "Controllers Suite")
 }
 
 var _ = BeforeSuite(func() {
 	By("bootstrapping test environment")
-	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{
-			filepath.Join("config", "crd", "bases"),
-		},
-	}
+
+	ctx, cancel = context.WithCancel(context.TODO())
 
 	var err error
-	cfg, err = testEnv.Start()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cfg).ToNot(BeNil())
+	scheme, err = setupScheme()
+	Expect(err).To(BeNil())
 
-	Expect(v1.AddToScheme(scheme.Scheme)).To(Succeed())
-	Expect(sveltosv1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
+	testEnvConfig := helpers.NewTestEnvironmentConfiguration([]string{
+		path.Join("config", "crd", "bases"),
+	}, scheme)
+	testEnv, err = testEnvConfig.Build(scheme)
+	if err != nil {
+		panic(err)
+	}
 
-	// +kubebuilder:scaffold:scheme
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).ToNot(HaveOccurred())
-	Expect(k8sClient).ToNot(BeNil())
+	go func() {
+		By("Starting the manager")
+		if err := testEnv.StartManager(ctx); err != nil {
+			panic(fmt.Sprintf("Failed to start the envtest manager: %v", err))
+		}
+	}()
+
+	if synced := testEnv.GetCache().WaitForCacheSync(ctx); !synced {
+		time.Sleep(time.Second)
+	}
 
 	klog.InitFlags(nil)
 	Expect(flag.Lookup("v").Value.Set("0")).To(BeNil())
 	instance = logsettings.RegisterForLogSettings(context.TODO(),
-		sveltosv1alpha1.ComponentAddonManager, klogr.New(), cfg)
+		sveltosv1alpha1.ComponentAddonManager, klogr.New(), testEnv.Config)
 })
+
 var _ = AfterSuite(func() {
+	cancel()
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
 })
+
+func setupScheme() (*runtime.Scheme, error) {
+	s := runtime.NewScheme()
+	if err := clusterv1.AddToScheme(s); err != nil {
+		return nil, err
+	}
+	if err := v1.AddToScheme(s); err != nil {
+		return nil, err
+	}
+	if err := sveltosv1alpha1.AddToScheme(s); err != nil {
+		return nil, err
+	}
+	return s, nil
+}

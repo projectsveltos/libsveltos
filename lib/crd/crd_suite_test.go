@@ -29,7 +29,9 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/klog/v2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/projectsveltos/libsveltos/internal/test/helpers"
 )
@@ -50,6 +52,8 @@ var _ = BeforeSuite(func() {
 	By("bootstrapping test environment")
 
 	ctx, cancel = context.WithCancel(context.TODO())
+
+	ctrl.SetLogger(klog.Background())
 
 	var err error
 	scheme, err = setupScheme()

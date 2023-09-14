@@ -21,6 +21,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/klog/v2"
+
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"sigs.k8s.io/cluster-api/util"
 )
@@ -28,6 +31,8 @@ import (
 func TestDeployer(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Deployer Suite")
+
+	ctrl.SetLogger(klog.Background())
 }
 
 func randomString() string {
