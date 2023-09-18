@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog/v2/klogr"
 
 	"github.com/projectsveltos/libsveltos/lib/utils"
 )
@@ -102,5 +103,11 @@ var _ = Describe("utils ", func() {
 
 		_, err = clientcmd.BuildConfigFromFlags("", tmpFile.Name())
 		Expect(err).To(Succeed())
+	})
+
+	It("GetKubernetesVersion returns cluster Kubernetes version", func() {
+		version, err := utils.GetKubernetesVersion(context.TODO(), testEnv.Config, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(version).ToNot(BeEmpty())
 	})
 })
