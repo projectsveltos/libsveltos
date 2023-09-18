@@ -17,6 +17,7 @@ import (
 	"context"
 	"path"
 	goruntime "runtime"
+	"time"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apimachineryscheme "k8s.io/apimachinery/pkg/runtime"
@@ -67,9 +68,11 @@ func NewTestEnvironmentConfiguration(crdDirectoryPaths []string, s *apimachinery
 	machineCRD := external.TestMachineCRD.DeepCopy()
 	return &TestEnvironmentConfiguration{
 		env: &envtest.Environment{
-			Scheme:                s,
-			ErrorIfCRDPathMissing: true,
-			CRDDirectoryPaths:     resolvedCrdDirectoryPaths,
+			ControlPlaneStartTimeout: time.Minute,
+			ControlPlaneStopTimeout:  time.Minute,
+			Scheme:                   s,
+			ErrorIfCRDPathMissing:    true,
+			CRDDirectoryPaths:        resolvedCrdDirectoryPaths,
 			CRDs: []*apiextensionsv1.CustomResourceDefinition{
 				clusterCRD, machineCRD,
 			},
