@@ -81,7 +81,7 @@ var _ = BeforeSuite(func() {
 
 	klog.InitFlags(nil)
 	Expect(flag.Lookup("v").Value.Set("0")).To(BeNil())
-	instance = logsettings.RegisterForLogSettings(context.TODO(),
+	instance = logsettings.RegisterForLogSettings(ctx,
 		sveltosv1alpha1.ComponentAddonManager, klogr.New(), testEnv.Config)
 })
 
