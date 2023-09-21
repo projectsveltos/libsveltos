@@ -23,9 +23,9 @@ import (
 )
 
 const (
-	// PolicyTemplate is the annotation that must be set on a policy when the
+	// PolicyTemplateAnnotation is the annotation that must be set on a policy when the
 	// policy is a template and needs variable sustitution.
-	PolicyTemplate = "projectsveltos.io/template"
+	PolicyTemplateAnnotation = "projectsveltos.io/template"
 )
 
 const (
