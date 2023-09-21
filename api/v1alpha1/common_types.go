@@ -23,6 +23,12 @@ import (
 )
 
 const (
+	// PolicyTemplate is the annotation that must be set on a policy when the
+	// policy is a template and needs variable sustitution.
+	PolicyTemplate = "projectsveltos.io/template"
+)
+
+const (
 	// DeployedBySveltosAnnotation is an annotation Sveltos adds to
 	// EventSource/HealthCheck/Classifier/ResourceSummary instances deployed
 	// by sveltos in managed clusters. Those resources, once deployed in a
