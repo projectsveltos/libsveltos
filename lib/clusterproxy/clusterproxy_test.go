@@ -287,7 +287,34 @@ var _ = Describe("clusterproxy ", func() {
 			clusterproxy.SveltosKubeconfigSecretNamePostfix)))
 	})
 
-	It("getSveltosSecretData returns secret data", func() {
+	It("getSveltosSecretData returns overridden secret data", func() {
+		sveltosClusterWithOverride := sveltosCluster.DeepCopy()
+		sveltosClusterWithOverride.Spec.KubeconfigName = randomString()
+
+		randomData := []byte(randomString())
+		secret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: sveltosClusterWithOverride.Namespace,
+				Name:      sveltosClusterWithOverride.Spec.KubeconfigName,
+			},
+			Data: map[string][]byte{
+				"data": randomData,
+			},
+		}
+
+		initObjects := []client.Object{
+			sveltosClusterWithOverride,
+			&secret,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		data, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosClusterWithOverride.Namespace, sveltosClusterWithOverride.Name)
+		Expect(err).To(BeNil())
+		Expect(data).To(Equal(randomData))
+	})
+
+	It("getSveltosSecretData returns default secret data", func() {
 		randomData := []byte(randomString())
 		secret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{

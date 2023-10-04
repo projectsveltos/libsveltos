@@ -107,7 +107,9 @@ func GetCAPISecretData(ctx context.Context, logger logr.Logger, c client.Client,
 		return nil, err
 	}
 
-	return getSecretData(ctx, logger, c, clusterNamespace, clusterName, capiKubeconfigSecretNamePostfix)
+	secretName := fmt.Sprintf("%s%s", cluster.Name, capiKubeconfigSecretNamePostfix)
+
+	return getSecretData(ctx, logger, c, clusterNamespace, secretName)
 }
 
 // GetSveltosKubernetesRestConfig returns rest.Config for a Sveltos Cluster clusterNamespace/clusterName
@@ -173,7 +175,12 @@ func GetSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Clie
 		return nil, err
 	}
 
-	return getSecretData(ctx, logger, c, clusterNamespace, clusterName, sveltosKubeconfigSecretNamePostfix)
+	secretName := cluster.Spec.KubeconfigName
+	if secretName == "" {
+		secretName = fmt.Sprintf("%s%s", cluster.Name, sveltosKubeconfigSecretNamePostfix)
+	}
+
+	return getSecretData(ctx, logger, c, clusterNamespace, secretName)
 }
 
 // IsClusterReadyToBeConfigured returns true if cluster is ready to be configured
@@ -272,9 +279,8 @@ func CreateKubeconfig(logger logr.Logger, kubeconfigContent []byte) (string, err
 }
 
 func getSecretData(ctx context.Context, logger logr.Logger, c client.Client,
-	clusterNamespace, clusterName, postfix string) ([]byte, error) {
+	clusterNamespace, secretName string) ([]byte, error) {
 
-	secretName := clusterName + postfix
 	logger = logger.WithValues("secret", secretName)
 
 	secret := &corev1.Secret{}
