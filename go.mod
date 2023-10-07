@@ -15,8 +15,8 @@ require (
 	k8s.io/klog/v2 v2.90.1
 	k8s.io/kubectl v0.27.2
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491
-	sigs.k8s.io/cluster-api v1.5.0
-	sigs.k8s.io/controller-runtime v0.15.0
+	sigs.k8s.io/cluster-api v1.5.2
+	sigs.k8s.io/controller-runtime v0.15.1
 )
 
 require (
@@ -55,7 +55,7 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.10.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/net v0.13.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/term v0.10.0 // indirect
