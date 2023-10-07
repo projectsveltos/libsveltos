@@ -26,6 +26,13 @@ const (
 
 // SveltosClusterSpec defines the desired state of SveltosCluster
 type SveltosClusterSpec struct {
+	// KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig
+	// to be hosted in a secret with the pattern ${sveltosClusterName}-sveltos-kubeconfig.
+	//
+	// When a value is specified, the referenced Kubernetes Secret object must exist,
+	// and will be used to connect to the Kubernetes cluster.
+	// +optional
+	KubeconfigName string `json:"kubeconfigName,omitempty"`
 	// Paused can be used to prevent controllers from processing the
 	// SveltosCluster and all its associated objects.
 	// +optional
