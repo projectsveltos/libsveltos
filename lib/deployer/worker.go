@@ -167,7 +167,7 @@ func processRequests(ctx context.Context, d *deployer, i int, logger logr.Logger
 			applicant, featureID, _ := getApplicatantAndFeatureFromKey(params.key)
 			cleanup, err := getIsCleanupFromKey(params.key)
 			if err != nil {
-				storeResult(d, params.key, err, params.handler, params.metric, logger)
+				storeResult(d, params.key, err, params.handlerOptions, params.handler, params.metric, logger)
 			} else {
 				l.Info(fmt.Sprintf("worker: %d processing request. cleanup: %t", id, cleanup))
 				start := time.Now()
@@ -175,7 +175,7 @@ func processRequests(ctx context.Context, d *deployer, i int, logger logr.Logger
 				err = params.handler(ctx, controlClusterClient,
 					ns, name, applicant, featureID, clusterType, params.handlerOptions,
 					l)
-				storeResult(d, params.key, err, params.handler, params.metric, logger)
+				storeResult(d, params.key, err, params.handlerOptions, params.handler, params.metric, logger)
 				elapsed := time.Since(start)
 				if params.metric != nil {
 					params.metric(elapsed, ns, name, featureID, clusterType, l)
@@ -217,8 +217,8 @@ func processRequests(ctx context.Context, d *deployer, i int, logger logr.Logger
 // - set results for further in time lookup
 // - remove key from inProgress
 // - if key is in dirty, remove it from there and add it to the back of the jobQueue
-func storeResult(d *deployer, key string, err error, handler RequestHandler, metricHandler MetricHandler,
-	logger logr.Logger) {
+func storeResult(d *deployer, key string, err error, handlerOptions Options,
+	handler RequestHandler, metricHandler MetricHandler, logger logr.Logger) {
 
 	d.mu.Lock()
 
@@ -247,7 +247,13 @@ func storeResult(d *deployer, key string, err error, handler RequestHandler, met
 			continue
 		}
 		l.V(logs.LogVerbose).Info("add to jobQueue")
-		d.jobQueue = append(d.jobQueue, requestParams{key: d.dirty[i], handler: handler, metric: metricHandler})
+		d.jobQueue = append(d.jobQueue,
+			requestParams{
+				key:            d.dirty[i],
+				handler:        handler,
+				metric:         metricHandler,
+				handlerOptions: handlerOptions,
+			})
 		l.V(logs.LogVerbose).Info("remove from dirty")
 		d.dirty = removeFromSlice(d.dirty, i)
 		l.V(logs.LogVerbose).Info("remove result")
