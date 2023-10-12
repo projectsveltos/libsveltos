@@ -129,7 +129,7 @@ var _ = Describe("Worker", func() {
 		d.SetInProgress([]string{key})
 		Expect(len(d.GetInProgress())).To(Equal(1))
 
-		deployer.StoreResult(d, key, nil, doNothingHandler, metricHandler, klogr.New())
+		deployer.StoreResult(d, key, nil, deployer.Options{}, doNothingHandler, metricHandler, klogr.New())
 		Expect(len(d.GetInProgress())).To(Equal(0))
 	})
 
@@ -150,7 +150,7 @@ var _ = Describe("Worker", func() {
 		d.SetDirty([]string{key})
 		Expect(len(d.GetDirty())).To(Equal(1))
 
-		deployer.StoreResult(d, key, nil, doNothingHandler, metricHandler, klogr.New())
+		deployer.StoreResult(d, key, nil, deployer.Options{}, doNothingHandler, metricHandler, klogr.New())
 		Expect(len(d.GetInProgress())).To(Equal(0))
 		Expect(len(d.GetDirty())).To(Equal(0))
 		Expect(len(d.GetJobQueue())).To(Equal(1))
