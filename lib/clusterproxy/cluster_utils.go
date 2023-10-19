@@ -39,6 +39,7 @@ import (
 	"github.com/projectsveltos/libsveltos/lib/logsettings"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 	"github.com/projectsveltos/libsveltos/lib/roles"
+	"github.com/projectsveltos/libsveltos/lib/sharding"
 )
 
 const (
@@ -248,7 +249,7 @@ func addTypeInformationToObject(scheme *runtime.Scheme, obj client.Object) {
 
 // getListOfCAPIClusters returns all CAPI Clusters where Classifier needs to be deployed.
 // Currently a Classifier instance needs to be deployed in every existing CAPI cluster.
-func getListOfCAPICluster(ctx context.Context, c client.Client, logger logr.Logger,
+func getListOfCAPICluster(ctx context.Context, c client.Client, shard *string, logger logr.Logger,
 ) ([]corev1.ObjectReference, error) {
 
 	present, err := isCAPIPresent(ctx, c, logger)
@@ -277,6 +278,10 @@ func getListOfCAPICluster(ctx context.Context, c client.Client, logger logr.Logg
 			continue
 		}
 
+		if shard != nil && !sharding.IsShardAMatch(*shard, cluster) {
+			continue
+		}
+
 		addTypeInformationToObject(c.Scheme(), cluster)
 
 		clusters = append(clusters, corev1.ObjectReference{
@@ -292,7 +297,7 @@ func getListOfCAPICluster(ctx context.Context, c client.Client, logger logr.Logg
 
 // getListOfSveltosClusters returns all Sveltos Clusters where Classifier needs to be deployed.
 // Currently a Classifier instance needs to be deployed in every existing sveltosCluster.
-func getListOfSveltosCluster(ctx context.Context, c client.Client, logger logr.Logger,
+func getListOfSveltosCluster(ctx context.Context, c client.Client, shard *string, logger logr.Logger,
 ) ([]corev1.ObjectReference, error) {
 
 	clusterList := &libsveltosv1alpha1.SveltosClusterList{}
@@ -308,6 +313,10 @@ func getListOfSveltosCluster(ctx context.Context, c client.Client, logger logr.L
 
 		if !cluster.DeletionTimestamp.IsZero() {
 			// Only existing cluster can match
+			continue
+		}
+
+		if shard != nil && !sharding.IsShardAMatch(*shard, cluster) {
 			continue
 		}
 
@@ -328,13 +337,32 @@ func getListOfSveltosCluster(ctx context.Context, c client.Client, logger logr.L
 func GetListOfClusters(ctx context.Context, c client.Client, logger logr.Logger,
 ) ([]corev1.ObjectReference, error) {
 
-	clusters, err := getListOfCAPICluster(ctx, c, logger)
+	clusters, err := getListOfCAPICluster(ctx, c, nil, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	var tmpClusters []corev1.ObjectReference
-	tmpClusters, err = getListOfSveltosCluster(ctx, c, logger)
+	tmpClusters, err = getListOfSveltosCluster(ctx, c, nil, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	clusters = append(clusters, tmpClusters...)
+	return clusters, nil
+}
+
+// GetListOfClustersForShardKey returns all existing Sveltos/CAPI Clusters for a given shard
+func GetListOfClustersForShardKey(ctx context.Context, c client.Client, shard string,
+	logger logr.Logger) ([]corev1.ObjectReference, error) {
+
+	clusters, err := getListOfCAPICluster(ctx, c, &shard, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	var tmpClusters []corev1.ObjectReference
+	tmpClusters, err = getListOfSveltosCluster(ctx, c, &shard, logger)
 	if err != nil {
 		return nil, err
 	}
