@@ -33,6 +33,7 @@ import (
 	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
 	"github.com/projectsveltos/libsveltos/internal/test/helpers/external"
 	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
+	"github.com/projectsveltos/libsveltos/lib/sharding"
 )
 
 var _ = Describe("Cluster utils", func() {
@@ -144,7 +145,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(data).To(Equal(randomData))
 	})
 
-	It("GetListOfClusters returns the CAPI Clusters where a Classifier has to be deployed", func() {
+	It("GetListOfClusters returns the all existing Clusters", func() {
 		cluster1 := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: randomString(),
@@ -172,6 +173,64 @@ var _ = Describe("Cluster utils", func() {
 		matches, err := clusterproxy.GetListOfClusters(context.TODO(), c, klogr.New())
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(2))
+	})
+
+	It("GetListOfClustersForShardKey returns all existing Clusters with shard annotation set to provided key", func() {
+		shardKey := randomString()
+
+		cluster1 := &clusterv1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: randomString(),
+				Name:      randomString(),
+				Annotations: map[string]string{
+					sharding.ShardAnnotation: shardKey,
+				},
+			},
+		}
+
+		cluster2 := &clusterv1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: randomString(),
+				Name:      randomString(),
+				Annotations: map[string]string{
+					sharding.ShardAnnotation: randomString(),
+				},
+			},
+		}
+
+		cluster3 := &clusterv1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: randomString(),
+				Name:      randomString(),
+			},
+		}
+
+		clusterCRD := external.TestClusterCRD.DeepCopy()
+
+		initObjects := []client.Object{
+			clusterCRD,
+			cluster1,
+			cluster2,
+			cluster3,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		matches, err := clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, shardKey, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(corev1.ObjectReference{
+			Namespace: cluster1.Namespace, Name: cluster1.Name,
+			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+		}))
+
+		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, "", klogr.New())
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(corev1.ObjectReference{
+			Namespace: cluster3.Namespace, Name: cluster3.Name,
+			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+		}))
 	})
 
 	It("getMatchingClusters returns matchin CAPI Cluster", func() {
