@@ -73,6 +73,9 @@ const (
 
 	// ComponentEventManager is the event-manager pod
 	ComponentEventManager = Component("EventManager")
+
+	// ComponentShardController is the shard-controller pod
+	ComponentShardController = Component("ShardController")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.
