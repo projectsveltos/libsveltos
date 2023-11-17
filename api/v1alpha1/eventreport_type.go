@@ -31,9 +31,9 @@ const (
 	// EventReport before removing it from the apiserver.
 	EventReportFinalizer = "eventreport.finalizer.projectsveltos.io"
 
-	// EventSourceLabelName is added to each EventReport generated
+	// EventSourceNameLabel is added to each EventReport generated
 	// for a EventSource instance
-	EventSourceLabelName = "projectsveltos.io/eventsource-name"
+	EventSourceNameLabel = "projectsveltos.io/eventsource-name"
 
 	// EventReportClusterNameLabel is added to each EventReport
 	EventReportClusterNameLabel = "eventreport.projectsveltos.io/cluster-name"
@@ -50,7 +50,7 @@ func GetEventReportName(healthName, clusterName string, clusterType *ClusterType
 
 func GetEventReportLabels(eventSourceName, clusterName string, clusterType *ClusterType) map[string]string {
 	return map[string]string{
-		EventSourceLabelName:        eventSourceName,
+		EventSourceNameLabel:        eventSourceName,
 		EventReportClusterNameLabel: clusterName,
 		EventReportClusterTypeLabel: strings.ToLower(string(*clusterType)),
 	}

@@ -26,11 +26,14 @@ const (
 
 	ResourceSummaryKind = "ResourceSummary"
 
-	// ClusterSummaryLabelName is added to all ResourceSummary instances
-	ClusterSummaryLabelName = "projectsveltos.io/cluster-summary-name"
+	// ClusterSummaryNameLabel is added to all ResourceSummary instances
+	ClusterSummaryNameLabel = "projectsveltos.io/cluster-summary-name"
 
-	// ClusterSummaryLabelNamespace is added to all ResourceSummary instances
-	ClusterSummaryLabelNamespace = "projectsveltos.io/cluster-summary-namespace"
+	// ClusterSummaryNamespaceLabel is added to all ResourceSummary instances
+	ClusterSummaryNamespaceLabel = "projectsveltos.io/cluster-summary-namespace"
+
+	// ClusterSummaryTypeLabel is added to all ResourceSummary instances
+	ClusterSummaryTypeLabel = "projectsveltos.io/cluster-summary-type"
 )
 
 type Resource struct {

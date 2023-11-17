@@ -27,8 +27,8 @@ const (
 
 	AccessRequestKind = "AccessRequest"
 
-	// AccessRequestLabelName is added to each Secret generated for an AccessRequest
-	AccessRequestLabelName = "projectsveltos.io/access-request-name"
+	// AccessRequestNameLabel is added to each Secret generated for an AccessRequest
+	AccessRequestNameLabel = "projectsveltos.io/access-request-name"
 )
 
 // RequestType specifies the type of AccessRequest
