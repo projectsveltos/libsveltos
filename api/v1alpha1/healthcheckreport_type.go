@@ -31,9 +31,9 @@ const (
 	// HealthCheckReport before removing it from the apiserver.
 	HealthCheckReportFinalizer = "healthcheckreport.finalizer.projectsveltos.io"
 
-	// HealthCheckLabelName is added to each HealthCheckReport generated
+	// HealthCheckNameLabel is added to each HealthCheckReport generated
 	// for a HealthCheck instance
-	HealthCheckLabelName = "projectsveltos.io/healthcheck-name"
+	HealthCheckNameLabel = "projectsveltos.io/healthcheck-name"
 
 	// HealthCheckReportClusterNameLabel is added to each HealthCheckReport
 	HealthCheckReportClusterNameLabel = "healthcheckreport.projectsveltos.io/cluster-name"
@@ -50,7 +50,7 @@ func GetHealthCheckReportName(healthCheckName, clusterName string, clusterType *
 
 func GetHealthCheckReportLabels(healthCheckName, clusterName string, clusterType *ClusterType) map[string]string {
 	return map[string]string{
-		HealthCheckLabelName:              healthCheckName,
+		HealthCheckNameLabel:              healthCheckName,
 		HealthCheckReportClusterNameLabel: clusterName,
 		HealthCheckReportClusterTypeLabel: strings.ToLower(string(*clusterType)),
 	}
