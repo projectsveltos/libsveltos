@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/projectsveltos/libsveltos/internal/test/helpers/external"
 )
@@ -97,8 +98,10 @@ func (t *TestEnvironmentConfiguration) Build(s *apimachineryscheme.Scheme) (*Tes
 	}
 
 	options := manager.Options{
-		Scheme:             s,
-		MetricsBindAddress: "0",
+		Scheme: s,
+		Metrics: metricsserver.Options{
+			BindAddress: "0",
+		},
 	}
 
 	kubeconfig, err := user.KubeConfig()
