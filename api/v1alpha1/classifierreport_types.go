@@ -31,9 +31,9 @@ const (
 )
 
 const (
-	// ClassifierLabelName is added to each ClassifierReport generated
+	// ClassifierNameLabel is added to each ClassifierReport generated
 	// for a Classifier instance
-	ClassifierLabelName = "projectsveltos.io/classifier-name"
+	ClassifierlNameLabel = "projectsveltos.io/classifier-name"
 
 	ClassifierReportKind = "ClassifierReport"
 
