@@ -170,9 +170,17 @@ var _ = Describe("Cluster utils", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		matches, err := clusterproxy.GetListOfClusters(context.TODO(), c, klogr.New())
+		matches, err := clusterproxy.GetListOfClusters(context.TODO(), c, "", klogr.New())
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(2))
+
+		matches, err = clusterproxy.GetListOfClusters(context.TODO(), c, cluster1.Namespace, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(corev1.ObjectReference{
+			Namespace: cluster1.Namespace, Name: cluster1.Name,
+			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+		}))
 	})
 
 	It("GetListOfClustersForShardKey returns all existing Clusters with shard annotation set to provided key", func() {
@@ -216,7 +224,7 @@ var _ = Describe("Cluster utils", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		matches, err := clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, shardKey, klogr.New())
+		matches, err := clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, "", shardKey, klogr.New())
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
@@ -224,11 +232,19 @@ var _ = Describe("Cluster utils", func() {
 			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
 		}))
 
-		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, "", klogr.New())
+		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, "", "", klogr.New())
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster3.Namespace, Name: cluster3.Name,
+			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+		}))
+
+		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, cluster1.Namespace, shardKey, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(corev1.ObjectReference{
+			Namespace: cluster1.Namespace, Name: cluster1.Name,
 			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
 		}))
 	})
@@ -268,7 +284,7 @@ var _ = Describe("Cluster utils", func() {
 
 		parsedSelector, _ := labels.Parse(string(selector))
 
-		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector, klogr.New())
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector, "", klogr.New())
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(2))
 		Expect(matches).To(ContainElement(
@@ -277,5 +293,14 @@ var _ = Describe("Cluster utils", func() {
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
 				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
+
+		matches, err = clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector,
+			sveltosCluster.Namespace, klogr.New())
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
+				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
+
 	})
 })

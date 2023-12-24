@@ -247,10 +247,10 @@ func addTypeInformationToObject(scheme *runtime.Scheme, obj client.Object) {
 	}
 }
 
-// getListOfCAPIClusters returns all CAPI Clusters where Classifier needs to be deployed.
-// Currently a Classifier instance needs to be deployed in every existing CAPI cluster.
-func getListOfCAPICluster(ctx context.Context, c client.Client, shard *string, logger logr.Logger,
-) ([]corev1.ObjectReference, error) {
+// getListOfCAPIClusters returns all CAPI Clusters.
+// If shard is set, returns only clusters matching shard.
+func getListOfCAPICluster(ctx context.Context, c client.Client, namespace string, shard *string,
+	logger logr.Logger) ([]corev1.ObjectReference, error) {
 
 	present, err := isCAPIPresent(ctx, c, logger)
 	if err != nil {
@@ -262,8 +262,13 @@ func getListOfCAPICluster(ctx context.Context, c client.Client, shard *string, l
 		return nil, nil
 	}
 
+	listOptions := []client.ListOption{}
+	if namespace != "" {
+		listOptions = append(listOptions, client.InNamespace(namespace))
+	}
+
 	clusterList := &clusterv1.ClusterList{}
-	if err := c.List(ctx, clusterList); err != nil {
+	if err := c.List(ctx, clusterList, listOptions...); err != nil {
 		logger.Error(err, "failed to list all Cluster")
 		return nil, err
 	}
@@ -295,13 +300,18 @@ func getListOfCAPICluster(ctx context.Context, c client.Client, shard *string, l
 	return clusters, nil
 }
 
-// getListOfSveltosClusters returns all Sveltos Clusters where Classifier needs to be deployed.
-// Currently a Classifier instance needs to be deployed in every existing sveltosCluster.
-func getListOfSveltosCluster(ctx context.Context, c client.Client, shard *string, logger logr.Logger,
-) ([]corev1.ObjectReference, error) {
+// getListOfSveltosClusters returns all Sveltos Clusters.
+// If shard is set, returns only clusters matching shard.
+func getListOfSveltosCluster(ctx context.Context, c client.Client, namespace string, shard *string,
+	logger logr.Logger) ([]corev1.ObjectReference, error) {
+
+	listOptions := []client.ListOption{}
+	if namespace != "" {
+		listOptions = append(listOptions, client.InNamespace(namespace))
+	}
 
 	clusterList := &libsveltosv1alpha1.SveltosClusterList{}
-	if err := c.List(ctx, clusterList); err != nil {
+	if err := c.List(ctx, clusterList, listOptions...); err != nil {
 		logger.Error(err, "failed to list all Cluster")
 		return nil, err
 	}
@@ -334,16 +344,17 @@ func getListOfSveltosCluster(ctx context.Context, c client.Client, shard *string
 }
 
 // GetListOfClusters returns all existing Sveltos/CAPI Clusters.
-func GetListOfClusters(ctx context.Context, c client.Client, logger logr.Logger,
+// If namespace is not empty, only existing clusters in that namespace will be returned.
+func GetListOfClusters(ctx context.Context, c client.Client, namespace string, logger logr.Logger,
 ) ([]corev1.ObjectReference, error) {
 
-	clusters, err := getListOfCAPICluster(ctx, c, nil, logger)
+	clusters, err := getListOfCAPICluster(ctx, c, namespace, nil, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	var tmpClusters []corev1.ObjectReference
-	tmpClusters, err = getListOfSveltosCluster(ctx, c, nil, logger)
+	tmpClusters, err = getListOfSveltosCluster(ctx, c, namespace, nil, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -353,16 +364,17 @@ func GetListOfClusters(ctx context.Context, c client.Client, logger logr.Logger,
 }
 
 // GetListOfClustersForShardKey returns all existing Sveltos/CAPI Clusters for a given shard
-func GetListOfClustersForShardKey(ctx context.Context, c client.Client, shard string,
+// If namespace is not empty, clusters will be further filtered by namespace.
+func GetListOfClustersForShardKey(ctx context.Context, c client.Client, namespace, shard string,
 	logger logr.Logger) ([]corev1.ObjectReference, error) {
 
-	clusters, err := getListOfCAPICluster(ctx, c, &shard, logger)
+	clusters, err := getListOfCAPICluster(ctx, c, namespace, &shard, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	var tmpClusters []corev1.ObjectReference
-	tmpClusters, err = getListOfSveltosCluster(ctx, c, &shard, logger)
+	tmpClusters, err = getListOfSveltosCluster(ctx, c, namespace, &shard, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -372,7 +384,7 @@ func GetListOfClustersForShardKey(ctx context.Context, c client.Client, shard st
 }
 
 func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labels.Selector,
-	logger logr.Logger) ([]corev1.ObjectReference, error) {
+	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
 	present, err := isCAPIPresent(ctx, c, logger)
 	if err != nil {
@@ -384,8 +396,13 @@ func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labe
 		return nil, nil
 	}
 
+	listOptions := []client.ListOption{}
+	if namespace != "" {
+		listOptions = append(listOptions, client.InNamespace(namespace))
+	}
+
 	clusterList := &clusterv1.ClusterList{}
-	if err := c.List(ctx, clusterList); err != nil {
+	if err := c.List(ctx, clusterList, listOptions...); err != nil {
 		logger.Error(err, "failed to list all Cluster")
 		return nil, err
 	}
@@ -415,10 +432,15 @@ func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labe
 }
 
 func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector labels.Selector,
-	logger logr.Logger) ([]corev1.ObjectReference, error) {
+	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
+
+	listOptions := []client.ListOption{}
+	if namespace != "" {
+		listOptions = append(listOptions, client.InNamespace(namespace))
+	}
 
 	clusterList := &libsveltosv1alpha1.SveltosClusterList{}
-	if err := c.List(ctx, clusterList); err != nil {
+	if err := c.List(ctx, clusterList, listOptions...); err != nil {
 		logger.Error(err, "failed to list all Cluster")
 		return nil, err
 	}
@@ -449,18 +471,18 @@ func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector l
 
 // GetMatchingClusters returns all Sveltos/CAPI Clusters currently matching selector
 func GetMatchingClusters(ctx context.Context, c client.Client, selector labels.Selector,
-	logger logr.Logger) ([]corev1.ObjectReference, error) {
+	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
 	matching := make([]corev1.ObjectReference, 0)
 
-	tmpMatching, err := getMatchingCAPIClusters(ctx, c, selector, logger)
+	tmpMatching, err := getMatchingCAPIClusters(ctx, c, selector, namespace, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	matching = append(matching, tmpMatching...)
 
-	tmpMatching, err = getMatchingSveltosClusters(ctx, c, selector, logger)
+	tmpMatching, err = getMatchingSveltosClusters(ctx, c, selector, namespace, logger)
 	if err != nil {
 		return nil, err
 	}
