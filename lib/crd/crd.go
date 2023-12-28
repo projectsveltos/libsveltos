@@ -62,6 +62,10 @@ func GetEventSourceCRDYAML() []byte {
 	return EventSourceCRD
 }
 
+func GetClusterEventSourceCRDYAML() []byte {
+	return ClusterEventSourceCRD
+}
+
 func GetEventReportCRDYAML() []byte {
 	return EventReportCRD
 }

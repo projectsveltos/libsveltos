@@ -28,8 +28,8 @@ const (
 	EventSourceKind = "EventSource"
 )
 
-// EventSourceSpec defines the desired state of EventSource
-type EventSourceSpec struct {
+// ResourceSelector defines which resources to select
+type ResourceSelector struct {
 	// Group of the resource deployed in the Cluster.
 	Group string `json:"group"`
 
@@ -54,6 +54,24 @@ type EventSourceSpec struct {
 	// representing whether object is a match.
 	// +optional
 	Script string `json:"script,omitempty"`
+}
+
+// EventSourceSpec defines the desired state of EventSource
+type EventSourceSpec struct {
+	// ResourceSelectors identifies what resources to select
+	ResourceSelectors []ResourceSelector `json:"resourceSelectors"`
+
+	// This field is optional and can be used to specify a Lua function
+	// that will be used to further select a subset of the resources that
+	// have already been selected using the ResourceSelector field.
+	// The function will receive the array of resources selected by ResourceSelectors.
+	// If this field is not specified, all resources selected by the ResourceSelector
+	// field will be considered.
+	// This field allows to perform more complex filtering or selection operations
+	// on the resources, looking at all resources together.
+	// This can be useful for more sophisticated tasks, such as identifying resources
+	// that are related to each other or that have similar properties.
+	AggregatedSelection string `json:"aggregatedSelection,omitempty"`
 
 	// CollectResources indicates whether matching resources need
 	// to be collected and added to EventReport.
@@ -63,7 +81,7 @@ type EventSourceSpec struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:path=eventsources,scope=Cluster
+//+kubebuilder:resource:path=eventsources,scope=Namespaced
 
 // EventSource is the Schema for the EventSource API
 type EventSource struct {
