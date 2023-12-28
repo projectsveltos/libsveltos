@@ -31,7 +31,7 @@ spec:
     listKind: EventSourceList
     plural: eventsources
     singular: eventsource
-  scope: Namespaced
+  scope: Cluster
   versions:
   - name: v1alpha1
     schema:
@@ -53,78 +53,56 @@ spec:
           spec:
             description: EventSourceSpec defines the desired state of EventSource
             properties:
-              aggregatedSelection:
-                description: This field is optional and can be used to specify a Lua
-                  function that will be used to further select a subset of the resources
-                  that have already been selected using the ResourceSelector field.
-                  The function will receive the array of resources selected by ResourceSelectors.
-                  If this field is not specified, all resources selected by the ResourceSelector
-                  field will be considered. This field allows to perform more complex
-                  filtering or selection operations on the resources, looking at all
-                  resources together. This can be useful for more sophisticated tasks,
-                  such as identifying resources that are related to each other or
-                  that have similar properties.
-                type: string
               collectResources:
                 default: false
                 description: CollectResources indicates whether matching resources
                   need to be collected and added to EventReport.
                 type: boolean
-              resourceSelectors:
-                description: ResourceSelectors identifies what resources to select
+              group:
+                description: Group of the resource deployed in the Cluster.
+                type: string
+              kind:
+                description: Kind of the resource deployed in the Cluster.
+                minLength: 1
+                type: string
+              labelFilters:
+                description: LabelFilters allows to filter resources based on current
+                  labels.
                 items:
-                  description: ResourceSelector defines which resources to select
                   properties:
-                    group:
-                      description: Group of the resource deployed in the Cluster.
+                    key:
+                      description: Key is the label key
                       type: string
-                    kind:
-                      description: Kind of the resource deployed in the Cluster.
-                      minLength: 1
+                    operation:
+                      description: Operation is the comparison operation
+                      enum:
+                      - Equal
+                      - Different
                       type: string
-                    labelFilters:
-                      description: LabelFilters allows to filter resources based on
-                        current labels.
-                      items:
-                        properties:
-                          key:
-                            description: Key is the label key
-                            type: string
-                          operation:
-                            description: Operation is the comparison operation
-                            enum:
-                            - Equal
-                            - Different
-                            type: string
-                          value:
-                            description: Value is the label value
-                            type: string
-                        required:
-                        - key
-                        - operation
-                        - value
-                        type: object
-                      type: array
-                    namespace:
-                      description: Namespace of the resource deployed in the  Cluster.
-                        Empty for resources scoped at cluster level.
-                      type: string
-                    script:
-                      description: Script is a text containing a lua script. Must
-                        return struct with field "matching" representing whether object
-                        is a match.
-                      type: string
-                    version:
-                      description: Version of the resource deployed in the Cluster.
+                    value:
+                      description: Value is the label value
                       type: string
                   required:
-                  - group
-                  - kind
-                  - version
+                  - key
+                  - operation
+                  - value
                   type: object
                 type: array
+              namespace:
+                description: Namespace of the resource deployed in the  Cluster. Empty
+                  for resources scoped at cluster level.
+                type: string
+              script:
+                description: Script is a text containing a lua script. Must return
+                  struct with field "matching" representing whether object is a match.
+                type: string
+              version:
+                description: Version of the resource deployed in the Cluster.
+                type: string
             required:
-            - resourceSelectors
+            - group
+            - kind
+            - version
             type: object
         type: object
     served: true
