@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -73,11 +73,9 @@ var _ = Describe("clusterproxy ", func() {
 		scheme, err = setupScheme()
 		Expect(err).ToNot(HaveOccurred())
 
-		logger = klogr.New()
-
 		namespace = "reconcile" + randomString()
 
-		logger = klogr.New()
+		logger = textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
 		cluster = &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      upstreamClusterNamePrefix + randomString(),
@@ -210,7 +208,8 @@ var _ = Describe("clusterproxy ", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		cps, err := clusterproxy.GetMachinesForCluster(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name},
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(cps.Items)).To(Equal(2))
 	})
@@ -224,7 +223,8 @@ var _ = Describe("clusterproxy ", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name, Kind: "Cluster"}, klogr.New())
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name, Kind: "Cluster"},
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(false))
 	})
@@ -238,7 +238,8 @@ var _ = Describe("clusterproxy ", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name},
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(true))
 	})
@@ -258,7 +259,8 @@ var _ = Describe("clusterproxy ", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name}, klogr.New())
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name},
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(true))
 	})
@@ -283,8 +285,9 @@ var _ = Describe("clusterproxy ", func() {
 
 		_, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace, sveltosCluster.Name)
 		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Failed to get secret %s/%s%s", sveltosCluster.Namespace, sveltosCluster.Name,
-			clusterproxy.SveltosKubeconfigSecretNamePostfix)))
+		Expect(err.Error()).To(ContainSubstring(
+			fmt.Sprintf("Failed to get secret %s/%s%s", sveltosCluster.Namespace, sveltosCluster.Name,
+				clusterproxy.SveltosKubeconfigSecretNamePostfix)))
 	})
 
 	It("getSveltosSecretData returns overridden secret data", func() {
@@ -309,7 +312,8 @@ var _ = Describe("clusterproxy ", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		data, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosClusterWithOverride.Namespace, sveltosClusterWithOverride.Name)
+		data, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosClusterWithOverride.Namespace,
+			sveltosClusterWithOverride.Name)
 		Expect(err).To(BeNil())
 		Expect(data).To(Equal(randomData))
 	})
@@ -333,7 +337,8 @@ var _ = Describe("clusterproxy ", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		data, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace, sveltosCluster.Name)
+		data, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace,
+			sveltosCluster.Name)
 		Expect(err).To(BeNil())
 		Expect(data).To(Equal(randomData))
 	})
@@ -347,8 +352,11 @@ var _ = Describe("clusterproxy ", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name, Kind: libsveltosv1alpha1.SveltosClusterKind},
-			klogr.New())
+			&corev1.ObjectReference{
+				Namespace: sveltosCluster.Namespace,
+				Name:      sveltosCluster.Name,
+				Kind:      libsveltosv1alpha1.SveltosClusterKind},
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(true))
 
@@ -356,8 +364,11 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(c.Update(context.TODO(), sveltosCluster)).To(Succeed())
 
 		ready, err = clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name, Kind: libsveltosv1alpha1.SveltosClusterKind},
-			klogr.New())
+			&corev1.ObjectReference{
+				Namespace: sveltosCluster.Namespace,
+				Name:      sveltosCluster.Name,
+				Kind:      libsveltosv1alpha1.SveltosClusterKind},
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(false))
 	})

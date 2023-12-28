@@ -30,7 +30,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
@@ -81,8 +81,8 @@ var _ = BeforeSuite(func() {
 
 	klog.InitFlags(nil)
 	Expect(flag.Lookup("v").Value.Set("0")).To(BeNil())
-	instance = logsettings.RegisterForLogSettings(ctx,
-		sveltosv1alpha1.ComponentAddonManager, klogr.New(), testEnv.Config)
+	instance = logsettings.RegisterForLogSettings(ctx, sveltosv1alpha1.ComponentAddonManager,
+		textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), testEnv.Config)
 })
 
 var _ = AfterSuite(func() {

@@ -22,8 +22,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/klog/v2/textlogger"
 
-	"k8s.io/klog/v2/klogr"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
@@ -36,7 +36,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		_, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		err := d.RegisterFeatureID(featureID)
@@ -57,7 +58,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		r := map[string]error{key: nil}
@@ -80,7 +82,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		r := map[string]error{key: fmt.Errorf("failed to deploy")}
@@ -103,7 +106,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		d.SetInProgress([]string{key})
@@ -125,7 +129,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		d.SetJobQueue(key, nil, nil)
@@ -150,7 +155,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		result := d.GetResult(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
@@ -172,7 +178,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 
 		err := d.Deploy(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup, nil, nil, deployer.Options{})
 		Expect(err).ToNot(BeNil())
@@ -188,7 +195,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		err := d.RegisterFeatureID(featureID)
@@ -216,7 +224,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		err := d.RegisterFeatureID(featureID)
@@ -240,7 +249,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		err := d.RegisterFeatureID(featureID)
@@ -268,7 +278,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		err := d.RegisterFeatureID(featureID)
@@ -298,7 +309,8 @@ var _ = Describe("Client", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		_, cancel := context.WithCancel(context.TODO())
 		defer cancel()
-		d := deployer.GetClient(context.TODO(), klogr.New(), c, 10)
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
 		err := d.RegisterFeatureID(featureID)
