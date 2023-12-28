@@ -16,27 +16,27 @@ limitations under the License.
 */
 package crd
 
-var EventSourceFile = "../../config/crd/bases/lib.projectsveltos.io_eventsources.yaml"
-var EventSourceCRD = []byte(`---
+var ClusterEventSourceFile = "../../config/crd/bases/lib.projectsveltos.io_clustereventsources.yaml"
+var ClusterEventSourceCRD = []byte(`---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.12.0
-  name: eventsources.lib.projectsveltos.io
+  name: clustereventsources.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
   names:
-    kind: EventSource
-    listKind: EventSourceList
-    plural: eventsources
-    singular: eventsource
-  scope: Namespaced
+    kind: ClusterEventSource
+    listKind: ClusterEventSourceList
+    plural: clustereventsources
+    singular: clustereventsource
+  scope: Cluster
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: EventSource is the Schema for the EventSource API
+        description: ClusterEventSource is the Schema for the ClusterEventSource API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation

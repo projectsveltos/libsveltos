@@ -122,6 +122,9 @@ func main() {
 	eventSourceFile := "../../config/crd/bases/lib.projectsveltos.io_eventsources.yaml"
 	generate(eventSourceFile, "eventsources", "EventSource")
 
+	clusterEventSourceFile := "../../config/crd/bases/lib.projectsveltos.io_clustereventsources.yaml"
+	generate(clusterEventSourceFile, "clustereventsources", "ClusterEventSource")
+
 	eventReportFile := "../../config/crd/bases/lib.projectsveltos.io_eventreports.yaml"
 	generate(eventReportFile, "eventreports", "EventReport")
 
