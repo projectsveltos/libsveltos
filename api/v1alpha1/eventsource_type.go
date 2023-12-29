@@ -73,6 +73,7 @@ type EventSourceSpec struct {
 	// on the resources, looking at all resources together.
 	// This can be useful for more sophisticated tasks, such as identifying resources
 	// that are related to each other or that have similar properties.
+	// The Lua function must return a slice of matching resurces and a message.
 	AggregatedSelection string `json:"aggregatedSelection,omitempty"`
 
 	// CollectResources indicates whether matching resources need

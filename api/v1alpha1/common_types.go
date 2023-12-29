@@ -111,3 +111,26 @@ type ClusterInfo struct {
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
 }
+
+// Operation specifies
+// +kubebuilder:validation:Enum:=Equal;Different
+type Operation string
+
+const (
+	// OperationEqual will verify equality. Corresponds to ==
+	OperationEqual = Operation("Equal")
+
+	// OperationDifferent will verify difference. Corresponds to !=
+	OperationDifferent = Operation("Different")
+)
+
+type LabelFilter struct {
+	// Key is the label key
+	Key string `json:"key"`
+
+	// Operation is the comparison operation
+	Operation Operation `json:"operation"`
+
+	// Value is the label value
+	Value string `json:"value"`
+}

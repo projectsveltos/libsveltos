@@ -69,92 +69,85 @@ spec:
                   - value
                   type: object
                 type: array
-              deployedResourceConstraints:
-                description: DeployedResourceConstraints allows to classify based
-                  on current deployed resources
-                items:
-                  properties:
-                    fieldFilters:
-                      description: 'FieldFilters allows to filter resources based
-                        on current field values. Internally uses FieldSelector so
-                        only fields supported by FieldSelector can be used. Current
-                        list: https://github.com/kubernetes/kubernetes/blob/9d577d8a29893062dfbd669997396dbd01ab0e47/pkg/apis/core/v1/conversion.go#L33'
-                      items:
-                        properties:
-                          field:
-                            description: Field is the field
-                            type: string
-                          operation:
-                            description: Operation is the comparison operation
-                            enum:
-                            - Equal
-                            - Different
-                            type: string
-                          value:
-                            description: Value is the field value
-                            type: string
-                        required:
-                        - field
-                        - operation
-                        - value
-                        type: object
-                      type: array
-                    group:
-                      description: Group of the resource deployed in the Cluster.
-                      type: string
-                    kind:
-                      description: Kind of the resource deployed in the Cluster.
-                      minLength: 1
-                      type: string
-                    labelFilters:
-                      description: LabelFilters allows to filter resources based on
-                        current labels.
-                      items:
-                        properties:
-                          key:
-                            description: Key is the label key
-                            type: string
-                          operation:
-                            description: Operation is the comparison operation
-                            enum:
-                            - Equal
-                            - Different
-                            type: string
-                          value:
-                            description: Value is the label value
-                            type: string
-                        required:
-                        - key
-                        - operation
-                        - value
-                        type: object
-                      type: array
-                    maxCount:
-                      description: MaxCount is the maximun number of resources to
-                        match
-                      type: integer
-                    minCount:
-                      description: MinCount is the minimum number of resources to
-                        match
-                      type: integer
-                    namespace:
-                      description: Namespace of the resource deployed in the  Cluster.
-                        Empty for resources scoped at cluster level.
-                      type: string
-                    script:
-                      description: Script is a text containing a lua script. Must
-                        return struct with field "matching" representing whether object
-                        is a match.
-                      type: string
-                    version:
-                      description: Version of the resource deployed in the Cluster.
-                      type: string
-                  required:
-                  - group
-                  - kind
-                  - version
-                  type: object
-                type: array
+              deployedResourceConstraint:
+                description: DeployedResourceConstraint allows to classify based on
+                  current deployed resources
+                properties:
+                  aggregatedClassification:
+                    description: AggregatedClassification is optional and can be used
+                      to specify a Lua function that will be used to further detect
+                      whether the subset of the resources selected using the ResourceSelector
+                      field are a match for this Classifier. The function will receive
+                      the array of resources selected by ResourceSelectors. If this
+                      field is not specified, a cluster is a match for Classifier
+                      instance, if all ResourceSelectors returns at least one match.
+                      This field allows to perform more complex evaluation  on the
+                      resources, looking at all resources together. This can be useful
+                      for more sophisticated tasks, such as identifying resources
+                      that are related to each other or that have similar properties.
+                      The Lua function must return a boolean indicating wther Cluster
+                      is a match and a message.
+                    type: string
+                  resourceSelectors:
+                    description: ResourceSelectors identifies what resources to select
+                      If no AggregatedClassification is specified, a cluster is a
+                      match for Classifier instance, if all ResourceSelectors returns
+                      at least one match.
+                    items:
+                      description: ResourceSelector defines what resources are a match
+                      properties:
+                        group:
+                          description: Group of the resource deployed in the Cluster.
+                          type: string
+                        kind:
+                          description: Kind of the resource deployed in the Cluster.
+                          minLength: 1
+                          type: string
+                        labelFilters:
+                          description: LabelFilters allows to filter resources based
+                            on current labels.
+                          items:
+                            properties:
+                              key:
+                                description: Key is the label key
+                                type: string
+                              operation:
+                                description: Operation is the comparison operation
+                                enum:
+                                - Equal
+                                - Different
+                                type: string
+                              value:
+                                description: Value is the label value
+                                type: string
+                            required:
+                            - key
+                            - operation
+                            - value
+                            type: object
+                          type: array
+                        namespace:
+                          description: Namespace of the resource deployed in the  Cluster.
+                            Empty for resources scoped at cluster level.
+                          type: string
+                        script:
+                          description: Script contains a function "evaluate" in lua
+                            language. The function will be passed one of the object
+                            selected based on above criteria. Must return struct with
+                            field "matching" representing whether object is a match.
+                          type: string
+                        version:
+                          description: Version of the resource deployed in the Cluster.
+                          type: string
+                      required:
+                      - group
+                      - kind
+                      - version
+                      type: object
+                    type: array
+                required:
+                - resourceSelectors
+                type: object
               kubernetesVersionConstraints:
                 description: KubernetesVersionConstraints allows to classify based
                   on current kubernetes version
