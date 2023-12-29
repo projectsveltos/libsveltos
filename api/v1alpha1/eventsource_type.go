@@ -28,36 +28,6 @@ const (
 	EventSourceKind = "EventSource"
 )
 
-// ResourceSelector defines what resources are a match
-type ResourceSelector struct {
-	// Group of the resource deployed in the Cluster.
-	Group string `json:"group"`
-
-	// Version of the resource deployed in the Cluster.
-	Version string `json:"version"`
-
-	// Kind of the resource deployed in the Cluster.
-	// +kubebuilder:validation:MinLength=1
-	Kind string `json:"kind"`
-
-	// LabelFilters allows to filter resources based on current labels.
-	// +optional
-	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
-
-	// Namespace of the resource deployed in the  Cluster.
-	// Empty for resources scoped at cluster level.
-	// +optional
-	Namespace string `json:"namespace,omitempty"`
-
-	// Script contains a function "evaluate" in lua language.
-	// The function will be passed one of the object selected based on
-	// above criteria.
-	// Must return struct with field "matching" representing whether
-	// object is a match.
-	// +optional
-	Script string `json:"script,omitempty"`
-}
-
 // EventSourceSpec defines the desired state of EventSource
 type EventSourceSpec struct {
 	// ResourceSelectors identifies what resources to select
@@ -73,7 +43,9 @@ type EventSourceSpec struct {
 	// on the resources, looking at all resources together.
 	// This can be useful for more sophisticated tasks, such as identifying resources
 	// that are related to each other or that have similar properties.
-	// The Lua function must return a slice of matching resurces and a message.
+	// The Lua function must return a struct with:
+	// - "resources" field: slice of matching resorces;
+	// - "message" field: (optional) message.
 	AggregatedSelection string `json:"aggregatedSelection,omitempty"`
 
 	// CollectResources indicates whether matching resources need

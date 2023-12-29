@@ -134,3 +134,33 @@ type LabelFilter struct {
 	// Value is the label value
 	Value string `json:"value"`
 }
+
+// ResourceSelector defines what resources are a match
+type ResourceSelector struct {
+	// Group of the resource deployed in the Cluster.
+	Group string `json:"group"`
+
+	// Version of the resource deployed in the Cluster.
+	Version string `json:"version"`
+
+	// Kind of the resource deployed in the Cluster.
+	// +kubebuilder:validation:MinLength=1
+	Kind string `json:"kind"`
+
+	// LabelFilters allows to filter resources based on current labels.
+	// +optional
+	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
+
+	// Namespace of the resource deployed in the  Cluster.
+	// Empty for resources scoped at cluster level.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// Evaluate contains a function "evaluate" in lua language.
+	// The function will be passed one of the object selected based on
+	// above criteria.
+	// Must return struct with field "matching" representing whether
+	// object is a match and an optional "message" field.
+	// +optional
+	Evaluate string `json:"evaluate,omitempty"`
+}
