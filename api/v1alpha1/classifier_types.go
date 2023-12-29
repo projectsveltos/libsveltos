@@ -86,6 +86,7 @@ type DeployedResourceConstraint struct {
 	// The Lua function must return a struct with:
 	// - "matching" field: boolean indicating whether cluster is a match;
 	// - "message" field: (optional) message.
+	// +optional
 	AggregatedClassification string `json:"aggregatedClassification,omitempty"`
 }
 
@@ -113,9 +114,11 @@ type KubernetesVersionConstraint struct {
 // ClassifierSpec defines the desired state of Classifier
 type ClassifierSpec struct {
 	// DeployedResourceConstraint allows to classify based on current deployed resources
-	DeployedResourceConstraint DeployedResourceConstraint `json:"deployedResourceConstraint,omitempty"`
+	// +optional
+	DeployedResourceConstraint *DeployedResourceConstraint `json:"deployedResourceConstraint,omitempty"`
 
 	// KubernetesVersionConstraints allows to classify based on current kubernetes version
+	// +optional
 	KubernetesVersionConstraints []KubernetesVersionConstraint `json:"kubernetesVersionConstraints,omitempty"`
 
 	// ClassifierLabels is set of labels, key,value pair, that will be added to each
