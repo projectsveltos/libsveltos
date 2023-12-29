@@ -54,17 +54,18 @@ spec:
             description: EventSourceSpec defines the desired state of EventSource
             properties:
               aggregatedSelection:
-                description: This field is optional and can be used to specify a Lua
-                  function that will be used to further select a subset of the resources
-                  that have already been selected using the ResourceSelector field.
-                  The function will receive the array of resources selected by ResourceSelectors.
-                  If this field is not specified, all resources selected by the ResourceSelector
-                  field will be considered. This field allows to perform more complex
-                  filtering or selection operations on the resources, looking at all
-                  resources together. This can be useful for more sophisticated tasks,
-                  such as identifying resources that are related to each other or
-                  that have similar properties. The Lua function must return a slice
-                  of matching resurces and a message.
+                description: 'This field is optional and can be used to specify a
+                  Lua function that will be used to further select a subset of the
+                  resources that have already been selected using the ResourceSelector
+                  field. The function will receive the array of resources selected
+                  by ResourceSelectors. If this field is not specified, all resources
+                  selected by the ResourceSelector field will be considered. This
+                  field allows to perform more complex filtering or selection operations
+                  on the resources, looking at all resources together. This can be
+                  useful for more sophisticated tasks, such as identifying resources
+                  that are related to each other or that have similar properties.
+                  The Lua function must return a struct with: - "resources" field:
+                  slice of matching resorces; - "message" field: (optional) message.'
                 type: string
               collectResources:
                 default: false
@@ -76,6 +77,13 @@ spec:
                 items:
                   description: ResourceSelector defines what resources are a match
                   properties:
+                    evaluate:
+                      description: Evaluate contains a function "evaluate" in lua
+                        language. The function will be passed one of the object selected
+                        based on above criteria. Must return struct with field "matching"
+                        representing whether object is a match and an optional "message"
+                        field.
+                      type: string
                     group:
                       description: Group of the resource deployed in the Cluster.
                       type: string
@@ -109,12 +117,6 @@ spec:
                     namespace:
                       description: Namespace of the resource deployed in the  Cluster.
                         Empty for resources scoped at cluster level.
-                      type: string
-                    script:
-                      description: Script contains a function "evaluate" in lua language.
-                        The function will be passed one of the object selected based
-                        on above criteria. Must return struct with field "matching"
-                        representing whether object is a match.
                       type: string
                     version:
                       description: Version of the resource deployed in the Cluster.

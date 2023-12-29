@@ -83,8 +83,9 @@ type DeployedResourceConstraint struct {
 	// at all resources together.
 	// This can be useful for more sophisticated tasks, such as identifying resources
 	// that are related to each other or that have similar properties.
-	// The Lua function must return a boolean indicating wther Cluster is a match and
-	// a message.
+	// The Lua function must return a struct with:
+	// - "matching" field: boolean indicating whether cluster is a match;
+	// - "message" field: (optional) message.
 	AggregatedClassification string `json:"aggregatedClassification,omitempty"`
 }
 
