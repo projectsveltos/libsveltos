@@ -30,23 +30,29 @@ const (
 
 // HealthCheckSpec defines the desired state of HealthCheck
 type HealthCheckSpec struct {
-	// ResourceSelectors identifies what resources to select
-	ResourceSelectors []ResourceSelector `json:"resourceSelectors"`
+	// Group of the resource deployed in the Cluster.
+	Group string `json:"group"`
 
-	// This field is optional and can be used to specify a Lua function
-	// that will be used to further analyze a subset of the resources that
-	// have already been selected using the ResourceSelector field.
-	// The function will receive the array of resources selected by ResourceSelectors.
-	// If this field is not specified, all resources selected by the ResourceSelector
-	// field will be considered.
-	// This field allows to perform more complex analysys  on the resources, looking
-	// at all resources together.
-	// This can be useful for more sophisticated tasks, such as identifying resources
-	// that are related to each other or that have similar properties.
-	// The Lua function must return a struct with:
-	// - "resources" field: slice of resorces;
-	// - "message" field: (optional) message.
-	AggregatedAnalysis string `json:"aggregatedAnalysis,omitempty"`
+	// Version of the resource deployed in the Cluster.
+	Version string `json:"version"`
+
+	// Kind of the resource deployed in the Cluster.
+	// +kubebuilder:validation:MinLength=1
+	Kind string `json:"kind"`
+
+	// LabelFilters allows to filter resources based on current labels.
+	// +optional
+	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
+
+	// Namespace of the resource deployed in the  Cluster.
+	// Empty for resources scoped at cluster level.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// Script is a text containing a lua script.
+	// Must return a struct with field "status"
+	// set to one of the possible value of HealthStatus.
+	Script string `json:"script,omitempty"`
 
 	// CollectResources indicates whether matching resources need
 	// to be collected and added to EventReport.
