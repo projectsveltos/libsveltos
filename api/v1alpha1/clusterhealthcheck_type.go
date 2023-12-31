@@ -47,6 +47,14 @@ const (
 	WebexRoomID = "WEBEX_ROOM_ID"
 )
 
+// Discord constant
+// To have Sveltos sends a Discord notification, create a Secret of type "addons.projectsveltos.io/cluster-profile"
+// In the data section set both discord token and discord server ID
+const (
+	DiscordToken    = "DISCORD_TOKEN"
+	DiscordServerID = "DISCORD_SERVER_ID"
+)
+
 // ConditionSeverity expresses the severity of a Condition Type failing.
 type ConditionSeverity string
 
@@ -140,7 +148,7 @@ type LivenessCheck struct {
 }
 
 // NotificationType specifies different type of notifications
-// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex
+// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex;Discord
 type NotificationType string
 
 const (
@@ -152,6 +160,9 @@ const (
 
 	// NotificationTypeWebex refers to generating a Webex message
 	NotificationTypeWebex = NotificationType("Webex")
+
+	// NotificationTypeDiscord refers to generating a Discord message
+	NotificationTypeDiscord = NotificationType("Discord")
 )
 
 type Notification struct {
