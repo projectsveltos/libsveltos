@@ -170,6 +170,7 @@ spec:
                       - KubernetesEvent
                       - Slack
                       - Webex
+                      - Discord
                       type: string
                   required:
                   - name
