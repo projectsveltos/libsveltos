@@ -51,8 +51,8 @@ const (
 // To have Sveltos sends a Discord notification, create a Secret of type "addons.projectsveltos.io/cluster-profile"
 // In the data section set both discord token and discord server ID
 const (
-	DiscordToken    = "DISCORD_TOKEN"
-	DiscordServerID = "DISCORD_SERVER_ID"
+	DiscordToken     = "DISCORD_TOKEN"
+	DiscordChannelID = "DISCORD_CHANNEL_ID"
 )
 
 // ConditionSeverity expresses the severity of a Condition Type failing.
