@@ -25,7 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -135,12 +135,14 @@ var _ = Describe("Cluster utils", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		data, err := clusterproxy.GetSecretData(context.TODO(), c, cluster.Namespace, cluster.Name,
-			"", "", libsveltosv1alpha1.ClusterTypeCapi, klogr.New())
+			"", "", libsveltosv1alpha1.ClusterTypeCapi,
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(data).To(Equal(randomData))
 
 		data, err = clusterproxy.GetSecretData(context.TODO(), c, sveltosCluster.Namespace, sveltosCluster.Name,
-			"", "", libsveltosv1alpha1.ClusterTypeSveltos, klogr.New())
+			"", "", libsveltosv1alpha1.ClusterTypeSveltos,
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(data).To(Equal(randomData))
 	})
@@ -170,9 +172,19 @@ var _ = Describe("Cluster utils", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		matches, err := clusterproxy.GetListOfClusters(context.TODO(), c, klogr.New())
+		matches, err := clusterproxy.GetListOfClusters(context.TODO(), c, "",
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(2))
+
+		matches, err = clusterproxy.GetListOfClusters(context.TODO(), c, cluster1.Namespace,
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(corev1.ObjectReference{
+			Namespace: cluster1.Namespace, Name: cluster1.Name,
+			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+		}))
 	})
 
 	It("GetListOfClustersForShardKey returns all existing Clusters with shard annotation set to provided key", func() {
@@ -216,7 +228,8 @@ var _ = Describe("Cluster utils", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		matches, err := clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, shardKey, klogr.New())
+		matches, err := clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, "", shardKey,
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
@@ -224,11 +237,21 @@ var _ = Describe("Cluster utils", func() {
 			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
 		}))
 
-		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, "", klogr.New())
+		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, "", "",
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster3.Namespace, Name: cluster3.Name,
+			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+		}))
+
+		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, cluster1.Namespace, shardKey,
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(corev1.ObjectReference{
+			Namespace: cluster1.Namespace, Name: cluster1.Name,
 			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
 		}))
 	})
@@ -268,7 +291,8 @@ var _ = Describe("Cluster utils", func() {
 
 		parsedSelector, _ := labels.Parse(string(selector))
 
-		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector, klogr.New())
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector, "",
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(2))
 		Expect(matches).To(ContainElement(
@@ -277,5 +301,14 @@ var _ = Describe("Cluster utils", func() {
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
 				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
+
+		matches, err = clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector,
+			sveltosCluster.Namespace, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
+				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
+
 	})
 })
