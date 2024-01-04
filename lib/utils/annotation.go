@@ -5,10 +5,10 @@ import (
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
     "k8s.io/client-go/kubernetes"
     "k8s.io/client-go/tools/clientcmd"
-    "utils"
+    "github.com/projectsveltos/libsveltos/lib/utils"
 )
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+// This annotation is added on referenced ConfigMap/Secret to indicate their content is a template
 
 const TemplateAnnotation = "projectsveltos.io/template"
 
@@ -21,16 +21,4 @@ func IsTemplate(obj metav1.Object) bool {
     return false
 }
 
-func main() {
-    // Create a Kubernetes client
-    config, _ := clientcmd.BuildConfigFromFlags("", "")
-    clientset, _ := kubernetes.NewForConfig(config)
 
-    // Get a ConfigMap by name
-    cm, _ := clientset.CoreV1().ConfigMaps("default").Get("my-configmap", metav1.GetOptions{})
-
-    // Check if the ConfigMap is a template
-    isTemplate := utils.IsTemplate(cm)
-
-    fmt.Println("Is the ConfigMap a template?", isTemplate)
-}
