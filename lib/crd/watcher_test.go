@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 
 	"github.com/projectsveltos/libsveltos/lib/crd"
 	"github.com/projectsveltos/libsveltos/lib/utils"
@@ -85,7 +85,7 @@ var _ = Describe("WatchCustomResourceDefinition", func() {
 		scheme, err = setupScheme()
 		Expect(err).ToNot(HaveOccurred())
 
-		logger := klogr.New()
+		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
 
 		watcherCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()

@@ -1,5 +1,5 @@
 /*
-Copyright 2022. projectsveltos.io. All rights reserved.
+Copyright 2022-23. projectsveltos.io. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,18 +58,6 @@ func GetClusterInfo(clusterNamespace, clusterName string) string {
 	return fmt.Sprintf("%s--%s", clusterNamespace, clusterName)
 }
 
-// Operation specifies
-// +kubebuilder:validation:Enum:=Equal;Different
-type Operation string
-
-const (
-	// OperationEqual will verify equality. Corresponds to ==
-	OperationEqual = Operation("Equal")
-
-	// OperationDifferent will verify difference. Corresponds to !=
-	OperationDifferent = Operation("Different")
-)
-
 type ClassifierLabel struct {
 	// Key is the label key
 	Key string `json:"key"`
@@ -78,66 +66,28 @@ type ClassifierLabel struct {
 	Value string `json:"value"`
 }
 
-type LabelFilter struct {
-	// Key is the label key
-	Key string `json:"key"`
-
-	// Operation is the comparison operation
-	Operation Operation `json:"operation"`
-
-	// Value is the label value
-	Value string `json:"value"`
-}
-
-type FieldFilter struct {
-	// Field is the field
-	Field string `json:"field"`
-
-	// Operation is the comparison operation
-	Operation Operation `json:"operation"`
-
-	// Value is the field value
-	Value string `json:"value"`
-}
-
 type DeployedResourceConstraint struct {
-	// Namespace of the resource deployed in the  Cluster.
-	// Empty for resources scoped at cluster level.
+	// ResourceSelectors identifies what resources to select
+	// If no AggregatedClassification is specified, a cluster is
+	// a match for Classifier instance, if all ResourceSelectors returns at
+	// least one match.
+	ResourceSelectors []ResourceSelector `json:"resourceSelectors"`
+
+	// AggregatedClassification is optional and can be used to specify a Lua function
+	// that will be used to further detect whether the subset of the resources
+	// selected using the ResourceSelector field are a match for this Classifier.
+	// The function will receive the array of resources selected by ResourceSelectors.
+	// If this field is not specified, a cluster is a match for Classifier instance,
+	// if all ResourceSelectors returns at least one match.
+	// This field allows to perform more complex evaluation  on the resources, looking
+	// at all resources together.
+	// This can be useful for more sophisticated tasks, such as identifying resources
+	// that are related to each other or that have similar properties.
+	// The Lua function must return a struct with:
+	// - "matching" field: boolean indicating whether cluster is a match;
+	// - "message" field: (optional) message.
 	// +optional
-	Namespace string `json:"namespace,omitempty"`
-
-	// Group of the resource deployed in the Cluster.
-	Group string `json:"group"`
-
-	// Version of the resource deployed in the Cluster.
-	Version string `json:"version"`
-
-	// Kind of the resource deployed in the Cluster.
-	// +kubebuilder:validation:MinLength=1
-	Kind string `json:"kind"`
-
-	// LabelFilters allows to filter resources based on current labels.
-	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
-
-	// FieldFilters allows to filter resources based on current field values.
-	// Internally uses FieldSelector so only fields supported by FieldSelector can
-	// be used.
-	// Current list: https://github.com/kubernetes/kubernetes/blob/9d577d8a29893062dfbd669997396dbd01ab0e47/pkg/apis/core/v1/conversion.go#L33
-	FieldFilters []FieldFilter `json:"fieldFilters,omitempty"`
-
-	// MinCount is the minimum number of resources to match
-	// +optional
-	MinCount *int `json:"minCount,omitempty"`
-
-	// MaxCount is the maximun number of resources to match
-	// +optional
-	MaxCount *int `json:"maxCount,omitempty"`
-
-	// Script is a text containing a lua script.
-	// Must return struct with field "matching"
-	// representing whether object is a match.
-	// +optional
-	Script string `json:"script,omitempty"`
+	AggregatedClassification string `json:"aggregatedClassification,omitempty"`
 }
 
 type KubernetesComparison string
@@ -163,10 +113,12 @@ type KubernetesVersionConstraint struct {
 
 // ClassifierSpec defines the desired state of Classifier
 type ClassifierSpec struct {
-	// DeployedResourceConstraints allows to classify based on current deployed resources
-	DeployedResourceConstraints []DeployedResourceConstraint `json:"deployedResourceConstraints,omitempty"`
+	// DeployedResourceConstraint allows to classify based on current deployed resources
+	// +optional
+	DeployedResourceConstraint *DeployedResourceConstraint `json:"deployedResourceConstraint,omitempty"`
 
 	// KubernetesVersionConstraints allows to classify based on current kubernetes version
+	// +optional
 	KubernetesVersionConstraints []KubernetesVersionConstraint `json:"kubernetesVersionConstraints,omitempty"`
 
 	// ClassifierLabels is set of labels, key,value pair, that will be added to each
