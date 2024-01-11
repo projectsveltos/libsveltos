@@ -18,6 +18,7 @@ package clusterproxy
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync/atomic"
 
@@ -43,7 +44,8 @@ import (
 )
 
 const (
-	kubernetesAdmin = "kubernetes-admin"
+	kubernetesAdmin    = "kubernetes-admin"
+	nilSelectorMessage = "selector is nil"
 )
 
 var (
@@ -386,6 +388,11 @@ func GetListOfClustersForShardKey(ctx context.Context, c client.Client, namespac
 func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labels.Selector,
 	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
+	if selector == nil {
+		logger.V(logs.LogInfo).Info(nilSelectorMessage)
+		return nil, fmt.Errorf("%s", nilSelectorMessage)
+	}
+
 	present, err := isCAPIPresent(ctx, c, logger)
 	if err != nil {
 		logger.Error(err, "failed to verify if ClusterAPI Cluster CRD is installed")
@@ -434,6 +441,11 @@ func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labe
 func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector labels.Selector,
 	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
+	if selector == nil {
+		logger.V(logs.LogInfo).Info(nilSelectorMessage)
+		return nil, fmt.Errorf("%s", nilSelectorMessage)
+	}
+
 	listOptions := []client.ListOption{}
 	if namespace != "" {
 		listOptions = append(listOptions, client.InNamespace(namespace))
@@ -472,6 +484,11 @@ func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector l
 // GetMatchingClusters returns all Sveltos/CAPI Clusters currently matching selector
 func GetMatchingClusters(ctx context.Context, c client.Client, selector labels.Selector,
 	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
+
+	if selector == nil {
+		logger.V(logs.LogInfo).Info(nilSelectorMessage)
+		return nil, fmt.Errorf("%s", nilSelectorMessage)
+	}
 
 	matching := make([]corev1.ObjectReference, 0)
 
