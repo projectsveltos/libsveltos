@@ -66,10 +66,6 @@ func GetEventReportCRDYAML() []byte {
 	return EventReportCRD
 }
 
-func GetAddonComplianceCRDYAML() []byte {
-	return AddonComplianceCRD
-}
-
 func GetReloaderCRDYAML() []byte {
 	return ReloaderCRD
 }
