@@ -56,54 +56,81 @@ spec:
               collectResources:
                 default: false
                 description: CollectResources indicates whether matching resources
-                  need to be collected and added to EventReport.
+                  need to be collected and added to HealthReport.
                 type: boolean
-              group:
-                description: Group of the resource deployed in the Cluster.
-                type: string
-              kind:
-                description: Kind of the resource deployed in the Cluster.
+              evaluateHealth:
+                description: 'The EvaluateHealth field specifies a Lua function responsible
+                  for evaluating the health of the resources selected by resourceSelectors.
+                  This function can assess the health of each resource independently
+                  or consider inter-resource relationships. The function must be named
+                  *evaluate* and can access all objects identified by resourceSelectors
+                  using the *resources* variable. It should return an array of structured
+                  instances, each containing the following fields: - resource: The
+                  resource being evaluated - healthStatus: The health status of the
+                  resource, which can be one of "Healthy", "Progressing", "Degraded",
+                  or "Suspended" - message: An optional message providing additional
+                  information about the health status'
                 minLength: 1
                 type: string
-              labelFilters:
-                description: LabelFilters allows to filter resources based on current
-                  labels.
+              resourceSelectors:
+                description: ResourceSelectors identifies what resources to select
+                  to evaluate health
                 items:
+                  description: ResourceSelector defines what resources are a match
                   properties:
-                    key:
-                      description: Key is the label key
+                    evaluate:
+                      description: Evaluate contains a function "evaluate" in lua
+                        language. The function will be passed one of the object selected
+                        based on above criteria. Must return struct with field "matching"
+                        representing whether object is a match and an optional "message"
+                        field.
                       type: string
-                    operation:
-                      description: Operation is the comparison operation
-                      enum:
-                      - Equal
-                      - Different
+                    group:
+                      description: Group of the resource deployed in the Cluster.
                       type: string
-                    value:
-                      description: Value is the label value
+                    kind:
+                      description: Kind of the resource deployed in the Cluster.
+                      minLength: 1
+                      type: string
+                    labelFilters:
+                      description: LabelFilters allows to filter resources based on
+                        current labels.
+                      items:
+                        properties:
+                          key:
+                            description: Key is the label key
+                            type: string
+                          operation:
+                            description: Operation is the comparison operation
+                            enum:
+                            - Equal
+                            - Different
+                            type: string
+                          value:
+                            description: Value is the label value
+                            type: string
+                        required:
+                        - key
+                        - operation
+                        - value
+                        type: object
+                      type: array
+                    namespace:
+                      description: Namespace of the resource deployed in the  Cluster.
+                        Empty for resources scoped at cluster level.
+                      type: string
+                    version:
+                      description: Version of the resource deployed in the Cluster.
                       type: string
                   required:
-                  - key
-                  - operation
-                  - value
+                  - group
+                  - kind
+                  - version
                   type: object
                 type: array
-              namespace:
-                description: Namespace of the resource deployed in the  Cluster. Empty
-                  for resources scoped at cluster level.
-                type: string
-              script:
-                description: Script is a text containing a lua script. Must return
-                  a struct with field "status" set to one of the possible value of
-                  HealthStatus.
-                type: string
-              version:
-                description: Version of the resource deployed in the Cluster.
-                type: string
             required:
-            - group
-            - kind
-            - version
+            - evaluateHealth
+            - resourceSelectors
             type: object
         type: object
     served: true

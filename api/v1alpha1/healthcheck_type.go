@@ -30,32 +30,22 @@ const (
 
 // HealthCheckSpec defines the desired state of HealthCheck
 type HealthCheckSpec struct {
-	// Group of the resource deployed in the Cluster.
-	Group string `json:"group"`
+	// ResourceSelectors identifies what resources to select to evaluate health
+	ResourceSelectors []ResourceSelector `json:"resourceSelectors"`
 
-	// Version of the resource deployed in the Cluster.
-	Version string `json:"version"`
-
-	// Kind of the resource deployed in the Cluster.
+	// The EvaluateHealth field specifies a Lua function responsible for evaluating the
+	// health of the resources selected by resourceSelectors.
+	// This function can assess the health of each resource independently or consider inter-resource relationships.
+	// The function must be named *evaluate* and can access all objects identified by resourceSelectors using
+	// the *resources* variable. It should return an array of structured instances, each containing the following fields:
+	// - resource: The resource being evaluated
+	// - healthStatus: The health status of the resource, which can be one of "Healthy", "Progressing", "Degraded", or "Suspended"
+	// - message: An optional message providing additional information about the health status
 	// +kubebuilder:validation:MinLength=1
-	Kind string `json:"kind"`
-
-	// LabelFilters allows to filter resources based on current labels.
-	// +optional
-	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
-
-	// Namespace of the resource deployed in the  Cluster.
-	// Empty for resources scoped at cluster level.
-	// +optional
-	Namespace string `json:"namespace,omitempty"`
-
-	// Script is a text containing a lua script.
-	// Must return a struct with field "status"
-	// set to one of the possible value of HealthStatus.
-	Script string `json:"script,omitempty"`
+	EvaluateHealth string `json:"evaluateHealth"`
 
 	// CollectResources indicates whether matching resources need
-	// to be collected and added to EventReport.
+	// to be collected and added to HealthReport.
 	// +kubebuilder:default:=false
 	// +optional
 	CollectResources bool `json:"collectResources,omitempty"`
