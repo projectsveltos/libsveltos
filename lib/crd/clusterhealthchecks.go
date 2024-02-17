@@ -171,6 +171,7 @@ spec:
                       - Slack
                       - Webex
                       - Discord
+                      - Teams
                       type: string
                   required:
                   - name
