@@ -55,6 +55,13 @@ const (
 	DiscordChannelID = "DISCORD_CHANNEL_ID"
 )
 
+// Teams constant
+// To have Sveltos sends a Microsoft Teams notification, create a Secret of type "addons.projectsveltos.io/cluster-profile"
+// In the data section set the Webhook URL
+const (
+	TeamsWebhookURL = "TEAMS_WEBHOOK_URL"
+)
+
 // ConditionSeverity expresses the severity of a Condition Type failing.
 type ConditionSeverity string
 
@@ -148,7 +155,7 @@ type LivenessCheck struct {
 }
 
 // NotificationType specifies different type of notifications
-// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex;Discord
+// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex;Discord;Teams
 type NotificationType string
 
 const (
@@ -163,6 +170,9 @@ const (
 
 	// NotificationTypeDiscord refers to generating a Discord message
 	NotificationTypeDiscord = NotificationType("Discord")
+
+	// NotificationTypeDiscord refers to generating a Teams message
+	NotificationTypeTeams = NotificationType("Teams")
 )
 
 type Notification struct {
