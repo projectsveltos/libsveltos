@@ -131,4 +131,9 @@ func main() {
 	reloaderReportFile := "../../config/crd/bases/lib.projectsveltos.io_reloaderreports.yaml"
 	generate(reloaderReportFile, "reloaderreports", "ReloaderReport")
 
+	clusterSetFile := "../../config/crd/bases/lib.projectsveltos.io_clustersets.yaml"
+	generate(clusterSetFile, "clustersets", "ClusterSet")
+
+	setFile := "../../config/crd/bases/lib.projectsveltos.io_sets.yaml"
+	generate(setFile, "sets", "Set")
 }
