@@ -24,9 +24,9 @@ import (
 type Status struct {
 	// MatchingClusterRefs reference all the clusters currently matching
 	// ClusterSet/Set ClusterSelector
-	MatchingClusterRefs []corev1.ObjectReference `json:"matchingClusters,omitempty"`
+	MatchingClusterRefs []corev1.ObjectReference `json:"matchingClusterRefs,omitempty"`
 
 	// SelectedClusters reference all the cluster currently selected among
 	// all the ones matching
-	SelectedClusters []corev1.ObjectReference `json:"selectedClusters,omitempty"`
+	SelectedClusterRefs []corev1.ObjectReference `json:"selectedClusterRefs,omitempty"`
 }
