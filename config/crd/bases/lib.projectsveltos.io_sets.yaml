@@ -44,7 +44,7 @@ spec:
           status:
             description: Status defines the observed state of ClusterSet/Set
             properties:
-              matchingClusters:
+              matchingClusterRefs:
                 description: MatchingClusterRefs reference all the clusters currently
                   matching ClusterSet/Set ClusterSelector
                 items:
@@ -109,7 +109,7 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
-              selectedClusters:
+              selectedClusterRefs:
                 description: SelectedClusters reference all the cluster currently
                   selected among all the ones matching
                 items:

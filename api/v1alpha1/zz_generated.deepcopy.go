@@ -1815,8 +1815,8 @@ func (in *Status) DeepCopyInto(out *Status) {
 		*out = make([]v1.ObjectReference, len(*in))
 		copy(*out, *in)
 	}
-	if in.SelectedClusters != nil {
-		in, out := &in.SelectedClusters, &out.SelectedClusters
+	if in.SelectedClusterRefs != nil {
+		in, out := &in.SelectedClusterRefs, &out.SelectedClusterRefs
 		*out = make([]v1.ObjectReference, len(*in))
 		copy(*out, *in)
 	}
