@@ -16,10 +16,18 @@ limitations under the License.
 
 package v1alpha1
 
+import (
+	corev1 "k8s.io/api/core/v1"
+)
+
 type Spec struct {
 	// ClusterSelector identifies clusters to associate to.
 	// +optional
 	ClusterSelector Selector `json:"clusterSelector,omitempty"`
+
+	// ClusterRefs identifies clusters to associate to.
+	// +optional
+	ClusterRefs []corev1.ObjectReference `json:"clusterRefs,omitempty"`
 
 	// MaxReplicas specifies the maximum number of clusters to be selected
 	// from the pool matching the clusterSelector.

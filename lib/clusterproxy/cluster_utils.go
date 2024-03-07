@@ -129,40 +129,6 @@ func IsClusterPaused(ctx context.Context, c client.Client,
 	return isCAPIClusterPaused(ctx, c, clusterNamespace, clusterName)
 }
 
-// isCAPIClusterReady returns true if CAPI Cluster is ready
-func isCAPIClusterReady(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName string) (bool, error) {
-
-	cluster, err := getCAPICluster(ctx, c, clusterNamespace, clusterName)
-	if err != nil {
-		return false, err
-	}
-
-	return cluster.Status.ControlPlaneReady, nil
-}
-
-// isSveltosClusterReady returns true if Cluster is ready
-func isSveltosClusterReady(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName string) (bool, error) {
-
-	cluster, err := getSveltosCluster(ctx, c, clusterNamespace, clusterName)
-	if err != nil {
-		return false, err
-	}
-
-	return cluster.Status.Ready, nil
-}
-
-// IsClusterReady returns true if cluster is ready
-func IsClusterReady(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName string, clusterType libsveltosv1alpha1.ClusterType) (bool, error) {
-
-	if clusterType == libsveltosv1alpha1.ClusterTypeSveltos {
-		return isSveltosClusterReady(ctx, c, clusterNamespace, clusterName)
-	}
-	return isCAPIClusterReady(ctx, c, clusterNamespace, clusterName)
-}
-
 func getKubernetesRestConfigForAdmin(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
 	clusterType libsveltosv1alpha1.ClusterType, logger logr.Logger) (*rest.Config, error) {
