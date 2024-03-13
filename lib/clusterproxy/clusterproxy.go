@@ -210,7 +210,11 @@ func isSveltosClusterReadyToBeConfigured(
 		return false, err
 	}
 
-	return sveltosCluster.Status.Ready, nil
+	return isSveltosClusterStatusReady(sveltosCluster), nil
+}
+
+func isSveltosClusterStatusReady(sveltosCluster *libsveltosv1alpha1.SveltosCluster) bool {
+	return sveltosCluster.Status.Ready
 }
 
 // isCAPIClusterReadyToBeConfigured checks whether Cluster:
@@ -228,16 +232,20 @@ func isCAPIClusterReadyToBeConfigured(
 		return false, err
 	}
 
+	return isCAPIControlPlaneReady(capiCluster), nil
+}
+
+func isCAPIControlPlaneReady(capiCluster *clusterv1.Cluster) bool {
 	for i := range capiCluster.Status.Conditions {
 		c := capiCluster.Status.Conditions[i]
 		if c.Type == clusterv1.ControlPlaneInitializedCondition &&
 			c.Status == corev1.ConditionTrue {
 
-			return true, nil
+			return true
 		}
 	}
 
-	return capiCluster.Status.ControlPlaneReady, nil
+	return capiCluster.Status.ControlPlaneReady
 }
 
 // GetMachinesForCluster find all Machines for a given CAPI Cluster.

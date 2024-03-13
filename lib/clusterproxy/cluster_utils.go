@@ -424,6 +424,11 @@ func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labe
 			continue
 		}
 
+		if !isCAPIControlPlaneReady(cluster) {
+			// Only ready cluster can match
+			continue
+		}
+
 		addTypeInformationToObject(c.Scheme(), cluster)
 		if selector.Matches(labels.Set(cluster.Labels)) {
 			matching = append(matching, corev1.ObjectReference{
@@ -464,6 +469,11 @@ func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector l
 
 		if !cluster.DeletionTimestamp.IsZero() {
 			// Only existing cluster can match
+			continue
+		}
+
+		if !isSveltosClusterStatusReady(cluster) {
+			// Only ready cluster can match
 			continue
 		}
 
