@@ -52,6 +52,9 @@ var _ = Describe("Cluster utils", func() {
 			Spec: clusterv1.ClusterSpec{
 				Paused: true,
 			},
+			Status: clusterv1.ClusterStatus{
+				ControlPlaneReady: true,
+			},
 		}
 
 		sveltosCluster = &libsveltosv1alpha1.SveltosCluster{
@@ -61,6 +64,9 @@ var _ = Describe("Cluster utils", func() {
 			},
 			Spec: libsveltosv1alpha1.SveltosClusterSpec{
 				Paused: true,
+			},
+			Status: libsveltosv1alpha1.SveltosClusterStatus{
+				Ready: true,
 			},
 		}
 	})
@@ -270,12 +276,18 @@ var _ = Describe("Cluster utils", func() {
 				Namespace: randomString(),
 				Labels:    currentLabels,
 			},
+			Status: libsveltosv1alpha1.SveltosClusterStatus{
+				Ready: true,
+			},
 		}
 
 		nonMatchingSveltosCluster := &libsveltosv1alpha1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      randomString(),
 				Namespace: randomString(),
+			},
+			Status: libsveltosv1alpha1.SveltosClusterStatus{
+				Ready: true,
 			},
 		}
 
@@ -287,7 +299,7 @@ var _ = Describe("Cluster utils", func() {
 			nonMatchingSveltosCluster,
 		}
 
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
 
 		parsedSelector, _ := labels.Parse(string(selector))
 
