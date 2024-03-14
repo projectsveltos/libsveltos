@@ -22,7 +22,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: resourcesummaries.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
@@ -39,14 +39,19 @@ spec:
         description: ResourceSummary is the Schema for the ResourceSummary API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -79,8 +84,9 @@ spec:
                             minLength: 1
                             type: string
                           namespace:
-                            description: Namespace of the resource deployed in the
-                              Cluster. Empty for resources scoped at cluster level.
+                            description: |-
+                              Namespace of the resource deployed in the Cluster.
+                              Empty for resources scoped at cluster level.
                             type: string
                           version:
                             description: Version of the resource deployed in the Cluster.
@@ -108,8 +114,9 @@ spec:
                   type: object
                 type: array
               kustomizeResources:
-                description: KustomizeResources deployed by ClusterSummary because
-                  of referenced KustomizationRef
+                description: |-
+                  KustomizeResources deployed by ClusterSummary because of referenced
+                  KustomizationRef
                 items:
                   properties:
                     group:
@@ -124,7 +131,8 @@ spec:
                       minLength: 1
                       type: string
                     namespace:
-                      description: Namespace of the resource deployed in the Cluster.
+                      description: |-
+                        Namespace of the resource deployed in the Cluster.
                         Empty for resources scoped at cluster level.
                       type: string
                     version:
@@ -154,7 +162,8 @@ spec:
                       minLength: 1
                       type: string
                     namespace:
-                      description: Namespace of the resource deployed in the Cluster.
+                      description: |-
+                        Namespace of the resource deployed in the Cluster.
                         Empty for resources scoped at cluster level.
                       type: string
                     version:
@@ -190,7 +199,8 @@ spec:
                       minLength: 1
                       type: string
                     namespace:
-                      description: Namespace of the resource deployed in the Cluster.
+                      description: |-
+                        Namespace of the resource deployed in the Cluster.
                         Empty for resources scoped at cluster level.
                       type: string
                     version:
@@ -226,7 +236,8 @@ spec:
                       minLength: 1
                       type: string
                     namespace:
-                      description: Namespace of the resource deployed in the Cluster.
+                      description: |-
+                        Namespace of the resource deployed in the Cluster.
                         Empty for resources scoped at cluster level.
                       type: string
                     version:
@@ -261,7 +272,8 @@ spec:
                       minLength: 1
                       type: string
                     namespace:
-                      description: Namespace of the resource deployed in the Cluster.
+                      description: |-
+                        Namespace of the resource deployed in the Cluster.
                         Empty for resources scoped at cluster level.
                       type: string
                     version:

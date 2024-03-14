@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: sveltosclusters.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
@@ -29,14 +29,19 @@ spec:
         description: SveltosCluster is the Schema for the SveltosCluster API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -44,23 +49,27 @@ spec:
             description: SveltosClusterSpec defines the desired state of SveltosCluster
             properties:
               kubeconfigName:
-                description: "KubeconfigName allows overriding the default Sveltos
-                  convention which expected a valid kubeconfig to be hosted in a secret
-                  with the pattern ${sveltosClusterName}-sveltos-kubeconfig. \n When
-                  a value is specified, the referenced Kubernetes Secret object must
-                  exist, and will be used to connect to the Kubernetes cluster."
+                description: |-
+                  KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig
+                  to be hosted in a secret with the pattern ${sveltosClusterName}-sveltos-kubeconfig.
+
+
+                  When a value is specified, the referenced Kubernetes Secret object must exist,
+                  and will be used to connect to the Kubernetes cluster.
                 type: string
               paused:
-                description: Paused can be used to prevent controllers from processing
-                  the SveltosCluster and all its associated objects.
+                description: |-
+                  Paused can be used to prevent controllers from processing the
+                  SveltosCluster and all its associated objects.
                 type: boolean
             type: object
           status:
             description: SveltosClusterStatus defines the status of SveltosCluster
             properties:
               failureMessage:
-                description: FailureMessage is a human consumable message explaining
-                  the misconfiguration
+                description: |-
+                  FailureMessage is a human consumable message explaining the
+                  misconfiguration
                 type: string
               ready:
                 description: Ready is the state of the cluster.

@@ -22,7 +22,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: classifierreports.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
@@ -39,37 +39,46 @@ spec:
         description: ClassifierReport is the Schema for the classifierreports API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
             properties:
               classifierName:
-                description: ClassifierName is the name of the Classifier instance
-                  this report is for.
+                description: |-
+                  ClassifierName is the name of the Classifier instance this report
+                  is for.
                 type: string
               clusterName:
-                description: ClusterName is the name of the Cluster this ClusterReport
+                description: |-
+                  ClusterName is the name of the Cluster this ClusterReport
                   is for.
                 type: string
               clusterNamespace:
-                description: ClusterNamespace is the namespace of the Cluster this
+                description: |-
+                  ClusterNamespace is the namespace of the Cluster this
                   ClusterReport is for.
                 type: string
               clusterType:
                 description: ClusterType is the type of Cluster
                 type: string
               match:
-                description: Match indicates whether Cluster is currently a match
-                  for the Classifier instance this report is for
+                description: |-
+                  Match indicates whether Cluster is currently a match for
+                  the Classifier instance this report is for
                 type: boolean
             required:
             - classifierName
