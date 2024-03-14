@@ -22,7 +22,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: eventsources.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
@@ -39,14 +39,19 @@ spec:
         description: EventSource is the Schema for the EventSource API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -54,23 +59,26 @@ spec:
             description: EventSourceSpec defines the desired state of EventSource
             properties:
               aggregatedSelection:
-                description: 'This field is optional and can be used to specify a
-                  Lua function that will be used to further select a subset of the
-                  resources that have already been selected using the ResourceSelector
-                  field. The function will receive the array of resources selected
-                  by ResourceSelectors. If this field is not specified, all resources
-                  selected by the ResourceSelector field will be considered. This
-                  field allows to perform more complex filtering or selection operations
-                  on the resources, looking at all resources together. This can be
-                  useful for more sophisticated tasks, such as identifying resources
+                description: |-
+                  This field is optional and can be used to specify a Lua function
+                  that will be used to further select a subset of the resources that
+                  have already been selected using the ResourceSelector field.
+                  The function will receive the array of resources selected by ResourceSelectors.
+                  If this field is not specified, all resources selected by the ResourceSelector
+                  field will be considered.
+                  This field allows to perform more complex filtering or selection operations
+                  on the resources, looking at all resources together.
+                  This can be useful for more sophisticated tasks, such as identifying resources
                   that are related to each other or that have similar properties.
-                  The Lua function must return a struct with: - "resources" field:
-                  slice of matching resorces; - "message" field: (optional) message.'
+                  The Lua function must return a struct with:
+                  - "resources" field: slice of matching resorces;
+                  - "message" field: (optional) message.
                 type: string
               collectResources:
                 default: false
-                description: CollectResources indicates whether matching resources
-                  need to be collected and added to EventReport.
+                description: |-
+                  CollectResources indicates whether matching resources need
+                  to be collected and added to EventReport.
                 type: boolean
               resourceSelectors:
                 description: ResourceSelectors identifies what resources to select
@@ -78,11 +86,12 @@ spec:
                   description: ResourceSelector defines what resources are a match
                   properties:
                     evaluate:
-                      description: Evaluate contains a function "evaluate" in lua
-                        language. The function will be passed one of the object selected
-                        based on above criteria. Must return struct with field "matching"
-                        representing whether object is a match and an optional "message"
-                        field.
+                      description: |-
+                        Evaluate contains a function "evaluate" in lua language.
+                        The function will be passed one of the object selected based on
+                        above criteria.
+                        Must return struct with field "matching" representing whether
+                        object is a match and an optional "message" field.
                       type: string
                     group:
                       description: Group of the resource deployed in the Cluster.
@@ -115,7 +124,8 @@ spec:
                         type: object
                       type: array
                     namespace:
-                      description: Namespace of the resource deployed in the  Cluster.
+                      description: |-
+                        Namespace of the resource deployed in the  Cluster.
                         Empty for resources scoped at cluster level.
                       type: string
                     version:
