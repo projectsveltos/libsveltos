@@ -52,6 +52,9 @@ var _ = Describe("Cluster utils", func() {
 			Spec: clusterv1.ClusterSpec{
 				Paused: true,
 			},
+			Status: clusterv1.ClusterStatus{
+				ControlPlaneReady: true,
+			},
 		}
 
 		sveltosCluster = &libsveltosv1alpha1.SveltosCluster{
@@ -61,6 +64,9 @@ var _ = Describe("Cluster utils", func() {
 			},
 			Spec: libsveltosv1alpha1.SveltosClusterSpec{
 				Paused: true,
+			},
+			Status: libsveltosv1alpha1.SveltosClusterStatus{
+				Ready: true,
 			},
 		}
 	})
@@ -98,52 +104,6 @@ var _ = Describe("Cluster utils", func() {
 		Expect(paused).To(BeFalse())
 
 		paused, err = clusterproxy.IsClusterPaused(context.TODO(), c, sveltosCluster.Namespace,
-			sveltosCluster.Name, libsveltosv1alpha1.ClusterTypeSveltos)
-		Expect(err).To(BeNil())
-		Expect(paused).To(BeFalse())
-	})
-
-	It(`IsClusterReady returns true when SveltosCluster.Status.Ready and 
-		Cluster.Status.ControlPlaneReady is set to true`, func() {
-		cluster.Status.ControlPlaneReady = true
-		sveltosCluster.Status.Ready = true
-
-		initObjects := []client.Object{
-			cluster, sveltosCluster,
-		}
-
-		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).
-			WithObjects(initObjects...).Build()
-
-		paused, err := clusterproxy.IsClusterReady(context.TODO(), c, cluster.Namespace,
-			cluster.Name, libsveltosv1alpha1.ClusterTypeCapi)
-		Expect(err).To(BeNil())
-		Expect(paused).To(BeTrue())
-
-		paused, err = clusterproxy.IsClusterReady(context.TODO(), c, sveltosCluster.Namespace,
-			sveltosCluster.Name, libsveltosv1alpha1.ClusterTypeSveltos)
-		Expect(err).To(BeNil())
-		Expect(paused).To(BeTrue())
-	})
-
-	It(`IsClusterReady returns false when SveltosCluster.Status.Ready and 
-		Cluster.Status.ControlPlaneReady is set to false`, func() {
-		cluster.Status.ControlPlaneReady = false
-		sveltosCluster.Status.Ready = false
-
-		initObjects := []client.Object{
-			cluster, sveltosCluster,
-		}
-
-		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).
-			WithObjects(initObjects...).Build()
-
-		paused, err := clusterproxy.IsClusterReady(context.TODO(), c, cluster.Namespace,
-			cluster.Name, libsveltosv1alpha1.ClusterTypeCapi)
-		Expect(err).To(BeNil())
-		Expect(paused).To(BeFalse())
-
-		paused, err = clusterproxy.IsClusterReady(context.TODO(), c, sveltosCluster.Namespace,
 			sveltosCluster.Name, libsveltosv1alpha1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(paused).To(BeFalse())
@@ -316,12 +276,18 @@ var _ = Describe("Cluster utils", func() {
 				Namespace: randomString(),
 				Labels:    currentLabels,
 			},
+			Status: libsveltosv1alpha1.SveltosClusterStatus{
+				Ready: true,
+			},
 		}
 
 		nonMatchingSveltosCluster := &libsveltosv1alpha1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      randomString(),
 				Namespace: randomString(),
+			},
+			Status: libsveltosv1alpha1.SveltosClusterStatus{
+				Ready: true,
 			},
 		}
 
@@ -333,7 +299,7 @@ var _ = Describe("Cluster utils", func() {
 			nonMatchingSveltosCluster,
 		}
 
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
 
 		parsedSelector, _ := labels.Parse(string(selector))
 

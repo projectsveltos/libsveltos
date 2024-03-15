@@ -165,4 +165,24 @@ var _ = Describe("CRD", func() {
 
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
+
+	It("Gets the ClusterSet CustomResourceDefinition", func() {
+		yaml := crd.GetClusterSetCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_clustersets.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the Set CustomResourceDefinition", func() {
+		yaml := crd.GetSetCRDYAML()
+
+		filename := "../../config/crd/bases/lib.projectsveltos.io_sets.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
 })

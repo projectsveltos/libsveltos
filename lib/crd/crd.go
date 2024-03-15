@@ -73,3 +73,11 @@ func GetReloaderCRDYAML() []byte {
 func GetReloaderReportCRDYAML() []byte {
 	return ReloaderReportCRD
 }
+
+func GetClusterSetCRDYAML() []byte {
+	return ClusterSetCRD
+}
+
+func GetSetCRDYAML() []byte {
+	return SetCRD
+}

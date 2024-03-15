@@ -22,7 +22,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: classifiers.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
@@ -39,14 +39,19 @@ spec:
         description: Classifier is the Schema for the classifiers API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -54,8 +59,9 @@ spec:
             description: ClassifierSpec defines the desired state of Classifier
             properties:
               classifierLabels:
-                description: ClassifierLabels is set of labels, key,value pair, that
-                  will be added to each cluster matching Classifier instance
+                description: |-
+                  ClassifierLabels is set of labels, key,value pair, that will be added to each
+                  cluster matching Classifier instance
                 items:
                   properties:
                     key:
@@ -74,35 +80,37 @@ spec:
                   current deployed resources
                 properties:
                   aggregatedClassification:
-                    description: 'AggregatedClassification is optional and can be
-                      used to specify a Lua function that will be used to further
-                      detect whether the subset of the resources selected using the
-                      ResourceSelector field are a match for this Classifier. The
-                      function will receive the array of resources selected by ResourceSelectors.
-                      If this field is not specified, a cluster is a match for Classifier
-                      instance, if all ResourceSelectors returns at least one match.
-                      This field allows to perform more complex evaluation  on the
-                      resources, looking at all resources together. This can be useful
-                      for more sophisticated tasks, such as identifying resources
+                    description: |-
+                      AggregatedClassification is optional and can be used to specify a Lua function
+                      that will be used to further detect whether the subset of the resources
+                      selected using the ResourceSelector field are a match for this Classifier.
+                      The function will receive the array of resources selected by ResourceSelectors.
+                      If this field is not specified, a cluster is a match for Classifier instance,
+                      if all ResourceSelectors returns at least one match.
+                      This field allows to perform more complex evaluation  on the resources, looking
+                      at all resources together.
+                      This can be useful for more sophisticated tasks, such as identifying resources
                       that are related to each other or that have similar properties.
-                      The Lua function must return a struct with: - "matching" field:
-                      boolean indicating whether cluster is a match; - "message" field:
-                      (optional) message.'
+                      The Lua function must return a struct with:
+                      - "matching" field: boolean indicating whether cluster is a match;
+                      - "message" field: (optional) message.
                     type: string
                   resourceSelectors:
-                    description: ResourceSelectors identifies what resources to select
-                      If no AggregatedClassification is specified, a cluster is a
-                      match for Classifier instance, if all ResourceSelectors returns
-                      at least one match.
+                    description: |-
+                      ResourceSelectors identifies what resources to select
+                      If no AggregatedClassification is specified, a cluster is
+                      a match for Classifier instance, if all ResourceSelectors returns at
+                      least one match.
                     items:
                       description: ResourceSelector defines what resources are a match
                       properties:
                         evaluate:
-                          description: Evaluate contains a function "evaluate" in
-                            lua language. The function will be passed one of the object
-                            selected based on above criteria. Must return struct with
-                            field "matching" representing whether object is a match
-                            and an optional "message" field.
+                          description: |-
+                            Evaluate contains a function "evaluate" in lua language.
+                            The function will be passed one of the object selected based on
+                            above criteria.
+                            Must return struct with field "matching" representing whether
+                            object is a match and an optional "message" field.
                           type: string
                         group:
                           description: Group of the resource deployed in the Cluster.
@@ -135,7 +143,8 @@ spec:
                             type: object
                           type: array
                         namespace:
-                          description: Namespace of the resource deployed in the  Cluster.
+                          description: |-
+                            Namespace of the resource deployed in the  Cluster.
                             Empty for resources scoped at cluster level.
                           type: string
                         version:
@@ -181,8 +190,9 @@ spec:
             description: ClassifierStatus defines the observed state of Classifier
             properties:
               clusterInfo:
-                description: ClusterInfo reference all the cluster-api Cluster where
-                  Classifier has been/is being deployed
+                description: |-
+                  ClusterInfo reference all the cluster-api Cluster where Classifier
+                  has been/is being deployed
                 items:
                   properties:
                     cluster:
@@ -192,34 +202,40 @@ spec:
                           description: API version of the referent.
                           type: string
                         fieldPath:
-                          description: 'If referring to a piece of an object instead
-                            of an entire object, this string should contain a valid
-                            JSON/Go field access statement, such as desiredState.manifest.containers[2].
-                            For example, if the object reference is to a container
-                            within a pod, this would take on a value like: "spec.containers{name}"
-                            (where "name" refers to the name of the container that
-                            triggered the event) or if no container name is specified
-                            "spec.containers[2]" (container with index 2 in this pod).
-                            This syntax is chosen only to have some well-defined way
-                            of referencing a part of an object. TODO: this design
-                            is not final and this field is subject to change in the
-                            future.'
+                          description: |-
+                            If referring to a piece of an object instead of an entire object, this string
+                            should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                            For example, if the object reference is to a container within a pod, this would take on a value like:
+                            "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                            the event) or if no container name is specified "spec.containers[2]" (container with
+                            index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                            referencing a part of an object.
+                            TODO: this design is not final and this field is subject to change in the future.
                           type: string
                         kind:
-                          description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          description: |-
+                            Kind of the referent.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                           type: string
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                           type: string
                         namespace:
-                          description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                          description: |-
+                            Namespace of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                           type: string
                         resourceVersion:
-                          description: 'Specific resourceVersion to which this reference
-                            is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                          description: |-
+                            Specific resourceVersion to which this reference is made, if any.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                           type: string
                         uid:
-                          description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                          description: |-
+                            UID of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                           type: string
                       type: object
                       x-kubernetes-map-type: atomic
@@ -228,8 +244,9 @@ spec:
                         the error.
                       type: string
                     hash:
-                      description: Hash represents the hash of the Classifier currently
-                        deployed in the Cluster
+                      description: |-
+                        Hash represents the hash of the Classifier currently deployed
+                        in the Cluster
                       format: byte
                       type: string
                     status:
@@ -248,8 +265,9 @@ spec:
                   type: object
                 type: array
               machingClusterStatuses:
-                description: MatchingClusterRefs reference all the cluster-api Cluster
-                  currently matching Classifier
+                description: |-
+                  MatchingClusterRefs reference all the cluster-api Cluster currently matching
+                  Classifier
                 items:
                   properties:
                     clusterRef:
@@ -259,57 +277,66 @@ spec:
                           description: API version of the referent.
                           type: string
                         fieldPath:
-                          description: 'If referring to a piece of an object instead
-                            of an entire object, this string should contain a valid
-                            JSON/Go field access statement, such as desiredState.manifest.containers[2].
-                            For example, if the object reference is to a container
-                            within a pod, this would take on a value like: "spec.containers{name}"
-                            (where "name" refers to the name of the container that
-                            triggered the event) or if no container name is specified
-                            "spec.containers[2]" (container with index 2 in this pod).
-                            This syntax is chosen only to have some well-defined way
-                            of referencing a part of an object. TODO: this design
-                            is not final and this field is subject to change in the
-                            future.'
+                          description: |-
+                            If referring to a piece of an object instead of an entire object, this string
+                            should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                            For example, if the object reference is to a container within a pod, this would take on a value like:
+                            "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                            the event) or if no container name is specified "spec.containers[2]" (container with
+                            index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                            referencing a part of an object.
+                            TODO: this design is not final and this field is subject to change in the future.
                           type: string
                         kind:
-                          description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          description: |-
+                            Kind of the referent.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                           type: string
                         name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                           type: string
                         namespace:
-                          description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                          description: |-
+                            Namespace of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                           type: string
                         resourceVersion:
-                          description: 'Specific resourceVersion to which this reference
-                            is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                          description: |-
+                            Specific resourceVersion to which this reference is made, if any.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                           type: string
                         uid:
-                          description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                          description: |-
+                            UID of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                           type: string
                       type: object
                       x-kubernetes-map-type: atomic
                     managedLabels:
-                      description: ManagedLabels indicates the labels being managed
-                        on the cluster by this Classifier instance
+                      description: |-
+                        ManagedLabels indicates the labels being managed on
+                        the cluster by this Classifier instance
                       items:
                         type: string
                       type: array
                     unManagedLabels:
-                      description: UnManagedLabel indicates the labels this Classifier
-                        instance would like to manage but cannot because different
-                        instance is already managing it
+                      description: |-
+                        UnManagedLabel indicates the labels this Classifier instance
+                        would like to manage but cannot because different instance is
+                        already managing it
                       items:
                         properties:
                           failureMessage:
-                            description: FailureMessage is a human consumable message
-                              explaining the misconfiguration
+                            description: |-
+                              FailureMessage is a human consumable message explaining the
+                              misconfiguration
                             type: string
                           key:
-                            description: Key represents a label Classifier would like
-                              to manage but cannot because currently managed by different
-                              instance
+                            description: |-
+                              Key represents a label Classifier would like to manage
+                              but cannot because currently managed by different instance
                             type: string
                         required:
                         - key
