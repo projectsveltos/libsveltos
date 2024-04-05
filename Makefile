@@ -27,7 +27,6 @@ GOBUILD=go build
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/controller-gen
 GOIMPORTS := $(TOOLS_BIN_DIR)/goimports
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
-KUSTOMIZE := $(TOOLS_BIN_DIR)/kustomize
 GINKGO := $(TOOLS_BIN_DIR)/ginkgo
 
 GOLANGCI_LINT_VERSION := "v1.55.2"
