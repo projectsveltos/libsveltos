@@ -27,11 +27,28 @@ GOBUILD=go build
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/controller-gen
 GOIMPORTS := $(TOOLS_BIN_DIR)/goimports
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
-KUSTOMIZE := $(TOOLS_BIN_DIR)/kustomize
 GINKGO := $(TOOLS_BIN_DIR)/ginkgo
-SETUP_ENVTEST := $(TOOLS_BIN_DIR)/setup_envs
 
 GOLANGCI_LINT_VERSION := "v1.55.2"
+
+KUSTOMIZE_VER := v4.5.2
+KUSTOMIZE_BIN := kustomize
+KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/$(KUSTOMIZE_BIN)-$(KUSTOMIZE_VER))
+KUSTOMIZE_PKG := sigs.k8s.io/kustomize/kustomize/v4
+$(KUSTOMIZE): # Build kustomize from tools folder.
+	CGO_ENABLED=0 GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(KUSTOMIZE_PKG) $(KUSTOMIZE_BIN) $(KUSTOMIZE_VER)
+
+SETUP_ENVTEST_VER := v0.0.0-20240215143116-d0396a3d6f9f
+SETUP_ENVTEST_BIN := setup-envtest
+SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
+SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
+setup-envtest: $(SETUP_ENVTEST) ## Set up envtest (download kubebuilder assets)
+	@echo KUBEBUILDER_ASSETS=$(KUBEBUILDER_ASSETS)
+
+$(SETUP_ENVTEST_BIN): $(SETUP_ENVTEST) ## Build a local copy of setup-envtest.
+
+$(SETUP_ENVTEST): # Build setup-envtest from tools folder.
+	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(SETUP_ENVTEST_PKG) $(SETUP_ENVTEST_BIN) $(SETUP_ENVTEST_VER)
 
 $(CONTROLLER_GEN): $(TOOLS_DIR)/go.mod # Build controller-gen from tools folder.
 	cd $(TOOLS_DIR); $(GOBUILD) -tags=tools -o $(subst $(TOOLS_DIR)/hack/tools/,,$@) sigs.k8s.io/controller-tools/cmd/controller-gen
@@ -42,21 +59,11 @@ $(ENVSUBST): $(TOOLS_DIR)/go.mod # Build envsubst from tools folder.
 $(GOLANGCI_LINT): # Build golangci-lint from tools folder.
 	cd $(TOOLS_DIR); ./get-golangci-lint.sh $(GOLANGCI_LINT_VERSION)
 
-$(SETUP_ENVTEST): $(TOOLS_DIR)/go.mod # Build setup-envtest from tools folder.
-	cd $(TOOLS_DIR); $(GOBUILD) -tags=tools -o $(subst $(TOOLS_DIR)/hack/tools/,,$@) sigs.k8s.io/controller-runtime/tools/setup-envtest
-
 $(GOIMPORTS):
 	cd $(TOOLS_DIR); $(GOBUILD) -tags=tools -o $(subst $(TOOLS_DIR)/hack/tools/,,$@) golang.org/x/tools/cmd/goimports
 
 $(GINKGO): $(TOOLS_DIR)/go.mod
 	cd $(TOOLS_DIR) && $(GOBUILD) -tags tools -o $(subst $(TOOLS_DIR)/hack/tools/,,$@) github.com/onsi/ginkgo/v2/ginkgo
-
-KUSTOMIZE_VER := v4.5.2
-KUSTOMIZE_BIN := kustomize
-KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/$(KUSTOMIZE_BIN)-$(KUSTOMIZE_VER))
-KUSTOMIZE_PKG := sigs.k8s.io/kustomize/kustomize/v4
-$(KUSTOMIZE): # Build kustomize from tools folder.
-	CGO_ENABLED=0 GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(KUSTOMIZE_PKG) $(KUSTOMIZE_BIN) $(KUSTOMIZE_VER)
 
 ##@ General
 
