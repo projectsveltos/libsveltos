@@ -65,7 +65,14 @@ spec:
               tokenRequestRenewalOption:
                 description: TokenRequestRenewalOption contains options describing
                   how to renew TokenRequest
-                type: string
+                properties:
+                  renewTokenRequestInterval:
+                    description: RenewTokenRequestInterval is the interval at which
+                      to renew the TokenRequest
+                    type: string
+                required:
+                - renewTokenRequestInterval
+                type: object
             type: object
           status:
             description: SveltosClusterStatus defines the status of SveltosCluster
