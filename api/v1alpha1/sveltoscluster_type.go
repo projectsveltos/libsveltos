@@ -24,6 +24,12 @@ const (
 	SveltosClusterKind = "SveltosCluster"
 )
 
+type TokenRequestRenewalOption struct {
+	// RenewTokenRequestInterval is the interval at which to renew the TokenRequest
+	// +optional
+	RenewTokenRequestInterval *metav1.Duration `json:"renewTokenRequestInterval,omitempty"`
+}
+
 // SveltosClusterSpec defines the desired state of SveltosCluster
 type SveltosClusterSpec struct {
 	// KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig
@@ -37,6 +43,10 @@ type SveltosClusterSpec struct {
 	// SveltosCluster and all its associated objects.
 	// +optional
 	Paused bool `json:"paused,omitempty"`
+
+	// TokenRequestRenewalOption contains options describing how to renew TokenRequest
+	// +optional
+	TokenRequestRenewalOption *metav1.Duration `json:"tokenRequestRenewalOption,omitempty"`
 }
 
 // SveltosClusterStatus defines the status of SveltosCluster
@@ -53,6 +63,11 @@ type SveltosClusterStatus struct {
 	// misconfiguration
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
+
+	// LastReconciledTokenRequestAt is the last time the TokenRequest
+	// was renewed.
+	// +optional
+	LastReconciledTokenRequestAt string `json:"lastReconciledTokenRequestAt,omitempty"`
 }
 
 //+kubebuilder:object:root=true
