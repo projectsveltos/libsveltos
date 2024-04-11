@@ -26,8 +26,7 @@ const (
 
 type TokenRequestRenewalOption struct {
 	// RenewTokenRequestInterval is the interval at which to renew the TokenRequest
-	// +optional
-	RenewTokenRequestInterval *metav1.Duration `json:"renewTokenRequestInterval,omitempty"`
+	RenewTokenRequestInterval metav1.Duration `json:"renewTokenRequestInterval"`
 }
 
 // SveltosClusterSpec defines the desired state of SveltosCluster
@@ -46,7 +45,7 @@ type SveltosClusterSpec struct {
 
 	// TokenRequestRenewalOption contains options describing how to renew TokenRequest
 	// +optional
-	TokenRequestRenewalOption *metav1.Duration `json:"tokenRequestRenewalOption,omitempty"`
+	TokenRequestRenewalOption *TokenRequestRenewalOption `json:"tokenRequestRenewalOption,omitempty"`
 }
 
 // SveltosClusterStatus defines the status of SveltosCluster
