@@ -183,6 +183,55 @@ func GetSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Clie
 	return getSecretData(ctx, logger, c, clusterNamespace, secretName)
 }
 
+// UpdateSveltosSecretData updates the content of the secret containing the
+// the kubeconfig for Sveltos cluster
+func UpdateSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Client,
+	clusterNamespace, clusterName, kubeconfig string) error {
+
+	logger.WithValues("namespace", clusterNamespace, "cluster", clusterName)
+	logger.V(logs.LogVerbose).Info("Get secret")
+	key := client.ObjectKey{
+		Namespace: clusterNamespace,
+		Name:      clusterName,
+	}
+
+	cluster := libsveltosv1alpha1.SveltosCluster{}
+	if err := c.Get(ctx, key, &cluster); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("SveltosCluster does not exist")
+			return errors.Wrap(err,
+				fmt.Sprintf("SveltosCluster %s/%s does not exist",
+					clusterNamespace,
+					clusterName,
+				))
+		}
+		return err
+	}
+
+	secretName := cluster.Spec.KubeconfigName
+	if secretName == "" {
+		secretName = fmt.Sprintf("%s%s", cluster.Name, sveltosKubeconfigSecretNamePostfix)
+	}
+
+	secret := &corev1.Secret{}
+	secretKey := client.ObjectKey{
+		Namespace: clusterNamespace,
+		Name:      secretName,
+	}
+
+	if err := c.Get(ctx, secretKey, secret); err != nil {
+		logger.Error(err, "failed to get secret")
+		return errors.Wrap(err,
+			fmt.Sprintf("Failed to get secret %s/%s",
+				clusterNamespace, secretName))
+	}
+
+	secret.Data = map[string][]byte{
+		"kubeconfig": []byte(kubeconfig),
+	}
+	return c.Update(ctx, secret)
+}
+
 // IsClusterReadyToBeConfigured returns true if cluster is ready to be configured
 func IsClusterReadyToBeConfigured(
 	ctx context.Context, c client.Client,
