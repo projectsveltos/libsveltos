@@ -1,6 +1,6 @@
 module github.com/projectsveltos/libsveltos
 
-go 1.21
+go 1.22.0
 
 require (
 	github.com/go-logr/logr v1.4.1
@@ -14,7 +14,7 @@ require (
 	k8s.io/client-go v0.29.3
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/kubectl v0.29.3
-	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
+	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
 	sigs.k8s.io/cluster-api v1.6.3
 	sigs.k8s.io/controller-runtime v0.17.2
 )

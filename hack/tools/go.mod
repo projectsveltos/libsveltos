@@ -1,6 +1,6 @@
 module github.com/projectsveltos/libsveltos/hack/tools
 
-go 1.21
+go 1.22.0
 
 require (
 	github.com/a8m/envsubst v1.4.2
