@@ -19,6 +19,7 @@ package clusterproxy_test
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -263,6 +264,37 @@ var _ = Describe("clusterproxy ", func() {
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(true))
+	})
+
+	It("UpdateSveltosSecretData updates secret with SveltosCluster kubeconfig", func() {
+		randomData := []byte(randomString())
+		secret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: sveltosCluster.Namespace,
+				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
+			},
+			Data: map[string][]byte{
+				"data": randomData,
+			},
+		}
+
+		initObjects := []client.Object{
+			sveltosCluster,
+			&secret,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		newKubeconfig := randomString()
+		err := clusterproxy.UpdateSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace, sveltosCluster.Name, newKubeconfig)
+		Expect(err).To(BeNil())
+
+		currentSecret := &corev1.Secret{}
+		err = c.Get(context.TODO(), types.NamespacedName{Namespace: secret.Namespace, Name: secret.Name}, currentSecret)
+		Expect(err).To(BeNil())
+		Expect(currentSecret.Data).ToNot(BeNil())
+
+		Expect(reflect.DeepEqual(currentSecret.Data["kubeconfig"], []byte(newKubeconfig))).To(BeTrue())
 	})
 
 	It("getSveltosSecretData returns an error when cluster does not exist", func() {
