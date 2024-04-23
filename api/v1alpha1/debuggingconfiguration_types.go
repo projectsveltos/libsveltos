@@ -42,7 +42,7 @@ const (
 )
 
 //nolint:lll // kubebuilder marker
-// +kubebuilder:validation:Enum:=AddonManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager
+// +kubebuilder:validation:Enum:=AddonManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager;ShardController;UIBackend
 
 type Component string
 
@@ -73,6 +73,9 @@ const (
 
 	// ComponentShardController is the shard-controller pod
 	ComponentShardController = Component("ShardController")
+
+	// ComponentUIBackend is the ui backend pod
+	ComponentUIBackend = Component("UIBaeckend")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.
