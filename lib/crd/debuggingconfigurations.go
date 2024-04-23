@@ -78,6 +78,8 @@ spec:
                       - AccessManager
                       - HealthCheckManager
                       - EventManager
+                      - ShardController
+                      - UIBackend
                       type: string
                     logLevel:
                       description: 'LogLevel is the log severity above which logs
