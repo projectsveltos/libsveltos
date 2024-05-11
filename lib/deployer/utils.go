@@ -52,6 +52,10 @@ type ConflictError struct {
 	message string
 }
 
+func NewConflictError(msg string) *ConflictError {
+	return &ConflictError{message: msg}
+}
+
 func (e *ConflictError) Error() string {
 	return e.message
 }
