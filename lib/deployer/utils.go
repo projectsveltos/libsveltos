@@ -91,22 +91,25 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 		if kindOk {
 			if kind != referenceKind {
 				return true, "", &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s is currently deployed by %s: %s/%s",
-						object.GetKind(), object.GetName(), kind, namespace, name)}
+					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
+						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
+						addListOfOwners(currentObject))}
 			}
 		}
 		if namespaceOk {
 			if namespace != referenceNamespace {
 				return true, "", &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s is currently deployed by %s: %s/%s",
-						object.GetKind(), object.GetName(), kind, namespace, name)}
+					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
+						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
+						addListOfOwners(currentObject))}
 			}
 		}
 		if nameOk {
 			if name != referenceName {
 				return true, "", &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s is currently deployed by %s: %s/%s",
-						object.GetKind(), object.GetName(), kind, namespace, name)}
+					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
+						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
+						addListOfOwners(currentObject))}
 			}
 		}
 	}
@@ -143,14 +146,20 @@ func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
 		message += fmt.Sprintf("Object currently deployed because of %s %s/%s.", kind, namespace, name)
 	}
 
-	message += "List of Owners:"
-	ownerRefs := currentObject.GetOwnerReferences()
+	message += addListOfOwners(currentObject)
+
+	return message, nil
+}
+
+func addListOfOwners(u *unstructured.Unstructured) string {
+	message := "List of conflicting ClusterProfiles/Profiles:"
+	ownerRefs := u.GetOwnerReferences()
 	for i := range ownerRefs {
 		or := &ownerRefs[i]
 		message += fmt.Sprintf("%s %s;", or.Kind, or.Name)
 	}
 
-	return message, nil
+	return message
 }
 
 // AddOwnerReference adds Sveltos resource owning a resource as an object's OwnerReference.
