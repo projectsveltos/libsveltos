@@ -46,12 +46,21 @@ rules:
 - apiGroups: [""] # "" indicates the core API group
   resources: ["pods"]
   verbs: ["get", "watch", "list"]`
+
+	clusterProfile = `apiVersion: config.projectsveltos.io/v1alpha1
+kind: ClusterProfile
+metadata:
+  name: deploy-resources
+  uid: ef15985d-045b-496c-92d9-e31e99dc13ee`
 )
 
 var _ = Describe("Client", func() {
 	It("ValidateObjectForUpdate returns error when resource is already installed because of different ConfigMap",
 		func() {
 			name := randomString()
+
+			cp, err := utils.GetUnstructured([]byte(clusterProfile))
+			Expect(err).To(BeNil())
 
 			nsInstance := fmt.Sprintf(nsTemplate, name)
 
@@ -70,6 +79,14 @@ var _ = Describe("Client", func() {
 					Annotations: map[string]string{
 						deployer.PolicyHash: policyHash,
 					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							Kind:       "ClusterProfile",
+							APIVersion: "config.projectsveltos.io/v1alpha1",
+							Name:       cp.GetName(),
+							UID:        cp.GetUID(),
+						},
+					},
 				},
 			}
 
@@ -86,18 +103,17 @@ var _ = Describe("Client", func() {
 			Expect(err).To(BeNil())
 
 			// If different configMap, return error
-			_, _, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
-				randomString(), randomString())
+			_, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
+				randomString(), randomString(), cp)
 			Expect(err).ToNot(BeNil())
 
 			// If same configMap, return no error
-			var exist bool
-			var hash string
-			exist, hash, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
-				configMapNs, configMapName)
+			var resourceInfo *deployer.ResourceInfo
+			resourceInfo, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
+				configMapNs, configMapName, cp)
 			Expect(err).To(BeNil())
-			Expect(exist).To(BeTrue())
-			Expect(hash).To(Equal(policyHash))
+			Expect(resourceInfo.Exist).To(BeTrue())
+			Expect(resourceInfo.Hash).To(Equal(policyHash))
 		})
 
 	It("addOwnerReference adds an OwnerReference to an object. removeOwnerReference removes it", func() {

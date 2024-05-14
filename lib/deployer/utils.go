@@ -19,7 +19,9 @@ package deployer
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -29,23 +31,27 @@ import (
 
 const (
 	// ReferenceLabelKind is added to each policy deployed by a ClusterSummary
-	// instance to a CAPI Cluster. Indicates the Kind (ConfigMap or Secret)
+	// instance to a managed Cluster. Indicates the Kind (ConfigMap or Secret)
 	// containing the policy.
 	ReferenceKindLabel = "projectsveltos.io/reference-kind"
 
 	// ReferenceNameLabel is added to each policy deployed by a ClusterSummary
-	// instance to a CAPI Cluster. Indicates the name of the ConfigMap/Secret
+	// instance to a managed Cluster. Indicates the name of the ConfigMap/Secret
 	// containing the policy.
 	ReferenceNameLabel = "projectsveltos.io/reference-name"
 
 	// ReferenceNamespaceLabel is added to each policy deployed by a ClusterSummary
-	// instance to a CAPI Cluster. Indicates the namespace of the ConfigMap/Secret
+	// instance to a managed Cluster. Indicates the namespace of the ConfigMap/Secret
 	// containing the policy.
 	ReferenceNamespaceLabel = "projectsveltos.io/reference-namespace"
 
 	// PolicyHash is the annotation set on a policy when deployed in a CAPI
 	// cluster.
 	PolicyHash = "projectsveltos.io/hash"
+
+	// OwnerTier is the annotation set on a policy when deployed in a managed
+	// cluster. Contains the tier of the profile instance that deployed it.
+	OwnerTier = "projectsveltos.io/owner-tier"
 )
 
 type ConflictError struct {
@@ -60,27 +66,56 @@ func (e *ConflictError) Error() string {
 	return e.message
 }
 
+type ResourceInfo struct {
+	// indicates whethere resource currently exists
+	Exist bool
+
+	// Resource's OwnerReferences
+	OwnerReferences []corev1.ObjectReference
+
+	// Current profile owner's tier
+	OwnerTier string
+
+	Hash string
+}
+
 // validateObjectForUpdate finds if object currently exists. If object exists:
-// - verifies this object was created by same ConfigMap/Secret. Returns an error otherwise.
+// - verifies this object was created by same referenced object (specified by
+// referenceKind, referenceNamespace, referenceName);
+// - verifies this object was deployed because of the same profile instance (specified
+// by profile instance).
+// Returns an error otherwise.
 // This is needed to prevent misconfigurations. An example would be when different
 // ConfigMaps are referenced by ClusterProfile(s) or RoleRequest(s) and contain same policy
 // namespace/name (content might be different) and are about to be deployed in the same cluster;
 // Return an error if validation fails. Return also whether the object currently exists or not.
 // If object exists, return value of PolicyHash annotation.
 func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
-	object *unstructured.Unstructured,
-	referenceKind, referenceNamespace, referenceName string) (exist bool, hash string, err error) {
+	object *unstructured.Unstructured, referenceKind, referenceNamespace, referenceName string,
+	profile client.Object) (*ResourceInfo, error) {
 
 	if object == nil {
-		return false, "", nil
+		return nil, nil
 	}
 
+	resourceInfo := &ResourceInfo{}
 	currentObject, err := dr.Get(ctx, object.GetName(), metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return false, "", nil
+			resourceInfo.Exist = false
+			return resourceInfo, nil
 		}
-		return false, "", err
+		return nil, err
+	}
+
+	resourceInfo.OwnerReferences = getOwnerReferences(currentObject)
+	resourceInfo.Exist = true
+
+	// If currently set, get the Tier of current owner
+	if annotations := currentObject.GetAnnotations(); annotations != nil {
+		if tierString, ok := annotations[OwnerTier]; ok {
+			resourceInfo.OwnerTier = tierString
+		}
 	}
 
 	if labels := currentObject.GetLabels(); labels != nil {
@@ -90,36 +125,42 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 
 		if kindOk {
 			if kind != referenceKind {
-				return true, "", &ConflictError{
+				return resourceInfo, &ConflictError{
 					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
 						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addListOfOwners(currentObject))}
+						addOwnerMessage(currentObject))}
 			}
 		}
 		if namespaceOk {
 			if namespace != referenceNamespace {
-				return true, "", &ConflictError{
+				return resourceInfo, &ConflictError{
 					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
 						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addListOfOwners(currentObject))}
+						addOwnerMessage(currentObject))}
 			}
 		}
 		if nameOk {
 			if name != referenceName {
-				return true, "", &ConflictError{
+				return resourceInfo, &ConflictError{
 					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
 						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addListOfOwners(currentObject))}
+						addOwnerMessage(currentObject))}
 			}
+		}
+		if hasSveltosResourcesAsOwnerReference(currentObject) && !IsOwnerReference(currentObject, profile) {
+			return resourceInfo, &ConflictError{
+				message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
+					object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
+					addOwnerMessage(currentObject))}
 		}
 	}
 
 	// Only in case object exists and there are no conflicts, return hash
 	if annotations := currentObject.GetAnnotations(); annotations != nil {
-		hash = annotations[PolicyHash]
+		resourceInfo.Hash = annotations[PolicyHash]
 	}
 
-	return true, hash, nil
+	return resourceInfo, nil
 }
 
 // GetOwnerMessage returns a message listing why this object is deployed. The message lists:
@@ -143,22 +184,27 @@ func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
 		namespace := labels[ReferenceNamespaceLabel]
 		name := labels[ReferenceNameLabel]
 
-		message += fmt.Sprintf("Object currently deployed because of %s %s/%s.", kind, namespace, name)
+		message += fmt.Sprintf("Object %s:%s/%s currently deployed because of %s %s/%s.\n",
+			currentObject.GroupVersionKind().Kind, currentObject.GetNamespace(), currentObject.GetName(),
+			kind, namespace, name)
 	}
 
-	message += addListOfOwners(currentObject)
+	message += addOwnerMessage(currentObject)
 
 	return message, nil
 }
 
-func addListOfOwners(u *unstructured.Unstructured) string {
-	message := "List of conflicting ClusterProfiles/Profiles:"
+func addOwnerMessage(u *unstructured.Unstructured) string {
+	message := " Sveltos instance currently deploying this resource: "
 	ownerRefs := u.GetOwnerReferences()
 	for i := range ownerRefs {
 		or := &ownerRefs[i]
-		message += fmt.Sprintf("%s %s;", or.Kind, or.Name)
+		// Only include Sveltos resources
+		if strings.Contains(or.APIVersion, "projectsveltos.io") {
+			message += fmt.Sprintf("%s %s;", or.Kind, or.Name)
+		}
 	}
-
+	message += "\n"
 	return message
 }
 
@@ -261,4 +307,36 @@ func IsOwnerReference(object, owner client.Object) bool {
 	}
 
 	return false
+}
+
+// hasSveltosResourcesAsOwnerReference returns true if at least one
+// of current OwnerReferences is a Sveltos resource
+func hasSveltosResourcesAsOwnerReference(object client.Object) bool {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		return false
+	}
+
+	for i := range onwerReferences {
+		ref := &onwerReferences[i]
+		if strings.Contains(ref.APIVersion, "projectsveltos.io") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getOwnerReferences(currentObject client.Object) []corev1.ObjectReference {
+	references := currentObject.GetOwnerReferences()
+	result := make([]corev1.ObjectReference, len(references))
+	for i := range references {
+		result[i] = corev1.ObjectReference{
+			Kind:       references[i].Kind,
+			APIVersion: references[i].APIVersion,
+			Name:       references[i].Name,
+		}
+	}
+
+	return result
 }
