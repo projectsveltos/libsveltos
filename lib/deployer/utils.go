@@ -67,8 +67,9 @@ func (e *ConflictError) Error() string {
 }
 
 type ResourceInfo struct {
-	// indicates whethere resource currently exists
-	Exist bool
+	// indicates whethere resource currently exists (only
+	// existing resources have a Version set)
+	ResourceVersion string
 
 	// Resource's OwnerReferences
 	OwnerReferences []corev1.ObjectReference
@@ -102,14 +103,14 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 	currentObject, err := dr.Get(ctx, object.GetName(), metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			resourceInfo.Exist = false
+			resourceInfo.ResourceVersion = ""
 			return resourceInfo, nil
 		}
 		return nil, err
 	}
 
 	resourceInfo.OwnerReferences = getOwnerReferences(currentObject)
-	resourceInfo.Exist = true
+	resourceInfo.ResourceVersion = currentObject.GetResourceVersion()
 
 	// If currently set, get the Tier of current owner
 	if annotations := currentObject.GetAnnotations(); annotations != nil {

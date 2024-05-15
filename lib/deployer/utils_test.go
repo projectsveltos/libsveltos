@@ -112,7 +112,7 @@ var _ = Describe("Client", func() {
 			resourceInfo, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
 				configMapNs, configMapName, cp)
 			Expect(err).To(BeNil())
-			Expect(resourceInfo.Exist).To(BeTrue())
+			Expect(resourceInfo.ResourceVersion).ToNot(BeEmpty())
 			Expect(resourceInfo.Hash).To(Equal(policyHash))
 		})
 
