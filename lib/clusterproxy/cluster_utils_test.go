@@ -323,4 +323,82 @@ var _ = Describe("Cluster utils", func() {
 				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
 
 	})
+
+	It("getMatchingClusters returns matchin CAPI Cluster", func() {
+		selector := libsveltosv1alpha1.ClusterSelector{
+			LabelSelector: metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "env",
+						Operator: metav1.LabelSelectorOpIn,
+						Values:   []string{"qa"},
+					},
+					{
+						Key:      "zone",
+						Operator: metav1.LabelSelectorOpIn,
+						Values:   []string{"west"},
+					},
+				},
+			},
+		}
+
+		currentLabels := map[string]string{
+			"env":  "qa",
+			"zone": "west",
+		}
+
+		parsedSelector, _ := selector.ToSelector()
+
+		sveltosCluster := &libsveltosv1alpha1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+				Labels:    currentLabels,
+			},
+			Status: libsveltosv1alpha1.SveltosClusterStatus{
+				Ready: true,
+			},
+		}
+
+		nonMatchingSveltosCluster := &libsveltosv1alpha1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+			},
+			Status: libsveltosv1alpha1.SveltosClusterStatus{
+				Ready: true,
+			},
+		}
+
+		cluster.Labels = currentLabels
+
+		initObjects := []client.Object{
+			cluster,
+			sveltosCluster,
+			nonMatchingSveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
+
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector, "",
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(2))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name,
+				Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String()}))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
+				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
+
+		matches, err = clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector,
+			sveltosCluster.Namespace, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
+				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
+
+	})
+
 })
