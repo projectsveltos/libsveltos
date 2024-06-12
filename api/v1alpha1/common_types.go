@@ -21,6 +21,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 const (
@@ -74,6 +75,11 @@ type Selector string
 
 type ClusterSelector struct {
 	metav1.LabelSelector `json:",inline"`
+}
+
+// ToSelector converts ClusterSelector to labels.Selector
+func (cs *ClusterSelector) ToSelector() (labels.Selector, error) {
+	return metav1.LabelSelectorAsSelector(&cs.LabelSelector)
 }
 
 // +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;Removing;Removed

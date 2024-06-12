@@ -21,9 +21,13 @@ import (
 )
 
 type Spec struct {
-	// ClusterSelector identifies clusters to associate to.
+	// ClusterSelector identifies clusters to associate to (Deprecated use selector instead).
 	// +optional
 	ClusterSelector Selector `json:"clusterSelector,omitempty"`
+
+	// Selector identifies clusters to associate to.
+	// +optional
+	Selector ClusterSelector `json:"selector,omitempty"`
 
 	// ClusterRefs identifies clusters to associate to.
 	// +optional

@@ -217,8 +217,12 @@ type NotificationSummary struct {
 
 // ClusterHealthCheckSpec defines the desired state of ClusterHealthCheck
 type ClusterHealthCheckSpec struct {
-	// ClusterSelector identifies clusters to associate to.
+	// ClusterSelector identifies clusters to associate to (Deprecated use selector instead).
 	ClusterSelector Selector `json:"clusterSelector"`
+
+	// Selector identifies clusters to associate to.
+	// +optional
+	Selector ClusterSelector `json:"selector,omitempty"`
 
 	// LivenessChecks is a list of source of liveness checks to evaluate.
 	// Anytime one of those changes, notifications will be sent
