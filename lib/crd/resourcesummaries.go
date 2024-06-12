@@ -113,6 +113,61 @@ spec:
                   - releaseNamespace
                   type: object
                 type: array
+              ignoreDrift:
+                description: Resource specs ignored for drift detection
+                items:
+                  properties:
+                    paths:
+                      items:
+                        type: string
+                      type: array
+                    target:
+                      description: |-
+                        Selector specifies a set of resources. Any resource that matches intersection of all conditions is included in this
+                        set.
+                      properties:
+                        annotationSelector:
+                          description: |-
+                            AnnotationSelector is a string that follows the label selection expression
+                            https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#api
+                            It matches with the resource annotations.
+                          type: string
+                        group:
+                          description: |-
+                            Group is the API group to select resources from.
+                            Together with Version and Kind it is capable of unambiguously identifying and/or selecting resources.
+                            https://github.com/kubernetes/community/blob/master/contributors/design-proposals/api-machinery/api-group.md
+                          type: string
+                        kind:
+                          description: |-
+                            Kind of the API Group to select resources from.
+                            Together with Group and Version it is capable of unambiguously
+                            identifying and/or selecting resources.
+                            https://github.com/kubernetes/community/blob/master/contributors/design-proposals/api-machinery/api-group.md
+                          type: string
+                        labelSelector:
+                          description: |-
+                            LabelSelector is a string that follows the label selection expression
+                            https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#api
+                            It matches with the resource labels.
+                          type: string
+                        name:
+                          description: Name to match resources with.
+                          type: string
+                        namespace:
+                          description: Namespace to select resources from.
+                          type: string
+                        version:
+                          description: |-
+                            Version of the API Group to select resources from.
+                            Together with Group and Kind it is capable of unambiguously identifying and/or selecting resources.
+                            https://github.com/kubernetes/community/blob/master/contributors/design-proposals/api-machinery/api-group.md
+                          type: string
+                      type: object
+                  required:
+                  - paths
+                  type: object
+                type: array
               kustomizeResources:
                 description: |-
                   KustomizeResources deployed by ClusterSummary because of referenced

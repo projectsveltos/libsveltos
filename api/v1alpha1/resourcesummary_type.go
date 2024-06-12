@@ -97,6 +97,10 @@ type ResourceSummarySpec struct {
 	// Resources deployed by ClusterSummary because of referenced Helm charts
 	// +optional
 	ChartResources []HelmResources `json:"chartResources,omitempty"`
+
+	// Resource specs ignored for drift detection
+	// +optional
+	IgnoreDrift []IgnoreDriftItem `json:"ignoreDrift,omitempty"`
 }
 
 // ResourceSummaryStatus defines the status of ResourceSummary
