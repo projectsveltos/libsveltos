@@ -46,6 +46,10 @@ type SveltosClusterSpec struct {
 	// TokenRequestRenewalOption contains options describing how to renew TokenRequest
 	// +optional
 	TokenRequestRenewalOption *TokenRequestRenewalOption `json:"tokenRequestRenewalOption,omitempty"`
+
+	// ArbitraryData allows for arbitrary nested structures
+	// +optional
+	ArbitraryData map[string]string `json:"data,omitempty"`
 }
 
 // SveltosClusterStatus defines the status of SveltosCluster

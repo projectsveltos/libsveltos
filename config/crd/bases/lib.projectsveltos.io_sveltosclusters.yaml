@@ -48,6 +48,11 @@ spec:
           spec:
             description: SveltosClusterSpec defines the desired state of SveltosCluster
             properties:
+              data:
+                additionalProperties:
+                  type: string
+                description: ArbitraryData allows for arbitrary nested structures
+                type: object
               kubeconfigName:
                 description: |-
                   KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig
