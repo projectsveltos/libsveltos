@@ -20,6 +20,7 @@ import (
 	"errors"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -70,6 +71,10 @@ var (
 )
 
 type Selector string
+
+type ClusterSelector struct {
+	metav1.LabelSelector `json:",inline"`
+}
 
 // +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;Removing;Removed
 type SveltosFeatureStatus string
