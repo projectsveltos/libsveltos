@@ -85,8 +85,9 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: $(CONTROLLER_GEN) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+manifests: $(CONTROLLER_GEN) $(KUSTOMIZE) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(KUSTOMIZE) build config/default -o manifests
 
 ## Generate go code for library.
 crds: generate ## Generates go code (crds) for library

@@ -22,9 +22,12 @@ import (
 	"os"
 	"sync/atomic"
 
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,10 +36,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-
-	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/logsettings"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 	"github.com/projectsveltos/libsveltos/lib/roles"
@@ -55,14 +55,14 @@ var (
 
 // getSveltosCluster returns SveltosCluster
 func getSveltosCluster(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName string) (*libsveltosv1alpha1.SveltosCluster, error) {
+	clusterNamespace, clusterName string) (*libsveltosv1beta1.SveltosCluster, error) {
 
 	clusterNamespacedName := types.NamespacedName{
 		Namespace: clusterNamespace,
 		Name:      clusterName,
 	}
 
-	cluster := &libsveltosv1alpha1.SveltosCluster{}
+	cluster := &libsveltosv1beta1.SveltosCluster{}
 	if err := c.Get(ctx, clusterNamespacedName, cluster); err != nil {
 		return nil, err
 	}
@@ -87,9 +87,9 @@ func getCAPICluster(ctx context.Context, c client.Client,
 
 // getCluster returns the cluster object
 func GetCluster(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName string, clusterType libsveltosv1alpha1.ClusterType) (client.Object, error) {
+	clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType) (client.Object, error) {
 
-	if clusterType == libsveltosv1alpha1.ClusterTypeSveltos {
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
 		return getSveltosCluster(ctx, c, clusterNamespace, clusterName)
 	}
 	return getCAPICluster(ctx, c, clusterNamespace, clusterName)
@@ -121,9 +121,9 @@ func isSveltosClusterPaused(ctx context.Context, c client.Client,
 
 // IsClusterPaused returns true if cluster is currently paused
 func IsClusterPaused(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName string, clusterType libsveltosv1alpha1.ClusterType) (bool, error) {
+	clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType) (bool, error) {
 
-	if clusterType == libsveltosv1alpha1.ClusterTypeSveltos {
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
 		return isSveltosClusterPaused(ctx, c, clusterNamespace, clusterName)
 	}
 	return isCAPIClusterPaused(ctx, c, clusterNamespace, clusterName)
@@ -131,7 +131,7 @@ func IsClusterPaused(ctx context.Context, c client.Client,
 
 func getKubernetesRestConfigForAdmin(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
-	clusterType libsveltosv1alpha1.ClusterType, logger logr.Logger) (*rest.Config, error) {
+	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (*rest.Config, error) {
 
 	kubeconfigContent, err := roles.GetKubeconfig(ctx, c, clusterNamespace, clusterName,
 		adminNamespace, adminName, clusterType)
@@ -156,7 +156,7 @@ func getKubernetesRestConfigForAdmin(ctx context.Context, c client.Client,
 
 func getKubernetesClientForAdmin(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
-	clusterType libsveltosv1alpha1.ClusterType, logger logr.Logger) (client.Client, error) {
+	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (client.Client, error) {
 
 	config, err := getKubernetesRestConfigForAdmin(ctx, c, clusterNamespace, clusterName,
 		adminNamespace, adminName, clusterType, logger)
@@ -170,14 +170,14 @@ func getKubernetesClientForAdmin(ctx context.Context, c client.Client,
 // GetSecretData returns Kubeconfig to access cluster
 func GetSecretData(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
-	clusterType libsveltosv1alpha1.ClusterType, logger logr.Logger) ([]byte, error) {
+	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) ([]byte, error) {
 
 	if adminName != "" && adminName != kubernetesAdmin {
 		return roles.GetKubeconfig(ctx, c, clusterNamespace, clusterName,
 			adminNamespace, adminName, clusterType)
 	}
 
-	if clusterType == libsveltosv1alpha1.ClusterTypeSveltos {
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
 		return GetSveltosSecretData(ctx, logger, c, clusterNamespace, clusterName)
 	}
 	return GetCAPISecretData(ctx, logger, c, clusterNamespace, clusterName)
@@ -186,14 +186,14 @@ func GetSecretData(ctx context.Context, c client.Client,
 // GetKubernetesRestConfig returns restConfig for a cluster
 func GetKubernetesRestConfig(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
-	clusterType libsveltosv1alpha1.ClusterType, logger logr.Logger) (*rest.Config, error) {
+	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (*rest.Config, error) {
 
 	if adminName != "" && adminName != kubernetesAdmin {
 		return getKubernetesRestConfigForAdmin(ctx, c, clusterNamespace, clusterName,
 			adminNamespace, adminName, clusterType, logger)
 	}
 
-	if clusterType == libsveltosv1alpha1.ClusterTypeSveltos {
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
 		return GetSveltosKubernetesRestConfig(ctx, logger, c, clusterNamespace, clusterName)
 	}
 	return GetCAPIKubernetesRestConfig(ctx, logger, c, clusterNamespace, clusterName)
@@ -202,31 +202,31 @@ func GetKubernetesRestConfig(ctx context.Context, c client.Client,
 // GetKubernetesClient returns client to access cluster
 func GetKubernetesClient(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
-	clusterType libsveltosv1alpha1.ClusterType, logger logr.Logger) (client.Client, error) {
+	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (client.Client, error) {
 
 	if adminName != "" && adminName != kubernetesAdmin {
 		return getKubernetesClientForAdmin(ctx, c, clusterNamespace, clusterName,
 			adminNamespace, adminName, clusterType, logger)
 	}
 
-	if clusterType == libsveltosv1alpha1.ClusterTypeSveltos {
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
 		return GetSveltosKubernetesClient(ctx, logger, c, c.Scheme(), clusterNamespace, clusterName)
 	}
 	return GetCAPIKubernetesClient(ctx, logger, c, c.Scheme(), clusterNamespace, clusterName)
 }
 
 // GetClusterType returns clustertype for a given cluster
-func GetClusterType(cluster *corev1.ObjectReference) libsveltosv1alpha1.ClusterType {
+func GetClusterType(cluster *corev1.ObjectReference) libsveltosv1beta1.ClusterType {
 	// TODO: remove this
-	if cluster.APIVersion != libsveltosv1alpha1.GroupVersion.String() &&
+	if cluster.APIVersion != libsveltosv1beta1.GroupVersion.String() &&
 		cluster.APIVersion != clusterv1.GroupVersion.String() {
 
 		panic(1)
 	}
 
-	clusterType := libsveltosv1alpha1.ClusterTypeCapi
-	if cluster.APIVersion == libsveltosv1alpha1.GroupVersion.String() {
-		clusterType = libsveltosv1alpha1.ClusterTypeSveltos
+	clusterType := libsveltosv1beta1.ClusterTypeCapi
+	if cluster.APIVersion == libsveltosv1beta1.GroupVersion.String() {
+		clusterType = libsveltosv1beta1.ClusterTypeSveltos
 	}
 	return clusterType
 }
@@ -312,7 +312,7 @@ func getListOfSveltosCluster(ctx context.Context, c client.Client, namespace str
 		listOptions = append(listOptions, client.InNamespace(namespace))
 	}
 
-	clusterList := &libsveltosv1alpha1.SveltosClusterList{}
+	clusterList := &libsveltosv1beta1.SveltosClusterList{}
 	if err := c.List(ctx, clusterList, listOptions...); err != nil {
 		logger.Error(err, "failed to list all Cluster")
 		return nil, err
@@ -388,11 +388,6 @@ func GetListOfClustersForShardKey(ctx context.Context, c client.Client, namespac
 func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labels.Selector,
 	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
-	if selector == nil {
-		logger.V(logs.LogInfo).Info(nilSelectorMessage)
-		return nil, fmt.Errorf("%s", nilSelectorMessage)
-	}
-
 	present, err := isCAPIPresent(ctx, c, logger)
 	if err != nil {
 		logger.Error(err, "failed to verify if ClusterAPI Cluster CRD is installed")
@@ -456,7 +451,7 @@ func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector l
 		listOptions = append(listOptions, client.InNamespace(namespace))
 	}
 
-	clusterList := &libsveltosv1alpha1.SveltosClusterList{}
+	clusterList := &libsveltosv1beta1.SveltosClusterList{}
 	if err := c.List(ctx, clusterList, listOptions...); err != nil {
 		logger.Error(err, "failed to list all Cluster")
 		return nil, err
@@ -492,7 +487,7 @@ func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector l
 }
 
 // GetMatchingClusters returns all Sveltos/CAPI Clusters currently matching selector
-func GetMatchingClusters(ctx context.Context, c client.Client, selector labels.Selector,
+func GetMatchingClusters(ctx context.Context, c client.Client, selector *metav1.LabelSelector,
 	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
 	if selector == nil {
@@ -502,14 +497,20 @@ func GetMatchingClusters(ctx context.Context, c client.Client, selector labels.S
 
 	matching := make([]corev1.ObjectReference, 0)
 
-	tmpMatching, err := getMatchingCAPIClusters(ctx, c, selector, namespace, logger)
+	clusterSelector, err := metav1.LabelSelectorAsSelector(selector)
+	if err != nil {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert selector %v", err))
+		return nil, fmt.Errorf("%w", err)
+	}
+
+	tmpMatching, err := getMatchingCAPIClusters(ctx, c, clusterSelector, namespace, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	matching = append(matching, tmpMatching...)
 
-	tmpMatching, err = getMatchingSveltosClusters(ctx, c, selector, namespace, logger)
+	tmpMatching, err = getMatchingSveltosClusters(ctx, c, clusterSelector, namespace, logger)
 	if err != nil {
 		return nil, err
 	}
