@@ -25,10 +25,6 @@ type Spec struct {
 	// +optional
 	ClusterSelector Selector `json:"clusterSelector,omitempty"`
 
-	// Selector identifies clusters to associate to.
-	// +optional
-	Selector ClusterSelector `json:"selector,omitempty"`
-
 	// ClusterRefs identifies clusters to associate to.
 	// +optional
 	ClusterRefs []corev1.ObjectReference `json:"clusterRefs,omitempty"`

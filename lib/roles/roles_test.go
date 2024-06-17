@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/crd"
 	"github.com/projectsveltos/libsveltos/lib/roles"
 	"github.com/projectsveltos/libsveltos/lib/utils"
@@ -29,7 +29,7 @@ var _ = Describe("Roles", func() {
 
 		secret, err := roles.GetKubeconfig(context.TODO(), c,
 			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
-			sveltosv1alpha1.ClusterTypeSveltos)
+			libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(secret).To(BeNil())
 	})
@@ -62,7 +62,7 @@ var _ = Describe("Roles", func() {
 
 		currentKubeconfig, err := roles.GetKubeconfig(context.TODO(), c,
 			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
-			sveltosv1alpha1.ClusterTypeSveltos)
+			libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(currentKubeconfig).ToNot(BeNil())
 		Expect(reflect.DeepEqual(currentKubeconfig, kubeconfig)).To(BeTrue())
@@ -78,7 +78,7 @@ var _ = Describe("Roles", func() {
 
 		secret, err := roles.GetSecret(context.TODO(), c,
 			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
-			sveltosv1alpha1.ClusterTypeSveltos)
+			libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(secret).To(BeNil())
 	})
@@ -111,7 +111,7 @@ var _ = Describe("Roles", func() {
 
 		currentSecret, err := roles.GetSecret(context.TODO(), c,
 			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
-			sveltosv1alpha1.ClusterTypeSveltos)
+			libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(currentSecret).ToNot(BeNil())
 		Expect(currentSecret.Namespace).To(Equal(clusterNamespace))
@@ -149,7 +149,7 @@ var _ = Describe("Roles", func() {
 		Expect(err).To(BeNil())
 		Expect(c.Create(context.TODO(), roleRequestCRD)).To(Succeed())
 
-		roleRequest := &sveltosv1alpha1.RoleRequest{
+		roleRequest := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
@@ -157,7 +157,7 @@ var _ = Describe("Roles", func() {
 
 		secret, err := roles.CreateSecret(context.TODO(), c,
 			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
-			sveltosv1alpha1.ClusterTypeSveltos, []byte(randomString()), roleRequest)
+			libsveltosv1beta1.ClusterTypeSveltos, []byte(randomString()), roleRequest)
 		Expect(err).To(BeNil())
 		Expect(secret).ToNot(BeNil())
 		Expect(secret.Namespace).To(Equal(clusterNamespace))
@@ -203,7 +203,7 @@ var _ = Describe("Roles", func() {
 
 		initObjects := []client.Object{secret}
 
-		roleRequest := &sveltosv1alpha1.RoleRequest{
+		roleRequest := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
@@ -213,7 +213,7 @@ var _ = Describe("Roles", func() {
 
 		currentSecret, err := roles.CreateSecret(context.TODO(), c,
 			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
-			sveltosv1alpha1.ClusterTypeSveltos, kubeconfig, roleRequest)
+			libsveltosv1beta1.ClusterTypeSveltos, kubeconfig, roleRequest)
 		Expect(err).To(BeNil())
 		Expect(currentSecret).ToNot(BeNil())
 		Expect(currentSecret.Namespace).To(Equal(clusterNamespace))
@@ -250,7 +250,7 @@ var _ = Describe("Roles", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
 
-		roleRequest := &sveltosv1alpha1.RoleRequest{
+		roleRequest := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
@@ -259,7 +259,7 @@ var _ = Describe("Roles", func() {
 
 		err := roles.DeleteSecret(context.TODO(), c,
 			clusterNamespace, clusterName, serviceaccountNamespace, serviceaccountName,
-			sveltosv1alpha1.ClusterTypeSveltos, roleRequest)
+			libsveltosv1beta1.ClusterTypeSveltos, roleRequest)
 		Expect(err).To(BeNil())
 	})
 
@@ -269,7 +269,7 @@ var _ = Describe("Roles", func() {
 		serviceaccountNamespace := randomString()
 		serviceaccountName := randomString()
 
-		roleRequest := &sveltosv1alpha1.RoleRequest{
+		roleRequest := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
@@ -286,7 +286,7 @@ var _ = Describe("Roles", func() {
 					roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 				},
 				OwnerReferences: []metav1.OwnerReference{
-					{APIVersion: roleRequest.APIVersion, Kind: sveltosv1alpha1.RoleRequestKind, Name: roleRequest.Name},
+					{APIVersion: roleRequest.APIVersion, Kind: libsveltosv1beta1.RoleRequestKind, Name: roleRequest.Name},
 				},
 			},
 		}
@@ -297,7 +297,7 @@ var _ = Describe("Roles", func() {
 
 		err := roles.DeleteSecret(context.TODO(), c,
 			clusterNamespace, clusterName, serviceaccountNamespace, serviceaccountName,
-			sveltosv1alpha1.ClusterTypeSveltos, roleRequest)
+			libsveltosv1beta1.ClusterTypeSveltos, roleRequest)
 		Expect(err).To(BeNil())
 
 		listOptions := []client.ListOption{
@@ -320,14 +320,14 @@ var _ = Describe("Roles", func() {
 		serviceaccountNamespace := randomString()
 		serviceaccountName := randomString()
 
-		roleRequest1 := &sveltosv1alpha1.RoleRequest{
+		roleRequest1 := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
 		}
 		Expect(addTypeInformationToObject(scheme, roleRequest1)).To(Succeed())
 
-		roleRequest2 := &sveltosv1alpha1.RoleRequest{
+		roleRequest2 := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
@@ -344,8 +344,8 @@ var _ = Describe("Roles", func() {
 					roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 				},
 				OwnerReferences: []metav1.OwnerReference{
-					{APIVersion: roleRequest1.APIVersion, Kind: sveltosv1alpha1.RoleRequestKind, Name: roleRequest1.Name},
-					{APIVersion: roleRequest2.APIVersion, Kind: sveltosv1alpha1.RoleRequestKind, Name: roleRequest2.Name},
+					{APIVersion: roleRequest1.APIVersion, Kind: libsveltosv1beta1.RoleRequestKind, Name: roleRequest1.Name},
+					{APIVersion: roleRequest2.APIVersion, Kind: libsveltosv1beta1.RoleRequestKind, Name: roleRequest2.Name},
 				},
 			},
 		}
@@ -356,7 +356,7 @@ var _ = Describe("Roles", func() {
 
 		err := roles.DeleteSecret(context.TODO(), c,
 			clusterNamespace, clusterName, serviceaccountNamespace, serviceaccountName,
-			sveltosv1alpha1.ClusterTypeSveltos, roleRequest1)
+			libsveltosv1beta1.ClusterTypeSveltos, roleRequest1)
 		Expect(err).To(BeNil())
 
 		listOptions := []client.ListOption{
@@ -377,7 +377,7 @@ var _ = Describe("Roles", func() {
 	})
 
 	It("ListSecretForOwner returns all secret for which owner is one of the OnwerReferences", func() {
-		roleRequest1 := &sveltosv1alpha1.RoleRequest{
+		roleRequest1 := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
@@ -389,10 +389,10 @@ var _ = Describe("Roles", func() {
 				Namespace: randomString(),
 				Name:      randomString(),
 				Labels: map[string]string{
-					sveltosv1alpha1.RoleRequestLabel: "ok",
+					libsveltosv1beta1.RoleRequestLabel: "ok",
 				},
 				OwnerReferences: []metav1.OwnerReference{
-					{APIVersion: roleRequest1.APIVersion, Kind: sveltosv1alpha1.RoleRequestKind, Name: roleRequest1.Name},
+					{APIVersion: roleRequest1.APIVersion, Kind: libsveltosv1beta1.RoleRequestKind, Name: roleRequest1.Name},
 				},
 			},
 		}
@@ -402,7 +402,7 @@ var _ = Describe("Roles", func() {
 				Namespace: randomString(),
 				Name:      randomString(),
 				OwnerReferences: []metav1.OwnerReference{
-					{APIVersion: roleRequest1.APIVersion, Kind: sveltosv1alpha1.RoleRequestKind, Name: roleRequest1.Name},
+					{APIVersion: roleRequest1.APIVersion, Kind: libsveltosv1beta1.RoleRequestKind, Name: roleRequest1.Name},
 				},
 			},
 		}
@@ -412,7 +412,7 @@ var _ = Describe("Roles", func() {
 				Namespace: randomString(),
 				Name:      randomString(),
 				Labels: map[string]string{
-					sveltosv1alpha1.RoleRequestLabel: "ok",
+					libsveltosv1beta1.RoleRequestLabel: "ok",
 				},
 			},
 		}
@@ -438,12 +438,12 @@ var _ = Describe("Roles", func() {
 					Name:      randomString(),
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							APIVersion: sveltosv1alpha1.GroupVersion.String(),
-							Kind:       sveltosv1alpha1.RoleRequestKind,
+							APIVersion: libsveltosv1beta1.GroupVersion.String(),
+							Kind:       libsveltosv1beta1.RoleRequestKind,
 							Name:       randomString()},
 					},
 					Labels: map[string]string{
-						sveltosv1alpha1.RoleRequestLabel: "ok",
+						libsveltosv1beta1.RoleRequestLabel: "ok",
 					},
 				},
 			}

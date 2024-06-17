@@ -23,7 +23,7 @@ import (
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
 const (
@@ -63,11 +63,11 @@ type Result struct {
 
 type RequestHandler func(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, applicant, featureID string,
-	clusterType sveltosv1alpha1.ClusterType, o Options, logger logr.Logger) error
+	clusterType libsveltosv1beta1.ClusterType, o Options, logger logr.Logger) error
 
 type MetricHandler func(elapsed time.Duration,
 	clusterNamespace, clusterName, featureID string,
-	clusterType sveltosv1alpha1.ClusterType, logger logr.Logger)
+	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger)
 
 type DeployerInterface interface {
 	// RegisterFeatureID allows registering a feature ID.
@@ -89,7 +89,7 @@ type DeployerInterface interface {
 	Deploy(
 		ctx context.Context,
 		clusterNamespace, clusterName, applicant, featureID string,
-		clusterType sveltosv1alpha1.ClusterType,
+		clusterType libsveltosv1beta1.ClusterType,
 		cleanup bool,
 		f RequestHandler,
 		m MetricHandler,
@@ -102,7 +102,7 @@ type DeployerInterface interface {
 	// removed is currently in progress.
 	IsInProgress(
 		clusterNamespace, clusterName, applicant, featureID string,
-		clusterType sveltosv1alpha1.ClusterType,
+		clusterType libsveltosv1beta1.ClusterType,
 		cleanup bool,
 	) bool
 
@@ -110,12 +110,12 @@ type DeployerInterface interface {
 	GetResult(
 		ctx context.Context,
 		clusterNamespace, clusterName, applicant, featureID string,
-		clusterType sveltosv1alpha1.ClusterType,
+		clusterType libsveltosv1beta1.ClusterType,
 		cleanup bool,
 	) Result
 
 	// CleanupEntries removes any entry (from any internal data structure) for
 	// given feature
 	CleanupEntries(clusterNamespace, clusterName, applicant, featureID string,
-		clusterType sveltosv1alpha1.ClusterType, cleanup bool)
+		clusterType libsveltosv1beta1.ClusterType, cleanup bool)
 }

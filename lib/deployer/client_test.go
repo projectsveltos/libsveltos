@@ -26,7 +26,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/deployer"
 )
 
@@ -53,7 +53,7 @@ var _ = Describe("Client", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
@@ -66,7 +66,7 @@ var _ = Describe("Client", func() {
 		d.SetResults(r)
 		Expect(len(d.GetResults())).To(Equal(1))
 
-		result := d.GetResult(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		result := d.GetResult(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 		Expect(result.Err).To(BeNil())
 		Expect(result.ResultStatus).To(Equal(deployer.Deployed))
 	})
@@ -77,7 +77,7 @@ var _ = Describe("Client", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
@@ -90,7 +90,7 @@ var _ = Describe("Client", func() {
 		d.SetResults(r)
 		Expect(len(d.GetResults())).To(Equal(1))
 
-		result := d.GetResult(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		result := d.GetResult(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 		Expect(result.Err).ToNot(BeNil())
 		Expect(result.ResultStatus).To(Equal(deployer.Failed))
 	})
@@ -101,7 +101,7 @@ var _ = Describe("Client", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := true
-		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeSveltos, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos, cleanup)
 
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
@@ -113,7 +113,7 @@ var _ = Describe("Client", func() {
 		d.SetInProgress([]string{key})
 		Expect(len(d.GetInProgress())).To(Equal(1))
 
-		result := d.GetResult(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeSveltos, cleanup)
+		result := d.GetResult(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos, cleanup)
 		Expect(result.Err).To(BeNil())
 		Expect(result.ResultStatus).To(Equal(deployer.InProgress))
 	})
@@ -124,7 +124,7 @@ var _ = Describe("Client", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeSveltos, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos, cleanup)
 
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
@@ -136,11 +136,11 @@ var _ = Describe("Client", func() {
 		d.SetJobQueue(key, nil, nil)
 		Expect(len(d.GetJobQueue())).To(Equal(1))
 
-		result := d.GetResult(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeSveltos, cleanup)
+		result := d.GetResult(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos, cleanup)
 		Expect(result.Err).To(BeNil())
 		Expect(result.ResultStatus).To(Equal(deployer.InProgress))
 
-		result = d.GetResult(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		result = d.GetResult(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 		Expect(result.Err).To(BeNil())
 		Expect(result.ResultStatus).To(Equal(deployer.Unavailable))
 	})
@@ -159,11 +159,11 @@ var _ = Describe("Client", func() {
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
-		result := d.GetResult(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		result := d.GetResult(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 		Expect(result.Err).To(BeNil())
 		Expect(result.ResultStatus).To(Equal(deployer.Unavailable))
 
-		result = d.GetResult(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeSveltos, cleanup)
+		result = d.GetResult(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos, cleanup)
 		Expect(result.Err).To(BeNil())
 		Expect(result.ResultStatus).To(Equal(deployer.Unavailable))
 	})
@@ -181,7 +181,7 @@ var _ = Describe("Client", func() {
 		d := deployer.GetClient(context.TODO(),
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 
-		err := d.Deploy(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup, nil, nil, deployer.Options{})
+		err := d.Deploy(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup, nil, nil, deployer.Options{})
 		Expect(err).ToNot(BeNil())
 	})
 
@@ -202,11 +202,11 @@ var _ = Describe("Client", func() {
 		err := d.RegisterFeatureID(featureID)
 		Expect(err).To(BeNil())
 
-		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 		d.SetDirty([]string{key})
 		Expect(len(d.GetDirty())).To(Equal(1))
 
-		err = d.Deploy(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi,
+		err = d.Deploy(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi,
 			cleanup, nil, nil, deployer.Options{})
 		Expect(err).To(BeNil())
 		Expect(len(d.GetDirty())).To(Equal(1))
@@ -231,7 +231,7 @@ var _ = Describe("Client", func() {
 		err := d.RegisterFeatureID(featureID)
 		Expect(err).To(BeNil())
 
-		err = d.Deploy(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup, nil, nil, deployer.Options{})
+		err = d.Deploy(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup, nil, nil, deployer.Options{})
 		Expect(err).To(BeNil())
 		Expect(len(d.GetDirty())).To(Equal(1))
 		Expect(len(d.GetInProgress())).To(Equal(0))
@@ -244,7 +244,7 @@ var _ = Describe("Client", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeSveltos, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos, cleanup)
 
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
@@ -259,7 +259,7 @@ var _ = Describe("Client", func() {
 		d.SetInProgress([]string{key})
 		Expect(len(d.GetInProgress())).To(Equal(1))
 
-		err = d.Deploy(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeSveltos,
+		err = d.Deploy(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos,
 			cleanup, nil, nil, deployer.Options{})
 		Expect(err).To(BeNil())
 		Expect(len(d.GetDirty())).To(Equal(1))
@@ -273,7 +273,7 @@ var _ = Describe("Client", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		ctx, cancel := context.WithCancel(context.TODO())
@@ -289,7 +289,7 @@ var _ = Describe("Client", func() {
 		d.SetResults(r)
 		Expect(len(d.GetResults())).To(Equal(1))
 
-		err = d.Deploy(ctx, ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi,
+		err = d.Deploy(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi,
 			cleanup, nil, nil, deployer.Options{})
 		Expect(err).To(BeNil())
 		Expect(len(d.GetDirty())).To(Equal(1))
@@ -304,7 +304,7 @@ var _ = Describe("Client", func() {
 		applicant := randomString()
 		featureID := randomString()
 		cleanup := false
-		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		_, cancel := context.WithCancel(context.TODO())
@@ -329,7 +329,7 @@ var _ = Describe("Client", func() {
 		d.SetJobQueue(key, nil, nil)
 		Expect(len(d.GetJobQueue())).To(Equal(1))
 
-		d.CleanupEntries(ns, name, applicant, featureID, sveltosv1alpha1.ClusterTypeCapi, cleanup)
+		d.CleanupEntries(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 		Expect(len(d.GetDirty())).To(Equal(0))
 		Expect(len(d.GetInProgress())).To(Equal(1))
 		Expect(len(d.GetJobQueue())).To(Equal(0))

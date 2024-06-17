@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
 // Sharding can be used to to horizontal scale sveltos.
@@ -79,8 +79,8 @@ func IsShardAMatch(shardKey string, cluster client.Object) bool {
 // component indicates the sveltos component requesting it.
 // returns a bool indicating whether the cluster:shard pair has changed and an error
 // if any occurred
-func RegisterClusterShard(ctx context.Context, c client.Client, component sveltosv1alpha1.Component,
-	feature, shard, clusterNamespace, clusterName string, clusterType sveltosv1alpha1.ClusterType) (bool, error) {
+func RegisterClusterShard(ctx context.Context, c client.Client, component libsveltosv1beta1.Component,
+	feature, shard, clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType) (bool, error) {
 
 	cm, err := getConfigMap(ctx, c, component, feature)
 	if err != nil {
@@ -115,13 +115,13 @@ const (
 	configMapNamespace = "projectsveltos"
 )
 
-func getConfigMapName(component sveltosv1alpha1.Component, feature string) string {
+func getConfigMapName(component libsveltosv1beta1.Component, feature string) string {
 	return fmt.Sprintf("%s-%s-%s", configMapName,
 		strings.ToLower(string(component)),
 		strings.ToLower(feature))
 }
 
-func getConfigMap(ctx context.Context, c client.Client, component sveltosv1alpha1.Component,
+func getConfigMap(ctx context.Context, c client.Client, component libsveltosv1beta1.Component,
 	feature string) (*corev1.ConfigMap, error) {
 
 	cm := &corev1.ConfigMap{}
@@ -137,7 +137,7 @@ func getConfigMap(ctx context.Context, c client.Client, component sveltosv1alpha
 	return cm, nil
 }
 
-func createConfigMap(ctx context.Context, c client.Client, component sveltosv1alpha1.Component,
+func createConfigMap(ctx context.Context, c client.Client, component libsveltosv1beta1.Component,
 	feature string) (*corev1.ConfigMap, error) {
 
 	name := getConfigMapName(component, feature)

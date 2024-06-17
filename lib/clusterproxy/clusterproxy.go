@@ -32,7 +32,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
@@ -162,7 +162,7 @@ func GetSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Clie
 		Name:      clusterName,
 	}
 
-	cluster := libsveltosv1alpha1.SveltosCluster{}
+	cluster := libsveltosv1beta1.SveltosCluster{}
 	if err := c.Get(ctx, key, &cluster); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("SveltosCluster does not exist")
@@ -195,7 +195,7 @@ func UpdateSveltosSecretData(ctx context.Context, logger logr.Logger, c client.C
 		Name:      clusterName,
 	}
 
-	cluster := libsveltosv1alpha1.SveltosCluster{}
+	cluster := libsveltosv1beta1.SveltosCluster{}
 	if err := c.Get(ctx, key, &cluster); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("SveltosCluster does not exist")
@@ -238,7 +238,7 @@ func IsClusterReadyToBeConfigured(
 	cluster *corev1.ObjectReference, logger logr.Logger,
 ) (bool, error) {
 
-	if cluster.Kind == libsveltosv1alpha1.SveltosClusterKind {
+	if cluster.Kind == libsveltosv1beta1.SveltosClusterKind {
 		return isSveltosClusterReadyToBeConfigured(ctx, c, cluster, logger)
 	}
 
@@ -252,7 +252,7 @@ func isSveltosClusterReadyToBeConfigured(
 	cluster *corev1.ObjectReference, logger logr.Logger,
 ) (bool, error) {
 
-	sveltosCluster := &libsveltosv1alpha1.SveltosCluster{}
+	sveltosCluster := &libsveltosv1beta1.SveltosCluster{}
 	err := c.Get(ctx, types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Name}, sveltosCluster)
 	if err != nil {
 		logger.Info(fmt.Sprintf("Failed to get SveltosCluster %v", err))
@@ -262,7 +262,7 @@ func isSveltosClusterReadyToBeConfigured(
 	return isSveltosClusterStatusReady(sveltosCluster), nil
 }
 
-func isSveltosClusterStatusReady(sveltosCluster *libsveltosv1alpha1.SveltosCluster) bool {
+func isSveltosClusterStatusReady(sveltosCluster *libsveltosv1beta1.SveltosCluster) bool {
 	return sveltosCluster.Status.Ready
 }
 

@@ -39,10 +39,6 @@ type RoleRequestSpec struct {
 	// in this instance will be granted (Deprecated use selector instead)
 	ClusterSelector Selector `json:"clusterSelector"`
 
-	// Selector identifies clusters to associate to.
-	// +optional
-	Selector ClusterSelector `json:"selector,omitempty"`
-
 	// RoleRefs references all the Secret/ConfigMaps containing kubernetes
 	// Roles/ClusterRoles that need to be deployed in the matching clusters.
 	// +optional
