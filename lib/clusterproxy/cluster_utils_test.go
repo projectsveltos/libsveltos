@@ -261,6 +261,52 @@ var _ = Describe("Cluster utils", func() {
 		}))
 	})
 
+	It("GetMatchingClusters matches no cluster when Selector is empty", func() {
+		selector := libsveltosv1beta1.Selector{
+			LabelSelector: metav1.LabelSelector{},
+		}
+
+		sveltosCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+				Labels: map[string]string{
+					randomString(): randomString(),
+				},
+			},
+			Status: libsveltosv1beta1.SveltosClusterStatus{
+				Ready: true,
+			},
+		}
+
+		nonMatchingSveltosCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+			},
+			Status: libsveltosv1beta1.SveltosClusterStatus{
+				Ready: true,
+			},
+		}
+
+		cluster.Labels = map[string]string{
+			randomString(): randomString(),
+		}
+
+		initObjects := []client.Object{
+			cluster,
+			sveltosCluster,
+			nonMatchingSveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
+
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "",
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(0))
+	})
+
 	It("getMatchingClusters returns matchin CAPI Cluster", func() {
 		selector := libsveltosv1beta1.Selector{
 			LabelSelector: metav1.LabelSelector{

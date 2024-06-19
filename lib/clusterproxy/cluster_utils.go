@@ -497,6 +497,11 @@ func GetMatchingClusters(ctx context.Context, c client.Client, selector *metav1.
 
 	matching := make([]corev1.ObjectReference, 0)
 
+	if len(selector.MatchLabels)+len(selector.MatchExpressions) == 0 {
+		logger.V(logs.LogInfo).Info("empty selector matches no cluster")
+		return matching, nil
+	}
+
 	clusterSelector, err := metav1.LabelSelectorAsSelector(selector)
 	if err != nil {
 		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert selector %v", err))
