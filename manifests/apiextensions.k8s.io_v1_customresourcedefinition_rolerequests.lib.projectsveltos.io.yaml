@@ -286,45 +286,7 @@ spec:
           spec:
             description: RoleRequestSpec defines the desired state of RoleRequest
             properties:
-              expirationSeconds:
-                description: |-
-                  ExpirationSeconds is the requested duration of validity of the TokenRequest
-                  associated to ServiceAccount. If not specified, default value is used
-                format: int64
-                type: integer
-              roleRefs:
-                description: |-
-                  RoleRefs references all the Secret/ConfigMaps containing kubernetes
-                  Roles/ClusterRoles that need to be deployed in the matching clusters.
-                items:
-                  description: |-
-                    PolicyRef specifies a resource containing one or more policy
-                    to deploy in matching Clusters.
-                  properties:
-                    kind:
-                      description: 'Kind of the resource. Supported kinds are: Secrets
-                        and ConfigMaps.'
-                      enum:
-                      - Secret
-                      - ConfigMap
-                      type: string
-                    name:
-                      description: Name of the referenced resource.
-                      minLength: 1
-                      type: string
-                    namespace:
-                      description: |-
-                        Namespace of the referenced resource.
-                        Namespace can be left empty. In such a case, namespace will
-                        be implicit set to cluster's namespace.
-                      type: string
-                  required:
-                  - kind
-                  - name
-                  - namespace
-                  type: object
-                type: array
-              selector:
+              clusterSelector:
                 description: Selector identifies clusters to associate to.
                 properties:
                   matchExpressions:
@@ -370,6 +332,44 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
+              expirationSeconds:
+                description: |-
+                  ExpirationSeconds is the requested duration of validity of the TokenRequest
+                  associated to ServiceAccount. If not specified, default value is used
+                format: int64
+                type: integer
+              roleRefs:
+                description: |-
+                  RoleRefs references all the Secret/ConfigMaps containing kubernetes
+                  Roles/ClusterRoles that need to be deployed in the matching clusters.
+                items:
+                  description: |-
+                    PolicyRef specifies a resource containing one or more policy
+                    to deploy in matching Clusters.
+                  properties:
+                    kind:
+                      description: 'Kind of the resource. Supported kinds are: Secrets
+                        and ConfigMaps.'
+                      enum:
+                      - Secret
+                      - ConfigMap
+                      type: string
+                    name:
+                      description: Name of the referenced resource.
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: |-
+                        Namespace of the referenced resource.
+                        Namespace can be left empty. In such a case, namespace will
+                        be implicit set to cluster's namespace.
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  - namespace
+                  type: object
+                type: array
               serviceAccountName:
                 description: |-
                   ServiceAccountName is the name of the ServiceAccount representing a tenant admin for which
