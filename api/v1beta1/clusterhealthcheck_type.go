@@ -219,7 +219,7 @@ type NotificationSummary struct {
 type ClusterHealthCheckSpec struct {
 	// Selector identifies clusters to associate to.
 	// +optional
-	ClusterSelector Selector `json:"selector,omitempty"`
+	ClusterSelector Selector `json:"clusterSelector,omitempty"`
 
 	// LivenessChecks is a list of source of liveness checks to evaluate.
 	// Anytime one of those changes, notifications will be sent
