@@ -17,14 +17,12 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"encoding/json"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 var (
@@ -46,60 +44,4 @@ func convertV1Beta1SelectorToV1Alpha1(clusterSelector *libsveltosv1beta1.Selecto
 	}
 
 	return Selector(labelSelector.String()), nil
-}
-
-func convertV1Alpha1SetSpecToV1Beta1(srcSpec *Spec, dstSpec *libsveltosv1beta1.Spec) error {
-	dstSpec.ClusterRefs = srcSpec.ClusterRefs
-	dstSpec.MaxReplicas = srcSpec.MaxReplicas
-
-	selector, err := convertV1Alpha1SelectorToV1Beta1(&srcSpec.ClusterSelector)
-	if err != nil {
-		configlog.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert ClusterSelector: %v", err))
-		return err
-	}
-
-	dstSpec.ClusterSelector = *selector
-	return nil
-}
-
-func convertV1Beta1SetSpecToV1Alpha1(srcSpec *libsveltosv1beta1.Spec, dstSpec *Spec) error {
-	dstSpec.ClusterRefs = srcSpec.ClusterRefs
-	dstSpec.MaxReplicas = srcSpec.MaxReplicas
-
-	selector, err := convertV1Beta1SelectorToV1Alpha1(&srcSpec.ClusterSelector)
-	if err != nil {
-		configlog.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert ClusterSelector: %v", err))
-		return err
-	}
-
-	dstSpec.ClusterSelector = selector
-
-	return nil
-}
-
-func convertV1Alpha1SetStatusToV1Beta1(srcStatus *Status, dstStatus *libsveltosv1beta1.Status) error {
-	jsonData, err := json.Marshal(srcStatus) // Marshal the Status field
-	if err != nil {
-		return fmt.Errorf("error marshaling Status: %w", err)
-	}
-
-	err = json.Unmarshal(jsonData, &dstStatus) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
-	}
-
-	return nil
-}
-
-func convertV1Beta1SetStatusToV1Alpha1(srcStatus *libsveltosv1beta1.Status, dstStatus *Status) error {
-	jsonData, err := json.Marshal(srcStatus) // Marshal the Status field
-	if err != nil {
-		return fmt.Errorf("error marshaling Status: %w", err)
-	}
-
-	err = json.Unmarshal(jsonData, &dstStatus) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
-	}
-	return nil
 }

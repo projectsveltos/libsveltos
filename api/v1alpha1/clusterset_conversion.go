@@ -17,30 +17,22 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"fmt"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 // ConvertTo converts v1alpha1 to the Hub version (v1beta1).
 func (src *ClusterSet) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*libsveltosv1beta1.ClusterSet)
-
-	configlog.V(logs.LogInfo).Info("convert ClusterSet from v1alpha1 to v1beta1")
-
-	dst.ObjectMeta = src.ObjectMeta
-
-	err := convertV1Alpha1SetSpecToV1Beta1(&src.Spec, &dst.Spec)
+	err := Convert_v1alpha1_ClusterSet_To_v1beta1_ClusterSet(src, dst, nil)
 	if err != nil {
-		return fmt.Errorf("error converting Spec: %w", err)
+		return err
 	}
 
-	err = convertV1Alpha1SetStatusToV1Beta1(&src.Status, &dst.Status)
-	if err != nil {
-		return fmt.Errorf("error converting Spec: %w", err)
+	if src.Spec.ClusterSelector == "" {
+		dst.Spec.ClusterSelector.LabelSelector = metav1.LabelSelector{}
 	}
 
 	return nil
@@ -49,19 +41,13 @@ func (src *ClusterSet) ConvertTo(dstRaw conversion.Hub) error {
 // ConvertFrom converts from the Hub version (v1beta1) to this v1alpha1.
 func (dst *ClusterSet) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*libsveltosv1beta1.ClusterSet)
-
-	configlog.V(logs.LogInfo).Info("convert ClusterSet from v1beta1 to v1alpha1")
-
-	dst.ObjectMeta = src.ObjectMeta
-
-	err := convertV1Beta1SetSpecToV1Alpha1(&src.Spec, &dst.Spec)
+	err := Convert_v1beta1_ClusterSet_To_v1alpha1_ClusterSet(src, dst, nil)
 	if err != nil {
-		return fmt.Errorf("error converting Spec: %w", err)
+		return err
 	}
 
-	err = convertV1Beta1SetStatusToV1Alpha1(&src.Status, &dst.Status)
-	if err != nil {
-		return fmt.Errorf("error converting Status: %w", err)
+	if src.Spec.ClusterSelector.MatchLabels == nil {
+		dst.Spec.ClusterSelector = ""
 	}
 
 	return nil

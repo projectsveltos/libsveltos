@@ -17,9 +17,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"encoding/json"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimachineryconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
@@ -29,41 +30,13 @@ import (
 // ConvertTo converts v1alpha1 to the Hub version (v1beta1).
 func (src *RoleRequest) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*libsveltosv1beta1.RoleRequest)
-
-	configlog.V(logs.LogInfo).Info("convert RoleRequest from v1alpha1 to v1beta1")
-
-	dst.ObjectMeta = src.ObjectMeta
-
-	dst.Spec.ExpirationSeconds = src.Spec.ExpirationSeconds
-
-	jsonData, err := json.Marshal(src.Spec.RoleRefs) // Marshal the RoleRefs field
+	err := Convert_v1alpha1_RoleRequest_To_v1beta1_RoleRequest(src, dst, nil)
 	if err != nil {
-		return fmt.Errorf("error marshaling Spec.RoleRefs: %w", err)
-	}
-	err = json.Unmarshal(jsonData, &dst.Spec.RoleRefs) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
-	}
-
-	dst.Spec.ServiceAccountName = src.Spec.ServiceAccountName
-	dst.Spec.ServiceAccountNamespace = src.Spec.ServiceAccountNamespace
-
-	selector, err := convertV1Alpha1SelectorToV1Beta1(&src.Spec.ClusterSelector)
-	if err != nil {
-		configlog.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert ClusterSelector: %v", err))
 		return err
 	}
 
-	dst.Spec.ClusterSelector = *selector
-
-	jsonData, err = json.Marshal(src.Status) // Marshal the Status field
-	if err != nil {
-		return fmt.Errorf("error marshaling Status: %w", err)
-	}
-
-	err = json.Unmarshal(jsonData, &dst.Status) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
+	if src.Spec.ClusterSelector == "" {
+		dst.Spec.ClusterSelector.LabelSelector = metav1.LabelSelector{}
 	}
 
 	return nil
@@ -72,42 +45,52 @@ func (src *RoleRequest) ConvertTo(dstRaw conversion.Hub) error {
 // ConvertFrom converts from the Hub version (v1beta1) to this v1alpha1.
 func (dst *RoleRequest) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*libsveltosv1beta1.RoleRequest)
-
-	configlog.V(logs.LogInfo).Info("convert RoleRequest from v1beta1 to v1alpha1")
-
-	dst.ObjectMeta = src.ObjectMeta
-
-	dst.Spec.ExpirationSeconds = src.Spec.ExpirationSeconds
-
-	jsonData, err := json.Marshal(src.Spec.RoleRefs) // Marshal the RoleRefs field
+	err := Convert_v1beta1_RoleRequest_To_v1alpha1_RoleRequest(src, dst, nil)
 	if err != nil {
-		return fmt.Errorf("error marshaling Spec.RoleRefs: %w", err)
-	}
-	err = json.Unmarshal(jsonData, &dst.Spec.RoleRefs) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
+		return err
 	}
 
-	dst.Spec.ServiceAccountName = src.Spec.ServiceAccountName
-	dst.Spec.ServiceAccountNamespace = src.Spec.ServiceAccountNamespace
+	if src.Spec.ClusterSelector.MatchLabels == nil {
+		dst.Spec.ClusterSelector = ""
+	}
 
-	selector, err := convertV1Beta1SelectorToV1Alpha1(&src.Spec.ClusterSelector)
+	return nil
+}
+
+func Convert_v1alpha1_RoleRequestSpec_To_v1beta1_RoleRequestSpec(srcSpec *RoleRequestSpec,
+	dstSpec *libsveltosv1beta1.RoleRequestSpec, scope apimachineryconversion.Scope,
+) error {
+
+	if err := autoConvert_v1alpha1_RoleRequestSpec_To_v1beta1_RoleRequestSpec(srcSpec, dstSpec, nil); err != nil {
+		return err
+	}
+
+	selector, err := convertV1Alpha1SelectorToV1Beta1(&srcSpec.ClusterSelector)
 	if err != nil {
 		configlog.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert ClusterSelector: %v", err))
 		return err
 	}
 
-	dst.Spec.ClusterSelector = selector
+	dstSpec.ClusterSelector = *selector
 
-	jsonData, err = json.Marshal(src.Status) // Marshal the Status field
-	if err != nil {
-		return fmt.Errorf("error marshaling Status: %w", err)
+	return nil
+}
+
+func Convert_v1beta1_RoleRequestSpec_To_v1alpha1_RoleRequestSpec(srcSpec *libsveltosv1beta1.RoleRequestSpec,
+	dstSpec *RoleRequestSpec, scope apimachineryconversion.Scope,
+) error {
+
+	if err := autoConvert_v1beta1_RoleRequestSpec_To_v1alpha1_RoleRequestSpec(srcSpec, dstSpec, nil); err != nil {
+		return err
 	}
 
-	err = json.Unmarshal(jsonData, &dst.Status) // Unmarshal to v1beta1 type
+	selector, err := convertV1Beta1SelectorToV1Alpha1(&srcSpec.ClusterSelector)
 	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
+		configlog.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert ClusterSelector: %v", err))
+		return err
 	}
+
+	dstSpec.ClusterSelector = selector
 
 	return nil
 }

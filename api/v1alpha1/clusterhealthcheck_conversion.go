@@ -17,9 +17,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"encoding/json"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimachineryconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
@@ -29,45 +30,13 @@ import (
 // ConvertTo converts v1alpha1 to the Hub version (v1beta1).
 func (src *ClusterHealthCheck) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*libsveltosv1beta1.ClusterHealthCheck)
-
-	configlog.V(logs.LogInfo).Info("convert ClusterHealthCheck from v1alpha1 to v1beta1")
-
-	dst.ObjectMeta = src.ObjectMeta
-
-	jsonData, err := json.Marshal(src.Spec.LivenessChecks) // Marshal the LivenessChecks field
+	err := Convert_v1alpha1_ClusterHealthCheck_To_v1beta1_ClusterHealthCheck(src, dst, nil)
 	if err != nil {
-		return fmt.Errorf("error marshaling Spec.LivenessChecks: %w", err)
-	}
-	err = json.Unmarshal(jsonData, &dst.Spec.LivenessChecks) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
-	}
-
-	jsonData, err = json.Marshal(src.Spec.Notifications) // Marshal the Notifications field
-	if err != nil {
-		return fmt.Errorf("error marshaling Spec.Notifications: %w", err)
-	}
-	err = json.Unmarshal(jsonData, &dst.Spec.Notifications) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
-	}
-
-	selector, err := convertV1Alpha1SelectorToV1Beta1(&src.Spec.ClusterSelector)
-	if err != nil {
-		configlog.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert ClusterSelector: %v", err))
 		return err
 	}
 
-	dst.Spec.ClusterSelector = *selector
-
-	jsonData, err = json.Marshal(src.Status) // Marshal the Status field
-	if err != nil {
-		return fmt.Errorf("error marshaling Status: %w", err)
-	}
-
-	err = json.Unmarshal(jsonData, &dst.Status) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
+	if src.Spec.ClusterSelector == "" {
+		dst.Spec.ClusterSelector.LabelSelector = metav1.LabelSelector{}
 	}
 
 	return nil
@@ -76,46 +45,52 @@ func (src *ClusterHealthCheck) ConvertTo(dstRaw conversion.Hub) error {
 // ConvertFrom converts from the Hub version (v1beta1) to this v1alpha1.
 func (dst *ClusterHealthCheck) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*libsveltosv1beta1.ClusterHealthCheck)
-
-	configlog.V(logs.LogInfo).Info("convert ClusterHealthCheck from v1beta1 to v1alpha1")
-
-	dst.ObjectMeta = src.ObjectMeta
-
-	jsonData, err := json.Marshal(src.Spec.LivenessChecks) // Marshal the LivenessChecks field
+	err := Convert_v1beta1_ClusterHealthCheck_To_v1alpha1_ClusterHealthCheck(src, dst, nil)
 	if err != nil {
-		return fmt.Errorf("error marshaling Spec.LivenessChecks: %w", err)
-	}
-	err = json.Unmarshal(jsonData, &dst.Spec.LivenessChecks) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
+		return err
 	}
 
-	jsonData, err = json.Marshal(src.Spec.Notifications) // Marshal the Notifications field
-	if err != nil {
-		return fmt.Errorf("error marshaling Spec.Notifications: %w", err)
-	}
-	err = json.Unmarshal(jsonData, &dst.Spec.Notifications) // Unmarshal to v1beta1 type
-	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
+	if src.Spec.ClusterSelector.MatchLabels == nil {
+		dst.Spec.ClusterSelector = ""
 	}
 
-	selector, err := convertV1Beta1SelectorToV1Alpha1(&src.Spec.ClusterSelector)
+	return nil
+}
+
+func Convert_v1beta1_ClusterHealthCheckSpec_To_v1alpha1_ClusterHealthCheckSpec(srcSpec *libsveltosv1beta1.ClusterHealthCheckSpec,
+	dstSpec *ClusterHealthCheckSpec, scope apimachineryconversion.Scope,
+) error {
+
+	if err := autoConvert_v1beta1_ClusterHealthCheckSpec_To_v1alpha1_ClusterHealthCheckSpec(srcSpec, dstSpec, nil); err != nil {
+		return err
+	}
+
+	selector, err := convertV1Beta1SelectorToV1Alpha1(&srcSpec.ClusterSelector)
 	if err != nil {
 		configlog.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert ClusterSelector: %v", err))
 		return err
 	}
 
-	dst.Spec.ClusterSelector = selector
+	dstSpec.ClusterSelector = selector
 
-	jsonData, err = json.Marshal(src.Status) // Marshal the Status field
-	if err != nil {
-		return fmt.Errorf("error marshaling Status: %w", err)
+	return nil
+}
+
+func Convert_v1alpha1_ClusterHealthCheckSpec_To_v1beta1_ClusterHealthCheckSpec(srcSpec *ClusterHealthCheckSpec,
+	dstSpec *libsveltosv1beta1.ClusterHealthCheckSpec, scope apimachineryconversion.Scope,
+) error {
+
+	if err := autoConvert_v1alpha1_ClusterHealthCheckSpec_To_v1beta1_ClusterHealthCheckSpec(srcSpec, dstSpec, nil); err != nil {
+		return err
 	}
 
-	err = json.Unmarshal(jsonData, &dst.Status) // Unmarshal to v1beta1 type
+	selector, err := convertV1Alpha1SelectorToV1Beta1(&srcSpec.ClusterSelector)
 	if err != nil {
-		return fmt.Errorf("error unmarshaling JSON: %w", err)
+		configlog.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert ClusterSelector: %v", err))
+		return err
 	}
+
+	dstSpec.ClusterSelector = *selector
 
 	return nil
 }
