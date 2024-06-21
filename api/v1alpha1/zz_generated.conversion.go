@@ -196,16 +196,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*ClusterHealthCheckSpec)(nil), (*v1beta1.ClusterHealthCheckSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_ClusterHealthCheckSpec_To_v1beta1_ClusterHealthCheckSpec(a.(*ClusterHealthCheckSpec), b.(*v1beta1.ClusterHealthCheckSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta1.ClusterHealthCheckSpec)(nil), (*ClusterHealthCheckSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_ClusterHealthCheckSpec_To_v1alpha1_ClusterHealthCheckSpec(a.(*v1beta1.ClusterHealthCheckSpec), b.(*ClusterHealthCheckSpec), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*ClusterHealthCheckStatus)(nil), (*v1beta1.ClusterHealthCheckStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_ClusterHealthCheckStatus_To_v1beta1_ClusterHealthCheckStatus(a.(*ClusterHealthCheckStatus), b.(*v1beta1.ClusterHealthCheckStatus), scope)
 	}); err != nil {
@@ -706,16 +696,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*RoleRequestSpec)(nil), (*v1beta1.RoleRequestSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_RoleRequestSpec_To_v1beta1_RoleRequestSpec(a.(*RoleRequestSpec), b.(*v1beta1.RoleRequestSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta1.RoleRequestSpec)(nil), (*RoleRequestSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_RoleRequestSpec_To_v1alpha1_RoleRequestSpec(a.(*v1beta1.RoleRequestSpec), b.(*RoleRequestSpec), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*RoleRequestStatus)(nil), (*v1beta1.RoleRequestStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_RoleRequestStatus_To_v1beta1_RoleRequestStatus(a.(*RoleRequestStatus), b.(*v1beta1.RoleRequestStatus), scope)
 	}); err != nil {
@@ -743,16 +723,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*v1beta1.SetList)(nil), (*SetList)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_SetList_To_v1alpha1_SetList(a.(*v1beta1.SetList), b.(*SetList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*Spec)(nil), (*v1beta1.Spec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_Spec_To_v1beta1_Spec(a.(*Spec), b.(*v1beta1.Spec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta1.Spec)(nil), (*Spec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_Spec_To_v1alpha1_Spec(a.(*v1beta1.Spec), b.(*Spec), scope)
 	}); err != nil {
 		return err
 	}
@@ -823,6 +793,36 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*v1beta1.UnManagedLabel)(nil), (*UnManagedLabel)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_UnManagedLabel_To_v1alpha1_UnManagedLabel(a.(*v1beta1.UnManagedLabel), b.(*UnManagedLabel), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*ClusterHealthCheckSpec)(nil), (*v1beta1.ClusterHealthCheckSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_ClusterHealthCheckSpec_To_v1beta1_ClusterHealthCheckSpec(a.(*ClusterHealthCheckSpec), b.(*v1beta1.ClusterHealthCheckSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*RoleRequestSpec)(nil), (*v1beta1.RoleRequestSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_RoleRequestSpec_To_v1beta1_RoleRequestSpec(a.(*RoleRequestSpec), b.(*v1beta1.RoleRequestSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*Spec)(nil), (*v1beta1.Spec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_Spec_To_v1beta1_Spec(a.(*Spec), b.(*v1beta1.Spec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta1.ClusterHealthCheckSpec)(nil), (*ClusterHealthCheckSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_ClusterHealthCheckSpec_To_v1alpha1_ClusterHealthCheckSpec(a.(*v1beta1.ClusterHealthCheckSpec), b.(*ClusterHealthCheckSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta1.RoleRequestSpec)(nil), (*RoleRequestSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_RoleRequestSpec_To_v1alpha1_RoleRequestSpec(a.(*v1beta1.RoleRequestSpec), b.(*RoleRequestSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta1.Spec)(nil), (*Spec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_Spec_To_v1alpha1_Spec(a.(*v1beta1.Spec), b.(*Spec), scope)
 	}); err != nil {
 		return err
 	}
