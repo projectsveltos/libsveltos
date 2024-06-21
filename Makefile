@@ -44,8 +44,15 @@ CONVERSION_GEN_BIN := conversion-gen
 # in generated files.
 CONVERSION_GEN := $(abspath $(TOOLS_BIN_DIR)/$(CONVERSION_GEN_BIN))
 CONVERSION_GEN_PKG := k8s.io/code-generator/cmd/conversion-gen
+
 .PHONY: $(CONVERSION_GEN_BIN)
 $(CONVERSION_GEN_BIN): $(CONVERSION_GEN) ## Build a local copy of conversion-gen.
+
+## We are forcing a rebuilt of conversion-gen via PHONY so that we're always using an up-to-date version.
+## We can't use a versioned name for the binary, because that would be reflected in generated files.
+.PHONY: $(CONVERSION_GEN)
+$(CONVERSION_GEN): # Build conversion-gen from tools folder.
+	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(CONVERSION_GEN_PKG) $(CONVERSION_GEN_BIN) $(CONVERSION_GEN_VER)
 
 SETUP_ENVTEST_VER := v0.0.0-20240215143116-d0396a3d6f9f
 SETUP_ENVTEST_BIN := setup-envtest
@@ -130,6 +137,12 @@ vet: ## Run go vet against code.
 lint: $(GOLANGCI_LINT) generate ## Lint codebase
 	$(GOLANGCI_LINT) run -v --fast=false --max-issues-per-linter 0 --max-same-issues 0 --timeout 5m	
 
+.PHONY: check-manifests
+check-manifests: manifests generate-go-conversions ## Verify manifests file is up to date
+	test `git status --porcelain ./manifests/*.yaml | grep -cE '(^\?)|(^ M)'` -eq 0 || (echo "The manifest file changed, please 'make manifests' and commit the results"; exit 1)
+	test `git status --porcelain ./api/v1alpha1/zz_generated.conversion.go | grep -cE '(^\?)|(^ M)'` -eq 0 || (echo "The conversion generated file changed, please 'make generate-go-conversions' and commit the results"; exit 1)
+
+
 # KUBEBUILDER_ENVTEST_KUBERNETES_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 KUBEBUILDER_ENVTEST_KUBERNETES_VERSION = 1.30.0
 
@@ -142,7 +155,7 @@ endif
 ##@ TESTING
 
 .PHONY: test
-test: generate manifests fmt vet $(SETUP_ENVTEST) ## Run tests.
+test: generate manifests fmt vet $(SETUP_ENVTEST) check-manifests ## Run tests.
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test $(shell go list ./... | grep -v internal/test | grep -v lib/deployer/fake ) $(TEST_ARGS) -coverprofile cover.out 
 
 ##@ Build
