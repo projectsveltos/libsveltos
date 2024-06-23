@@ -39,6 +39,17 @@ func (src *ClusterHealthCheck) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.ClusterSelector.LabelSelector = metav1.LabelSelector{}
 	}
 
+	for i := range dst.Spec.LivenessChecks {
+		lc := &dst.Spec.LivenessChecks[i]
+		if lc.LivenessSourceRef != nil {
+			if lc.LivenessSourceRef.Kind == HealthCheckKind &&
+				lc.LivenessSourceRef.APIVersion == GroupVersion.String() {
+
+				lc.LivenessSourceRef.APIVersion = libsveltosv1beta1.GroupVersion.String()
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -52,6 +63,17 @@ func (dst *ClusterHealthCheck) ConvertFrom(srcRaw conversion.Hub) error {
 
 	if src.Spec.ClusterSelector.MatchLabels == nil {
 		dst.Spec.ClusterSelector = ""
+	}
+
+	for i := range dst.Spec.LivenessChecks {
+		lc := dst.Spec.LivenessChecks[i]
+		if lc.LivenessSourceRef != nil {
+			if lc.LivenessSourceRef.Kind == libsveltosv1beta1.HealthCheckKind &&
+				lc.LivenessSourceRef.APIVersion == GroupVersion.String() {
+
+				dst.Spec.LivenessChecks[i].LivenessSourceRef.APIVersion = GroupVersion.String()
+			}
+		}
 	}
 
 	return nil

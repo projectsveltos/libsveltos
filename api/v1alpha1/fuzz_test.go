@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	fuzz "github.com/google/gofuzz"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/apitesting/fuzzer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtimeserializer "k8s.io/apimachinery/pkg/runtime/serializer"
@@ -58,7 +59,7 @@ func TestFuzzyConversion(t *testing.T) {
 
 func fuzzFuncs(_ runtimeserializer.CodecFactory) []interface{} {
 	return []interface{}{
-		clusterHealthCheckSelectorFuzzer,
+		clusterHealthCheckFuzzer,
 		roleRequestClusterSelectorFuzzer,
 		clusterSetClusterSelectorFuzzer,
 		setClusterSelectorFuzzer,
@@ -69,11 +70,23 @@ func fuzzFuncs(_ runtimeserializer.CodecFactory) []interface{} {
 	}
 }
 
-func clusterHealthCheckSelectorFuzzer(in *libsveltosv1alpha1.ClusterHealthCheck, _ fuzz.Continue) {
+func clusterHealthCheckFuzzer(in *libsveltosv1alpha1.ClusterHealthCheck, _ fuzz.Continue) {
 	in.Spec.ClusterSelector = libsveltosv1alpha1.Selector(
 		fmt.Sprintf("%s=%s",
 			randomString(), randomString(),
 		))
+
+	in.Spec.LivenessChecks = []libsveltosv1alpha1.LivenessCheck{
+		{
+			Type: libsveltosv1alpha1.LivenessTypeHealthCheck,
+			LivenessSourceRef: &corev1.ObjectReference{
+				Namespace:  randomString(),
+				Name:       randomString(),
+				Kind:       libsveltosv1alpha1.HealthCheckKind,
+				APIVersion: libsveltosv1alpha1.GroupVersion.String(),
+			},
+		},
+	}
 }
 
 func roleRequestClusterSelectorFuzzer(in *libsveltosv1alpha1.RoleRequest, _ fuzz.Continue) {

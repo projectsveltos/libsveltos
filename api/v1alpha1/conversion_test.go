@@ -48,9 +48,10 @@ var _ = Describe("Conversion", func() {
 							Name: randomString(),
 							Type: libsveltosv1alpha1.LivenessTypeHealthCheck,
 							LivenessSourceRef: &corev1.ObjectReference{
-								Name:      randomString(),
-								Kind:      string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
-								Namespace: randomString(),
+								APIVersion: libsveltosv1alpha1.GroupVersion.String(),
+								Name:       randomString(),
+								Kind:       libsveltosv1alpha1.HealthCheckKind,
+								Namespace:  randomString(),
 							},
 						},
 					},
@@ -73,6 +74,13 @@ var _ = Describe("Conversion", func() {
 
 			Expect(len(dst.Spec.ClusterSelector.LabelSelector.MatchLabels)).To(Equal(1))
 			Expect(dst.Spec.ClusterSelector.LabelSelector.MatchLabels[key]).To(Equal(value))
+
+			Expect(len(dst.Spec.LivenessChecks)).ToNot(BeZero())
+			for i := range dst.Spec.LivenessChecks {
+				lc := &dst.Spec.LivenessChecks[i]
+				Expect(lc.LivenessSourceRef).ToNot(BeNil())
+				Expect(lc.LivenessSourceRef.APIVersion).To(Equal(libsveltosv1beta1.GroupVersion.String()))
+			}
 
 			final := &libsveltosv1alpha1.ClusterHealthCheck{}
 			Expect(final.ConvertFrom(dst)).To(Succeed())
