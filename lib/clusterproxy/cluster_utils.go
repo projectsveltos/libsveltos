@@ -30,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -217,15 +218,16 @@ func GetKubernetesClient(ctx context.Context, c client.Client,
 
 // GetClusterType returns clustertype for a given cluster
 func GetClusterType(cluster *corev1.ObjectReference) libsveltosv1beta1.ClusterType {
-	// TODO: remove this
-	if cluster.APIVersion != libsveltosv1beta1.GroupVersion.String() &&
-		cluster.APIVersion != clusterv1.GroupVersion.String() {
+	gvk := schema.FromAPIVersionAndKind(cluster.APIVersion, cluster.Kind)
+
+	if gvk.Group != libsveltosv1beta1.GroupVersion.Group &&
+		gvk.Group != clusterv1.GroupVersion.Group {
 
 		panic(1)
 	}
 
 	clusterType := libsveltosv1beta1.ClusterTypeCapi
-	if cluster.APIVersion == libsveltosv1beta1.GroupVersion.String() {
+	if gvk.Group == libsveltosv1beta1.GroupVersion.Group {
 		clusterType = libsveltosv1beta1.ClusterTypeSveltos
 	}
 	return clusterType
