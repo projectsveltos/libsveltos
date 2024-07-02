@@ -55,6 +55,11 @@ type Resource struct {
 
 	// Version of the resource deployed in the Cluster.
 	Version string `json:"version"`
+
+	// IgnoreForConfigurationDrift indicates to not track resource
+	// for configuration drift detection.
+	// +kubebuilder:default:=false
+	IgnoreForConfigurationDrift bool `json:"ignoreForConfigurationDrift"`
 }
 
 type HelmResources struct {

@@ -74,6 +74,12 @@ spec:
                           group:
                             description: Group of the resource deployed in the Cluster.
                             type: string
+                          ignoreForConfigurationDrift:
+                            default: false
+                            description: |-
+                              IgnoreForConfigurationDrift indicates to not track resource
+                              for configuration drift detection.
+                            type: boolean
                           kind:
                             description: Kind of the resource deployed in the Cluster.
                             minLength: 1
@@ -92,6 +98,7 @@ spec:
                             type: string
                         required:
                         - group
+                        - ignoreForConfigurationDrift
                         - kind
                         - name
                         - version
@@ -121,6 +128,12 @@ spec:
                     group:
                       description: Group of the resource deployed in the Cluster.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -139,6 +152,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
@@ -152,6 +166,12 @@ spec:
                     group:
                       description: Group of the resource deployed in the Cluster.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -170,6 +190,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
@@ -189,6 +210,12 @@ spec:
                     hash:
                       description: Hash is the hash of a resource's data.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -207,6 +234,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
@@ -226,6 +254,12 @@ spec:
                     hash:
                       description: Hash is the hash of a resource's data.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -244,6 +278,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
@@ -262,6 +297,12 @@ spec:
                     hash:
                       description: Hash is the hash of a resource's data.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -280,6 +321,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
@@ -336,6 +378,12 @@ spec:
                           group:
                             description: Group of the resource deployed in the Cluster.
                             type: string
+                          ignoreForConfigurationDrift:
+                            default: false
+                            description: |-
+                              IgnoreForConfigurationDrift indicates to not track resource
+                              for configuration drift detection.
+                            type: boolean
                           kind:
                             description: Kind of the resource deployed in the Cluster.
                             minLength: 1
@@ -354,6 +402,7 @@ spec:
                             type: string
                         required:
                         - group
+                        - ignoreForConfigurationDrift
                         - kind
                         - name
                         - version
@@ -383,6 +432,12 @@ spec:
                     group:
                       description: Group of the resource deployed in the Cluster.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -401,6 +456,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
@@ -414,6 +470,12 @@ spec:
                     group:
                       description: Group of the resource deployed in the Cluster.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -432,6 +494,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
@@ -451,6 +514,12 @@ spec:
                     hash:
                       description: Hash is the hash of a resource's data.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -469,6 +538,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
@@ -488,6 +558,12 @@ spec:
                     hash:
                       description: Hash is the hash of a resource's data.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -506,6 +582,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
@@ -524,6 +601,12 @@ spec:
                     hash:
                       description: Hash is the hash of a resource's data.
                       type: string
+                    ignoreForConfigurationDrift:
+                      default: false
+                      description: |-
+                        IgnoreForConfigurationDrift indicates to not track resource
+                        for configuration drift detection.
+                      type: boolean
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
@@ -542,6 +625,7 @@ spec:
                       type: string
                   required:
                   - group
+                  - ignoreForConfigurationDrift
                   - kind
                   - name
                   - version
