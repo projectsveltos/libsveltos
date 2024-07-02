@@ -2279,6 +2279,7 @@ func autoConvert_v1alpha1_Resource_To_v1beta1_Resource(in *Resource, out *v1beta
 	out.Group = in.Group
 	out.Kind = in.Kind
 	out.Version = in.Version
+	out.IgnoreForConfigurationDrift = in.IgnoreForConfigurationDrift
 	return nil
 }
 
@@ -2293,6 +2294,7 @@ func autoConvert_v1beta1_Resource_To_v1alpha1_Resource(in *v1beta1.Resource, out
 	out.Group = in.Group
 	out.Kind = in.Kind
 	out.Version = in.Version
+	out.IgnoreForConfigurationDrift = in.IgnoreForConfigurationDrift
 	return nil
 }
 
