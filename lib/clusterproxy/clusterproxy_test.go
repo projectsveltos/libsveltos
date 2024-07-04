@@ -37,7 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
 )
 
@@ -53,7 +53,7 @@ func setupScheme() (*runtime.Scheme, error) {
 	if err := clientgoscheme.AddToScheme(s); err != nil {
 		return nil, err
 	}
-	if err := libsveltosv1alpha1.AddToScheme(s); err != nil {
+	if err := libsveltosv1beta1.AddToScheme(s); err != nil {
 		return nil, err
 	}
 	if err := apiextensionsv1.AddToScheme(s); err != nil {
@@ -65,7 +65,7 @@ func setupScheme() (*runtime.Scheme, error) {
 var _ = Describe("clusterproxy ", func() {
 	var logger logr.Logger
 	var cluster *clusterv1.Cluster
-	var sveltosCluster *libsveltosv1alpha1.SveltosCluster
+	var sveltosCluster *libsveltosv1beta1.SveltosCluster
 	var namespace string
 	var scheme *runtime.Scheme
 
@@ -87,7 +87,7 @@ var _ = Describe("clusterproxy ", func() {
 			},
 		}
 
-		sveltosCluster = &libsveltosv1alpha1.SveltosCluster{
+		sveltosCluster = &libsveltosv1beta1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      upstreamClusterNamePrefix + randomString(),
 				Namespace: namespace,
@@ -387,7 +387,7 @@ var _ = Describe("clusterproxy ", func() {
 			&corev1.ObjectReference{
 				Namespace: sveltosCluster.Namespace,
 				Name:      sveltosCluster.Name,
-				Kind:      libsveltosv1alpha1.SveltosClusterKind},
+				Kind:      libsveltosv1beta1.SveltosClusterKind},
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(true))
@@ -399,7 +399,7 @@ var _ = Describe("clusterproxy ", func() {
 			&corev1.ObjectReference{
 				Namespace: sveltosCluster.Namespace,
 				Name:      sveltosCluster.Name,
-				Kind:      libsveltosv1alpha1.SveltosClusterKind},
+				Kind:      libsveltosv1beta1.SveltosClusterKind},
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(false))

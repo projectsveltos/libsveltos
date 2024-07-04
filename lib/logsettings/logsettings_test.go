@@ -25,19 +25,19 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 var _ = Describe("Logsettings", func() {
 	It("Should change log level appropriately", func() {
-		conf := &sveltosv1alpha1.DebuggingConfiguration{
+		conf := &libsveltosv1beta1.DebuggingConfiguration{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "default",
 			},
-			Spec: sveltosv1alpha1.DebuggingConfigurationSpec{
-				Configuration: []sveltosv1alpha1.ComponentConfiguration{
-					{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelDebug},
+			Spec: libsveltosv1beta1.DebuggingConfigurationSpec{
+				Configuration: []libsveltosv1beta1.ComponentConfiguration{
+					{Component: libsveltosv1beta1.ComponentAddonManager, LogLevel: libsveltosv1beta1.LogLevelDebug},
 				},
 			},
 		}
@@ -47,8 +47,8 @@ var _ = Describe("Logsettings", func() {
 		Expect(f).ToNot(BeNil())
 		Expect(f.Value.String()).To(Equal(strconv.Itoa(logsettings.LogDebug)))
 
-		conf.Spec.Configuration = []sveltosv1alpha1.ComponentConfiguration{
-			{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelInfo},
+		conf.Spec.Configuration = []libsveltosv1beta1.ComponentConfiguration{
+			{Component: libsveltosv1beta1.ComponentAddonManager, LogLevel: libsveltosv1beta1.LogLevelInfo},
 		}
 
 		logsettings.UpdateLogLevel(conf)
@@ -56,8 +56,8 @@ var _ = Describe("Logsettings", func() {
 		Expect(f).ToNot(BeNil())
 		Expect(f.Value.String()).To(Equal(strconv.Itoa(logsettings.LogInfo)))
 
-		conf.Spec.Configuration = []sveltosv1alpha1.ComponentConfiguration{
-			{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelVerbose},
+		conf.Spec.Configuration = []libsveltosv1beta1.ComponentConfiguration{
+			{Component: libsveltosv1beta1.ComponentAddonManager, LogLevel: libsveltosv1beta1.LogLevelVerbose},
 		}
 
 		logsettings.UpdateLogLevel(conf)
@@ -67,8 +67,8 @@ var _ = Describe("Logsettings", func() {
 
 		newDebugValue := 8
 		instance.SetDebugValue(newDebugValue)
-		conf.Spec.Configuration = []sveltosv1alpha1.ComponentConfiguration{
-			{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelDebug},
+		conf.Spec.Configuration = []libsveltosv1beta1.ComponentConfiguration{
+			{Component: libsveltosv1beta1.ComponentAddonManager, LogLevel: libsveltosv1beta1.LogLevelDebug},
 		}
 
 		logsettings.UpdateLogLevel(conf)
@@ -78,8 +78,8 @@ var _ = Describe("Logsettings", func() {
 
 		newInfoValue := 5
 		instance.SetInfoValue(newInfoValue)
-		conf.Spec.Configuration = []sveltosv1alpha1.ComponentConfiguration{
-			{Component: sveltosv1alpha1.ComponentAddonManager, LogLevel: sveltosv1alpha1.LogLevelInfo},
+		conf.Spec.Configuration = []libsveltosv1beta1.ComponentConfiguration{
+			{Component: libsveltosv1beta1.ComponentAddonManager, LogLevel: libsveltosv1beta1.LogLevelInfo},
 		}
 
 		logsettings.UpdateLogLevel(conf)

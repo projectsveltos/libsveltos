@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/deployer"
 )
 
@@ -55,7 +55,7 @@ const (
 // in cluster. It returns nil if it does not exist yet.
 func GetSecret(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
-	clusterType sveltosv1alpha1.ClusterType) (*corev1.Secret, error) {
+	clusterType libsveltosv1beta1.ClusterType) (*corev1.Secret, error) {
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
@@ -80,7 +80,7 @@ func GetSecret(ctx context.Context, c client.Client,
 // If Secret already exists, updates Data section if necessary (kubeconfig is different)
 func CreateSecret(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
-	clusterType sveltosv1alpha1.ClusterType, kubeconfig []byte, owner client.Object) (*corev1.Secret, error) {
+	clusterType libsveltosv1beta1.ClusterType, kubeconfig []byte, owner client.Object) (*corev1.Secret, error) {
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
@@ -108,7 +108,7 @@ func CreateSecret(ctx context.Context, c client.Client,
 // Removes owner as one of the OwnerReferences for secret. If no more OwnerReferences are left, deletes secret.
 func DeleteSecret(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
-	clusterType sveltosv1alpha1.ClusterType, owner client.Object) error {
+	clusterType libsveltosv1beta1.ClusterType, owner client.Object) error {
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
@@ -142,7 +142,7 @@ func DeleteSecret(ctx context.Context, c client.Client,
 func ListSecretForOwner(ctx context.Context, c client.Client, owner client.Object) ([]corev1.Secret, error) {
 	listOption := []client.ListOption{
 		client.MatchingLabels{
-			sveltosv1alpha1.RoleRequestLabel: "ok",
+			libsveltosv1beta1.RoleRequestLabel: "ok",
 		},
 	}
 
@@ -168,7 +168,7 @@ func ListSecretForOwner(ctx context.Context, c client.Client, owner client.Objec
 func ListSecrets(ctx context.Context, c client.Client) ([]corev1.Secret, error) {
 	listOption := []client.ListOption{
 		client.MatchingLabels{
-			sveltosv1alpha1.RoleRequestLabel: "ok",
+			libsveltosv1beta1.RoleRequestLabel: "ok",
 		},
 	}
 
@@ -192,7 +192,7 @@ func ListSecrets(ctx context.Context, c client.Client) ([]corev1.Secret, error) 
 // Returns nil if kubeconfig is not found. Returns an error if any occurred.
 func GetKubeconfig(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
-	clusterType sveltosv1alpha1.ClusterType) ([]byte, error) {
+	clusterType libsveltosv1beta1.ClusterType) ([]byte, error) {
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName)...)
@@ -255,10 +255,10 @@ func createSecret(ctx context.Context, c client.Client,
 			Namespace: namespace,
 			Name:      name,
 			Labels: map[string]string{
-				clusterNameLabel:                 clusterName,
-				serviceAccountNameLabel:          serviceAccountName,
-				serviceAccountNamespaceLabel:     serviceAccountNamespace,
-				sveltosv1alpha1.RoleRequestLabel: "ok",
+				clusterNameLabel:                   clusterName,
+				serviceAccountNameLabel:            serviceAccountName,
+				serviceAccountNamespaceLabel:       serviceAccountNamespace,
+				libsveltosv1beta1.RoleRequestLabel: "ok",
 			},
 		},
 		Data: map[string][]byte{

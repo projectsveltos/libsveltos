@@ -16,9 +16,8 @@ limitations under the License.
 */
 package crd
 
-var ReloaderFile = "../../config/crd/bases/lib.projectsveltos.io_reloaders.yaml"
-var ReloaderCRD = []byte(`---
-apiVersion: apiextensions.k8s.io/v1
+var ReloaderFile = "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_reloaders.lib.projectsveltos.io.yaml"
+var ReloaderCRD = []byte(`apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
@@ -34,6 +33,65 @@ spec:
   scope: Cluster
   versions:
   - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Reloader is the Schema for the Reloader API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ReloaderSpec defines the desired state of Reloader
+            properties:
+              reloaderInfo:
+                items:
+                  description: |-
+                    ReloaderInfo represents a resource that need to be reloaded
+                    if any mounted ConfigMap/Secret changes.
+                  properties:
+                    kind:
+                      description: 'Kind of the resource. Supported kinds are: Deployment
+                        StatefulSet DaemonSet.'
+                      enum:
+                      - Deployment
+                      - StatefulSet
+                      - DaemonSet
+                      type: string
+                    name:
+                      description: Name of the referenced resource.
+                      minLength: 1
+                      type: string
+                    namespace:
+                      description: Namespace of the referenced resource.
+                      minLength: 1
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: false
+  - name: v1beta1
     schema:
       openAPIV3Schema:
         description: Reloader is the Schema for the Reloader API

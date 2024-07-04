@@ -24,13 +24,12 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/klog/v2/textlogger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/internal/test/helpers/external"
 	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
 	"github.com/projectsveltos/libsveltos/lib/sharding"
@@ -39,7 +38,7 @@ import (
 var _ = Describe("Cluster utils", func() {
 	var namespace string
 	var cluster *clusterv1.Cluster
-	var sveltosCluster *libsveltosv1alpha1.SveltosCluster
+	var sveltosCluster *libsveltosv1beta1.SveltosCluster
 
 	BeforeEach(func() {
 		namespace = "cluster-utils" + randomString()
@@ -57,15 +56,15 @@ var _ = Describe("Cluster utils", func() {
 			},
 		}
 
-		sveltosCluster = &libsveltosv1alpha1.SveltosCluster{
+		sveltosCluster = &libsveltosv1beta1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      randomString(),
 				Namespace: namespace,
 			},
-			Spec: libsveltosv1alpha1.SveltosClusterSpec{
+			Spec: libsveltosv1beta1.SveltosClusterSpec{
 				Paused: true,
 			},
-			Status: libsveltosv1alpha1.SveltosClusterStatus{
+			Status: libsveltosv1beta1.SveltosClusterStatus{
 				Ready: true,
 			},
 		}
@@ -79,12 +78,12 @@ var _ = Describe("Cluster utils", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		paused, err := clusterproxy.IsClusterPaused(context.TODO(), c, cluster.Namespace,
-			cluster.Name, libsveltosv1alpha1.ClusterTypeCapi)
+			cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
 		Expect(err).To(BeNil())
 		Expect(paused).To(BeTrue())
 
 		paused, err = clusterproxy.IsClusterPaused(context.TODO(), c, sveltosCluster.Namespace,
-			sveltosCluster.Name, libsveltosv1alpha1.ClusterTypeSveltos)
+			sveltosCluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(paused).To(BeTrue())
 	})
@@ -99,12 +98,12 @@ var _ = Describe("Cluster utils", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		paused, err := clusterproxy.IsClusterPaused(context.TODO(), c, cluster.Namespace,
-			cluster.Name, libsveltosv1alpha1.ClusterTypeCapi)
+			cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
 		Expect(err).To(BeNil())
 		Expect(paused).To(BeFalse())
 
 		paused, err = clusterproxy.IsClusterPaused(context.TODO(), c, sveltosCluster.Namespace,
-			sveltosCluster.Name, libsveltosv1alpha1.ClusterTypeSveltos)
+			sveltosCluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(paused).To(BeFalse())
 	})
@@ -141,13 +140,13 @@ var _ = Describe("Cluster utils", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		data, err := clusterproxy.GetSecretData(context.TODO(), c, cluster.Namespace, cluster.Name,
-			"", "", libsveltosv1alpha1.ClusterTypeCapi,
+			"", "", libsveltosv1beta1.ClusterTypeCapi,
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(data).To(Equal(randomData))
 
 		data, err = clusterproxy.GetSecretData(context.TODO(), c, sveltosCluster.Namespace, sveltosCluster.Name,
-			"", "", libsveltosv1alpha1.ClusterTypeSveltos,
+			"", "", libsveltosv1beta1.ClusterTypeSveltos,
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(data).To(Equal(randomData))
@@ -262,31 +261,92 @@ var _ = Describe("Cluster utils", func() {
 		}))
 	})
 
+	It("GetMatchingClusters matches no cluster when Selector is empty", func() {
+		selector := libsveltosv1beta1.Selector{
+			LabelSelector: metav1.LabelSelector{},
+		}
+
+		sveltosCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+				Labels: map[string]string{
+					randomString(): randomString(),
+				},
+			},
+			Status: libsveltosv1beta1.SveltosClusterStatus{
+				Ready: true,
+			},
+		}
+
+		nonMatchingSveltosCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+			},
+			Status: libsveltosv1beta1.SveltosClusterStatus{
+				Ready: true,
+			},
+		}
+
+		cluster.Labels = map[string]string{
+			randomString(): randomString(),
+		}
+
+		initObjects := []client.Object{
+			cluster,
+			sveltosCluster,
+			nonMatchingSveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
+
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "",
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(0))
+	})
+
 	It("getMatchingClusters returns matchin CAPI Cluster", func() {
-		selector := libsveltosv1alpha1.Selector("env=qa,zone=west")
+		selector := libsveltosv1beta1.Selector{
+			LabelSelector: metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "env",
+						Operator: metav1.LabelSelectorOpIn,
+						Values:   []string{"qa"},
+					},
+					{
+						Key:      "zone",
+						Operator: metav1.LabelSelectorOpIn,
+						Values:   []string{"west"},
+					},
+				},
+			},
+		}
 
 		currentLabels := map[string]string{
 			"env":  "qa",
 			"zone": "west",
 		}
 
-		sveltosCluster := &libsveltosv1alpha1.SveltosCluster{
+		sveltosCluster := &libsveltosv1beta1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      randomString(),
 				Namespace: randomString(),
 				Labels:    currentLabels,
 			},
-			Status: libsveltosv1alpha1.SveltosClusterStatus{
+			Status: libsveltosv1beta1.SveltosClusterStatus{
 				Ready: true,
 			},
 		}
 
-		nonMatchingSveltosCluster := &libsveltosv1alpha1.SveltosCluster{
+		nonMatchingSveltosCluster := &libsveltosv1beta1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      randomString(),
 				Namespace: randomString(),
 			},
-			Status: libsveltosv1alpha1.SveltosClusterStatus{
+			Status: libsveltosv1beta1.SveltosClusterStatus{
 				Ready: true,
 			},
 		}
@@ -301,9 +361,7 @@ var _ = Describe("Cluster utils", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
 
-		parsedSelector, _ := labels.Parse(string(selector))
-
-		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector, "",
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "",
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(2))
@@ -312,15 +370,99 @@ var _ = Describe("Cluster utils", func() {
 				Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String()}))
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
-				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
+				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
 
-		matches, err = clusterproxy.GetMatchingClusters(context.TODO(), c, parsedSelector,
+		matches, err = clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector,
 			sveltosCluster.Namespace, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
-				Kind: libsveltosv1alpha1.SveltosClusterKind, APIVersion: libsveltosv1alpha1.GroupVersion.String()}))
+				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
+
+	})
+
+	It("getMatchingClusters returns matchin CAPI Cluster", func() {
+		key1 := randomString()
+		value1 := randomString()
+		key2 := randomString()
+		value2 := randomString()
+
+		selector := libsveltosv1beta1.Selector{
+			LabelSelector: metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      key1,
+						Operator: metav1.LabelSelectorOpIn,
+						Values:   []string{value1},
+					},
+					{
+						Key:      key2,
+						Operator: metav1.LabelSelectorOpIn,
+						Values:   []string{value2},
+					},
+				},
+			},
+		}
+
+		currentLabels := map[string]string{
+			key1: value1,
+			key2: value2,
+		}
+
+		sveltosCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+				Labels:    currentLabels,
+			},
+			Status: libsveltosv1beta1.SveltosClusterStatus{
+				Ready: true,
+			},
+		}
+
+		nonMatchingSveltosCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+				Labels: map[string]string{
+					randomString(): randomString(),
+					key1:           value1,
+				},
+			},
+			Status: libsveltosv1beta1.SveltosClusterStatus{
+				Ready: true,
+			},
+		}
+
+		cluster.Labels = currentLabels
+
+		initObjects := []client.Object{
+			cluster,
+			sveltosCluster,
+			nonMatchingSveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
+
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "",
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(2))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name,
+				Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String()}))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
+				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
+
+		matches, err = clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector,
+			sveltosCluster.Namespace, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
+				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
 
 	})
 })

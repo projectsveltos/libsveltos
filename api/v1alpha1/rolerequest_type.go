@@ -36,7 +36,7 @@ const (
 // RoleRequestSpec defines the desired state of RoleRequest
 type RoleRequestSpec struct {
 	// ClusterSelector identifies clusters where permissions requestes
-	// in this instance will be granted
+	// in this instance will be granted (Deprecated use selector instead)
 	ClusterSelector Selector `json:"clusterSelector"`
 
 	// RoleRefs references all the Secret/ConfigMaps containing kubernetes

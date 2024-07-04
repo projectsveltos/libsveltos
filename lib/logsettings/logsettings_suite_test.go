@@ -33,7 +33,7 @@ import (
 	"k8s.io/klog/v2/textlogger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
-	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/internal/test/helpers"
 	"github.com/projectsveltos/libsveltos/lib/logsettings"
 )
@@ -81,7 +81,7 @@ var _ = BeforeSuite(func() {
 
 	klog.InitFlags(nil)
 	Expect(flag.Lookup("v").Value.Set("0")).To(BeNil())
-	instance = logsettings.RegisterForLogSettings(ctx, sveltosv1alpha1.ComponentAddonManager,
+	instance = logsettings.RegisterForLogSettings(ctx, libsveltosv1beta1.ComponentAddonManager,
 		textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), testEnv.Config)
 })
 
@@ -100,7 +100,7 @@ func setupScheme() (*runtime.Scheme, error) {
 	if err := v1.AddToScheme(s); err != nil {
 		return nil, err
 	}
-	if err := sveltosv1alpha1.AddToScheme(s); err != nil {
+	if err := libsveltosv1beta1.AddToScheme(s); err != nil {
 		return nil, err
 	}
 	return s, nil

@@ -33,7 +33,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	sveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
 // Following are log severity levels to be used by sveltos services
@@ -68,7 +68,7 @@ type LogSetter struct {
 	verboseValue string
 
 	// Component registered
-	component sveltosv1alpha1.Component
+	component libsveltosv1beta1.Component
 
 	config *rest.Config
 }
@@ -78,7 +78,7 @@ var (
 	once     sync.Once
 )
 
-func newInstance(component sveltosv1alpha1.Component, config *rest.Config, logger logr.Logger) *LogSetter {
+func newInstance(component libsveltosv1beta1.Component, config *rest.Config, logger logr.Logger) *LogSetter {
 	once.Do(func() {
 		logger.Info("Creating LogSetter instance")
 		instance = &LogSetter{
@@ -127,7 +127,7 @@ func GetInstance() *LogSetter {
 // severity set for affected component(s).
 func RegisterForLogSettings(
 	ctx context.Context,
-	component sveltosv1alpha1.Component,
+	component libsveltosv1beta1.Component,
 	logger logr.Logger,
 	config *rest.Config,
 ) *LogSetter {
@@ -172,7 +172,7 @@ func runDebuggingConfigurationInformer(
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			instance.logger.Info("got add notification for DebuggingConfiguration")
-			d := &sveltosv1alpha1.DebuggingConfiguration{}
+			d := &libsveltosv1beta1.DebuggingConfiguration{}
 			err := runtime.DefaultUnstructuredConverter.
 				FromUnstructured(obj.(*unstructured.Unstructured).UnstructuredContent(), d)
 			if err != nil {
@@ -193,7 +193,7 @@ func runDebuggingConfigurationInformer(
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			instance.logger.Info("got update notification for DebuggingConfiguration")
-			d := &sveltosv1alpha1.DebuggingConfiguration{}
+			d := &libsveltosv1beta1.DebuggingConfiguration{}
 			err := runtime.DefaultUnstructuredConverter.
 				FromUnstructured(newObj.(*unstructured.Unstructured).UnstructuredContent(), d)
 			if err != nil {
@@ -212,25 +212,25 @@ func runDebuggingConfigurationInformer(
 
 // UpdateLogLevel updates log severity
 func UpdateLogLevel(
-	d *sveltosv1alpha1.DebuggingConfiguration,
+	d *libsveltosv1beta1.DebuggingConfiguration,
 ) {
 
 	found := false
 	for _, c := range d.Spec.Configuration {
 		if instance.component == c.Component {
-			if c.LogLevel == sveltosv1alpha1.LogLevelVerbose {
+			if c.LogLevel == libsveltosv1beta1.LogLevelVerbose {
 				found = true
 				instance.logger.Info("Setting log severity to verbose", "verbose", instance.verboseValue)
 				if err := flag.Lookup("v").Value.Set(instance.verboseValue); err != nil {
 					instance.logger.Error(err, "unable to set log level")
 				}
-			} else if c.LogLevel == sveltosv1alpha1.LogLevelDebug {
+			} else if c.LogLevel == libsveltosv1beta1.LogLevelDebug {
 				found = true
 				instance.logger.Info("Setting log severity to debug", "debug", instance.debugValue)
 				if err := flag.Lookup("v").Value.Set(instance.debugValue); err != nil {
 					instance.logger.Error(err, "unable to set log level")
 				}
-			} else if c.LogLevel == sveltosv1alpha1.LogLevelInfo {
+			} else if c.LogLevel == libsveltosv1beta1.LogLevelInfo {
 				found = true
 				instance.logger.Info("Setting log severity to info", "info", instance.infoValue)
 				if err := flag.Lookup("v").Value.Set(instance.infoValue); err != nil {

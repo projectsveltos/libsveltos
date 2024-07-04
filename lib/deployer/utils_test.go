@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	libsveltosv1alpha1 "github.com/projectsveltos/libsveltos/api/v1alpha1"
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/deployer"
 	"github.com/projectsveltos/libsveltos/lib/utils"
 )
@@ -72,7 +72,7 @@ var _ = Describe("Client", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
 					Labels: map[string]string{
-						deployer.ReferenceKindLabel:      string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
+						deployer.ReferenceKindLabel:      string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
 						deployer.ReferenceNameLabel:      configMapName,
 						deployer.ReferenceNamespaceLabel: configMapNs,
 					},
@@ -103,13 +103,13 @@ var _ = Describe("Client", func() {
 			Expect(err).To(BeNil())
 
 			// If different configMap, return error
-			_, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
+			_, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
 				randomString(), randomString(), cp)
 			Expect(err).ToNot(BeNil())
 
 			// If same configMap, return no error
 			var resourceInfo *deployer.ResourceInfo
-			resourceInfo, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1alpha1.ConfigMapReferencedResourceKind),
+			resourceInfo, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
 				configMapNs, configMapName, cp)
 			Expect(err).To(BeNil())
 			Expect(resourceInfo.ResourceVersion).ToNot(BeEmpty())
@@ -117,7 +117,7 @@ var _ = Describe("Client", func() {
 		})
 
 	It("addOwnerReference adds an OwnerReference to an object. removeOwnerReference removes it", func() {
-		roleRequest := &libsveltosv1alpha1.RoleRequest{
+		roleRequest := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
@@ -134,7 +134,7 @@ var _ = Describe("Client", func() {
 
 		Expect(policy.GetOwnerReferences()).ToNot(BeNil())
 		Expect(len(policy.GetOwnerReferences())).To(Equal(1))
-		Expect(policy.GetOwnerReferences()[0].Kind).To(Equal(libsveltosv1alpha1.RoleRequestKind))
+		Expect(policy.GetOwnerReferences()[0].Kind).To(Equal(libsveltosv1beta1.RoleRequestKind))
 		Expect(policy.GetOwnerReferences()[0].Name).To(Equal(roleRequest.Name))
 
 		deployer.RemoveOwnerReference(policy, roleRequest)
@@ -142,7 +142,7 @@ var _ = Describe("Client", func() {
 	})
 
 	It("IsOnlyOwnerReference returns true when only one Owner is present", func() {
-		roleRequest := &libsveltosv1alpha1.RoleRequest{
+		roleRequest := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
@@ -159,7 +159,7 @@ var _ = Describe("Client", func() {
 
 		Expect(deployer.IsOnlyOwnerReference(policy, roleRequest)).To(BeTrue())
 
-		roleRequest2 := &libsveltosv1alpha1.RoleRequest{
+		roleRequest2 := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
@@ -170,14 +170,14 @@ var _ = Describe("Client", func() {
 	})
 
 	It("IsOwnerReference returns true when owner is present", func() {
-		roleRequest := &libsveltosv1alpha1.RoleRequest{
+		roleRequest := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},
 		}
 		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
 
-		roleRequest2 := &libsveltosv1alpha1.RoleRequest{
+		roleRequest2 := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: randomString(),
 			},

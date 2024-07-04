@@ -89,51 +89,51 @@ func generate(filename, outputFilename, crdName string) {
 }
 
 func main() {
-	classifierFile := "../../config/crd/bases/lib.projectsveltos.io_classifiers.yaml"
+	classifierFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_classifiers.lib.projectsveltos.io.yaml"
 	generate(classifierFile, "classifiers", "Classifier")
 
-	classifierReportFile := "../../config/crd/bases/lib.projectsveltos.io_classifierreports.yaml"
+	classifierReportFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_classifierreports.lib.projectsveltos.io.yaml"
 	generate(classifierReportFile, "classifierreports", "ClassifierReport")
 
-	debuggingConfigurationFile := "../../config/crd/bases/lib.projectsveltos.io_debuggingconfigurations.yaml"
+	debuggingConfigurationFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_debuggingconfigurations.lib.projectsveltos.io.yaml"
 	generate(debuggingConfigurationFile, "debuggingconfigurations", "DebuggingConfiguration")
 
-	accessRequestFile := "../../config/crd/bases/lib.projectsveltos.io_accessrequests.yaml"
+	accessRequestFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_accessrequests.lib.projectsveltos.io.yaml"
 	generate(accessRequestFile, "accessrequests", "AccessRequest")
 
-	sveltosClusterFile := "../../config/crd/bases/lib.projectsveltos.io_sveltosclusters.yaml"
+	sveltosClusterFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_sveltosclusters.lib.projectsveltos.io.yaml"
 	generate(sveltosClusterFile, "sveltosclusters", "SveltosCluster")
 
-	resourceSummaryFile := "../../config/crd/bases/lib.projectsveltos.io_resourcesummaries.yaml"
+	resourceSummaryFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_resourcesummaries.lib.projectsveltos.io.yaml"
 	generate(resourceSummaryFile, "resourcesummaries", "ResourceSummary")
 
-	roleRequestFile := "../../config/crd/bases/lib.projectsveltos.io_rolerequests.yaml"
+	roleRequestFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_rolerequests.lib.projectsveltos.io.yaml"
 	generate(roleRequestFile, "rolerequests", "RoleRequest")
 
-	clusterHealthCheckFile := "../../config/crd/bases/lib.projectsveltos.io_clusterhealthchecks.yaml"
+	clusterHealthCheckFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_clusterhealthchecks.lib.projectsveltos.io.yaml"
 	generate(clusterHealthCheckFile, "clusterhealthchecks", "ClusterHealthCheck")
 
-	healthCheckFile := "../../config/crd/bases/lib.projectsveltos.io_healthchecks.yaml"
+	healthCheckFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_healthchecks.lib.projectsveltos.io.yaml"
 	generate(healthCheckFile, "healthchecks", "HealthCheck")
 
-	healthCheckReportFile := "../../config/crd/bases/lib.projectsveltos.io_healthcheckreports.yaml"
+	healthCheckReportFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_healthcheckreports.lib.projectsveltos.io.yaml"
 	generate(healthCheckReportFile, "healthcheckreports", "HealthCheckReport")
 
-	eventSourceFile := "../../config/crd/bases/lib.projectsveltos.io_eventsources.yaml"
+	eventSourceFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_eventsources.lib.projectsveltos.io.yaml"
 	generate(eventSourceFile, "eventsources", "EventSource")
 
-	eventReportFile := "../../config/crd/bases/lib.projectsveltos.io_eventreports.yaml"
+	eventReportFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_eventreports.lib.projectsveltos.io.yaml"
 	generate(eventReportFile, "eventreports", "EventReport")
 
-	reloaderFile := "../../config/crd/bases/lib.projectsveltos.io_reloaders.yaml"
+	reloaderFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_reloaders.lib.projectsveltos.io.yaml"
 	generate(reloaderFile, "reloaders", "Reloader")
 
-	reloaderReportFile := "../../config/crd/bases/lib.projectsveltos.io_reloaderreports.yaml"
+	reloaderReportFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_reloaderreports.lib.projectsveltos.io.yaml"
 	generate(reloaderReportFile, "reloaderreports", "ReloaderReport")
 
-	clusterSetFile := "../../config/crd/bases/lib.projectsveltos.io_clustersets.yaml"
+	clusterSetFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_clustersets.lib.projectsveltos.io.yaml"
 	generate(clusterSetFile, "clustersets", "ClusterSet")
 
-	setFile := "../../config/crd/bases/lib.projectsveltos.io_sets.yaml"
+	setFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_sets.lib.projectsveltos.io.yaml"
 	generate(setFile, "sets", "Set")
 }

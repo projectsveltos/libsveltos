@@ -29,7 +29,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the Classifier CustomResourceDefinition", func() {
 		yaml := crd.GetClassifierCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_classifiers.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_classifiers.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -39,7 +39,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the ClassifierReport CustomResourceDefinition", func() {
 		yaml := crd.GetClassifierReportCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_classifierreports.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_classifierreports.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -49,7 +49,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the DebuggingConfiguration CustomResourceDefinition", func() {
 		yaml := crd.GetDebuggingConfigurationCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_debuggingconfigurations.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_debuggingconfigurations.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -59,7 +59,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the AccessRequest CustomResourceDefinition", func() {
 		yaml := crd.GetAccessRequestCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_accessrequests.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_accessrequests.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -69,7 +69,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the SveltosCluster CustomResourceDefinition", func() {
 		yaml := crd.GetSveltosClusterCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_sveltosclusters.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_sveltosclusters.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -79,7 +79,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the ResourceSummary CustomResourceDefinition", func() {
 		yaml := crd.GetResourceSummaryCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_resourcesummaries.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_resourcesummaries.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -89,7 +89,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the RoleRequest CustomResourceDefinition", func() {
 		yaml := crd.GetRoleRequestCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_rolerequests.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_rolerequests.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -99,7 +99,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the ClusterHealthCheck CustomResourceDefinition", func() {
 		yaml := crd.GetClusterHealthCheckCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_clusterhealthchecks.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_clusterhealthchecks.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -109,7 +109,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the HealthCheck CustomResourceDefinition", func() {
 		yaml := crd.GetHealthCheckCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_healthchecks.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_healthchecks.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -119,7 +119,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the HealthCheckReport CustomResourceDefinition", func() {
 		yaml := crd.GetHealthCheckReportCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_healthcheckreports.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_healthcheckreports.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -129,7 +129,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the EventSource CustomResourceDefinition", func() {
 		yaml := crd.GetEventSourceCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_eventsources.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_eventsources.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -139,7 +139,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the EventReport CustomResourceDefinition", func() {
 		yaml := crd.GetEventReportCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_eventreports.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_eventreports.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -149,7 +149,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the Reloader CustomResourceDefinition", func() {
 		yaml := crd.GetReloaderCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_reloaders.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_reloaders.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -159,7 +159,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the ReloaderReport CustomResourceDefinition", func() {
 		yaml := crd.GetReloaderReportCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_reloaderreports.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_reloaderreports.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -169,7 +169,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the ClusterSet CustomResourceDefinition", func() {
 		yaml := crd.GetClusterSetCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_clustersets.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_clustersets.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
@@ -179,7 +179,7 @@ var _ = Describe("CRD", func() {
 	It("Gets the Set CustomResourceDefinition", func() {
 		yaml := crd.GetSetCRDYAML()
 
-		filename := "../../config/crd/bases/lib.projectsveltos.io_sets.yaml"
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_sets.lib.projectsveltos.io.yaml"
 		currentFile, err := os.ReadFile(filename)
 		Expect(err).To(BeNil())
 
