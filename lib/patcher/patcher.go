@@ -54,6 +54,7 @@ func (k *CustomPatchPostRenderer) RunUnstructured(unstructuredObjs []*unstructur
 			return nil, err
 		}
 		renderedManifests.Write(data)
+		renderedManifests.Write([]byte("---\n"))
 	}
 
 	manifests, err := k.Run(&renderedManifests)
