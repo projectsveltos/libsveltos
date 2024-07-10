@@ -25,6 +25,19 @@ import (
 
 	sveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/patcher"
+	"github.com/projectsveltos/libsveltos/lib/utils"
+)
+
+var (
+	podYAML = `apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: myimage
+`
 )
 
 var _ = Describe("CustomPatchPostRenderer", func() {
@@ -53,16 +66,7 @@ metadata:
 			},
 		}
 
-		renderedManifests = bytes.NewBufferString(`
-apiVersion: v1
-kind: Pod
-metadata:
-  name: mypod
-spec:
-  containers:
-  - name: mycontainer
-    image: myimage
-`)
+		renderedManifests = bytes.NewBufferString(podYAML)
 
 		unstructuredObjs = []*unstructured.Unstructured{
 			{
@@ -115,6 +119,41 @@ spec:
 
 			// Validate the output object
 			obj := outputObjects[0]
+			Expect(obj.GetAPIVersion()).To(Equal("v1"))
+			Expect(obj.GetKind()).To(Equal("Pod"))
+			Expect(obj.GetName()).To(Equal("mypod"))
+			Expect(obj.GetLabels()["test"]).To(Equal("value"))
+			Expect(obj.GetLabels()["environment"]).To(Equal("production"))
+		})
+
+		It("with multiple resources correctly apply patches to unstructured objects and return modified objects", func() {
+			nsYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-test`
+
+			saYAML := `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-serviceaccount
+  namespace: my-test`
+
+			namespace, err := utils.GetUnstructured([]byte(nsYAML))
+			Expect(err).To(BeNil())
+
+			sa, err := utils.GetUnstructured([]byte(saYAML))
+			Expect(err).To(BeNil())
+
+			pod, err := utils.GetUnstructured([]byte(podYAML))
+			Expect(err).To(BeNil())
+
+			outputObjects, err := renderer.RunUnstructured([]*unstructured.Unstructured{namespace, sa, pod})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(outputObjects).ToNot(BeNil())
+			Expect(outputObjects).To(HaveLen(3))
+
+			// Validate the output object
+			obj := outputObjects[2]
 			Expect(obj.GetAPIVersion()).To(Equal("v1"))
 			Expect(obj.GetKind()).To(Equal("Pod"))
 			Expect(obj.GetName()).To(Equal("mypod"))
