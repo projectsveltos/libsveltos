@@ -66,6 +66,28 @@ spec:
           spec:
             description: SveltosClusterSpec defines the desired state of SveltosCluster
             properties:
+              activeWindow:
+                description: |-
+                  ActiveWindow is an optional field for automatically pausing and unpausing
+                  the cluster.
+                  If not specified, the cluster will not be paused or unpaused automatically.
+                properties:
+                  from:
+                    description: |-
+                      From in Cron format, see https://en.wikipedia.org/wiki/Cron.
+                      Indicates when to un-pause the cluster (cluster in paused state receives no update from sveltos).
+                    minLength: 1
+                    type: string
+                  to:
+                    description: |-
+                      To in Cron format, see https://en.wikipedia.org/Cron.
+                      Indicates when to pause the cluster (cluster in paused state receives no update from sveltos).
+                    minLength: 1
+                    type: string
+                required:
+                - from
+                - to
+                type: object
               data:
                 additionalProperties:
                   type: string
@@ -109,6 +131,14 @@ spec:
                 description: |-
                   LastReconciledTokenRequestAt is the last time the TokenRequest
                   was renewed.
+                type: string
+              nextPause:
+                description: Information when next pause cluster is scheduled
+                format: date-time
+                type: string
+              nextUnpause:
+                description: Information when next unpause cluster is scheduled
+                format: date-time
                 type: string
               ready:
                 description: Ready is the state of the cluster.
@@ -156,6 +186,28 @@ spec:
           spec:
             description: SveltosClusterSpec defines the desired state of SveltosCluster
             properties:
+              activeWindow:
+                description: |-
+                  ActiveWindow is an optional field for automatically pausing and unpausing
+                  the cluster.
+                  If not specified, the cluster will not be paused or unpaused automatically.
+                properties:
+                  from:
+                    description: |-
+                      From in Cron format, see https://en.wikipedia.org/wiki/Cron.
+                      Indicates when to un-pause the cluster (cluster in paused state receives no update from sveltos).
+                    minLength: 1
+                    type: string
+                  to:
+                    description: |-
+                      To in Cron format, see https://en.wikipedia.org/Cron.
+                      Indicates when to pause the cluster (cluster in paused state receives no update from sveltos).
+                    minLength: 1
+                    type: string
+                required:
+                - from
+                - to
+                type: object
               data:
                 additionalProperties:
                   type: string
@@ -199,6 +251,14 @@ spec:
                 description: |-
                   LastReconciledTokenRequestAt is the last time the TokenRequest
                   was renewed.
+                type: string
+              nextPause:
+                description: Information when next pause cluster is scheduled
+                format: date-time
+                type: string
+              nextUnpause:
+                description: Information when next unpause cluster is scheduled
+                format: date-time
                 type: string
               ready:
                 description: Ready is the state of the cluster.
