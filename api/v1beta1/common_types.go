@@ -225,7 +225,7 @@ type Patch struct {
 	// When expressed as templates, the values are filled in using information from
 	// resources within the management cluster before deployment (Cluster and TemplateResourceRefs)
 	// +required
-	Patch string `json:"patch,omitempty"`
+	Patch string `json:"patch"`
 
 	// Target points to the resources that the patch document should be applied to.
 	// +optional
