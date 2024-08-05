@@ -88,6 +88,12 @@ spec:
                 - from
                 - to
                 type: object
+              consecutiveFailureThreshold:
+                default: 3
+                description: |-
+                  ConsecutiveFailureThreshold is the maximum number of consecutive connection
+                  failures before setting the problem status in Status.ConnectionStatus
+                type: integer
               data:
                 additionalProperties:
                   type: string
@@ -122,6 +128,19 @@ spec:
           status:
             description: SveltosClusterStatus defines the status of SveltosCluster
             properties:
+              connectionFailures:
+                description: |-
+                  connectionFailures is the number of consecutive failed attempts to connect
+                  to the remote cluster.
+                type: integer
+              connectionStatus:
+                description: |-
+                  ConnectionStatus indicates whether connection from the management cluster
+                  to the managed cluster is healthy
+                enum:
+                - Healthy
+                - Down
+                type: string
               failureMessage:
                 description: |-
                   FailureMessage is a human consumable message explaining the
@@ -208,6 +227,12 @@ spec:
                 - from
                 - to
                 type: object
+              consecutiveFailureThreshold:
+                default: 3
+                description: |-
+                  ConsecutiveFailureThreshold is the maximum number of consecutive connection
+                  failures before setting the problem status in Status.ConnectionStatus
+                type: integer
               data:
                 additionalProperties:
                   type: string
@@ -242,6 +267,19 @@ spec:
           status:
             description: SveltosClusterStatus defines the status of SveltosCluster
             properties:
+              connectionFailures:
+                description: |-
+                  connectionFailures is the number of consecutive failed attempts to connect
+                  to the remote cluster.
+                type: integer
+              connectionStatus:
+                description: |-
+                  ConnectionStatus indicates whether connection from the management cluster
+                  to the managed cluster is healthy
+                enum:
+                - Healthy
+                - Down
+                type: string
               failureMessage:
                 description: |-
                   FailureMessage is a human consumable message explaining the

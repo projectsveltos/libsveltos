@@ -36,6 +36,10 @@ type ActiveWindow struct {
 	To string `json:"to"`
 }
 
+// ConnectionStatus specifies whether connecting to managed cluster is healthy or not
+// +kubebuilder:validation:Enum:=Healthy;Down
+type ConnectionStatus string
+
 type TokenRequestRenewalOption struct {
 	// RenewTokenRequestInterval is the interval at which to renew the TokenRequest
 	RenewTokenRequestInterval metav1.Duration `json:"renewTokenRequestInterval"`
@@ -66,7 +70,14 @@ type SveltosClusterSpec struct {
 	// ActiveWindow is an optional field for automatically pausing and unpausing
 	// the cluster.
 	// If not specified, the cluster will not be paused or unpaused automatically.
+	// +optional
 	ActiveWindow *ActiveWindow `json:"activeWindow,omitempty"`
+
+	// ConsecutiveFailureThreshold is the maximum number of consecutive connection
+	// failures before setting the problem status in Status.ConnectionStatus
+	// +kubebuilder:default:=3
+	// +optional
+	ConsecutiveFailureThreshold int `json:"consecutiveFailureThreshold,omitempty"`
 }
 
 // SveltosClusterStatus defines the status of SveltosCluster
@@ -78,6 +89,11 @@ type SveltosClusterStatus struct {
 	// Ready is the state of the cluster.
 	// +optional
 	Ready bool `json:"ready,omitempty"`
+
+	// ConnectionStatus indicates whether connection from the management cluster
+	// to the managed cluster is healthy
+	// +optional
+	ConnectionStatus ConnectionStatus `json:"connectionStatus,omitempty"`
 
 	// FailureMessage is a human consumable message explaining the
 	// misconfiguration
@@ -96,6 +112,11 @@ type SveltosClusterStatus struct {
 	// Information when next pause cluster is scheduled
 	// +optional
 	NextPause *metav1.Time `json:"nextPause,omitempty"`
+
+	// connectionFailures is the number of consecutive failed attempts to connect
+	// to the remote cluster.
+	// +optional
+	ConnectionFailures int `json:"connectionFailures,omitempty"`
 }
 
 //+kubebuilder:object:root=true

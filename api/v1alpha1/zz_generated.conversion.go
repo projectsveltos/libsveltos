@@ -2888,6 +2888,7 @@ func autoConvert_v1alpha1_SveltosClusterSpec_To_v1beta1_SveltosClusterSpec(in *S
 	out.TokenRequestRenewalOption = (*v1beta1.TokenRequestRenewalOption)(unsafe.Pointer(in.TokenRequestRenewalOption))
 	out.ArbitraryData = *(*map[string]string)(unsafe.Pointer(&in.ArbitraryData))
 	out.ActiveWindow = (*v1beta1.ActiveWindow)(unsafe.Pointer(in.ActiveWindow))
+	out.ConsecutiveFailureThreshold = in.ConsecutiveFailureThreshold
 	return nil
 }
 
@@ -2902,6 +2903,7 @@ func autoConvert_v1beta1_SveltosClusterSpec_To_v1alpha1_SveltosClusterSpec(in *v
 	out.TokenRequestRenewalOption = (*TokenRequestRenewalOption)(unsafe.Pointer(in.TokenRequestRenewalOption))
 	out.ArbitraryData = *(*map[string]string)(unsafe.Pointer(&in.ArbitraryData))
 	out.ActiveWindow = (*ActiveWindow)(unsafe.Pointer(in.ActiveWindow))
+	out.ConsecutiveFailureThreshold = in.ConsecutiveFailureThreshold
 	return nil
 }
 
@@ -2913,10 +2915,12 @@ func Convert_v1beta1_SveltosClusterSpec_To_v1alpha1_SveltosClusterSpec(in *v1bet
 func autoConvert_v1alpha1_SveltosClusterStatus_To_v1beta1_SveltosClusterStatus(in *SveltosClusterStatus, out *v1beta1.SveltosClusterStatus, s conversion.Scope) error {
 	out.Version = in.Version
 	out.Ready = in.Ready
+	out.ConnectionStatus = v1beta1.ConnectionStatus(in.ConnectionStatus)
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
 	out.LastReconciledTokenRequestAt = in.LastReconciledTokenRequestAt
 	out.NextUnpause = (*metav1.Time)(unsafe.Pointer(in.NextUnpause))
 	out.NextPause = (*metav1.Time)(unsafe.Pointer(in.NextPause))
+	out.ConnectionFailures = in.ConnectionFailures
 	return nil
 }
 
@@ -2928,10 +2932,12 @@ func Convert_v1alpha1_SveltosClusterStatus_To_v1beta1_SveltosClusterStatus(in *S
 func autoConvert_v1beta1_SveltosClusterStatus_To_v1alpha1_SveltosClusterStatus(in *v1beta1.SveltosClusterStatus, out *SveltosClusterStatus, s conversion.Scope) error {
 	out.Version = in.Version
 	out.Ready = in.Ready
+	out.ConnectionStatus = ConnectionStatus(in.ConnectionStatus)
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
 	out.LastReconciledTokenRequestAt = in.LastReconciledTokenRequestAt
 	out.NextUnpause = (*metav1.Time)(unsafe.Pointer(in.NextUnpause))
 	out.NextPause = (*metav1.Time)(unsafe.Pointer(in.NextPause))
+	out.ConnectionFailures = in.ConnectionFailures
 	return nil
 }
 
