@@ -40,6 +40,14 @@ type ActiveWindow struct {
 // +kubebuilder:validation:Enum:=Healthy;Down
 type ConnectionStatus string
 
+const (
+	// ConnectionHealthy indicates connection from management cluster to managed cluster is healthy
+	ConnectionHealthy = ConnectionStatus("Healthy")
+
+	// ConnectionDown indicates connection from management cluster to managed cluster is down
+	ConnectionDown = ConnectionStatus("Down")
+)
+
 type TokenRequestRenewalOption struct {
 	// RenewTokenRequestInterval is the interval at which to renew the TokenRequest
 	RenewTokenRequestInterval metav1.Duration `json:"renewTokenRequestInterval"`
