@@ -21,7 +21,7 @@ var SveltosClusterCRD = []byte(`apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.1
   name: sveltosclusters.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
@@ -103,7 +103,6 @@ spec:
                 description: |-
                   KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig
                   to be hosted in a secret with the pattern ${sveltosClusterName}-sveltos-kubeconfig.
-
 
                   When a value is specified, the referenced Kubernetes Secret object must exist,
                   and will be used to connect to the Kubernetes cluster.
@@ -242,7 +241,6 @@ spec:
                 description: |-
                   KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig
                   to be hosted in a secret with the pattern ${sveltosClusterName}-sveltos-kubeconfig.
-
 
                   When a value is specified, the referenced Kubernetes Secret object must exist,
                   and will be used to connect to the Kubernetes cluster.

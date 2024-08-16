@@ -21,7 +21,7 @@ var ClassifierReportCRD = []byte(`apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.1
   name: classifierreports.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
