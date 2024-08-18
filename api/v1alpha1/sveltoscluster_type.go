@@ -24,6 +24,30 @@ const (
 	SveltosClusterKind = "SveltosCluster"
 )
 
+type ActiveWindow struct {
+	// From in Cron format, see https://en.wikipedia.org/wiki/Cron.
+	// Indicates when to un-pause the cluster (cluster in paused state receives no update from sveltos).
+	// +kubebuilder:validation:MinLength=1
+	From string `json:"from"`
+
+	// To in Cron format, see https://en.wikipedia.org/Cron.
+	// Indicates when to pause the cluster (cluster in paused state receives no update from sveltos).
+	// +kubebuilder:validation:MinLength=1
+	To string `json:"to"`
+}
+
+// ConnectionStatus specifies whether connecting to managed cluster is healthy or not
+// +kubebuilder:validation:Enum:=Healthy;Down
+type ConnectionStatus string
+
+const (
+	// ConnectionHealthy indicates connection from management cluster to managed cluster is healthy
+	ConnectionHealthy = ConnectionStatus("Healthy")
+
+	// ConnectionDown indicates connection from management cluster to managed cluster is down
+	ConnectionDown = ConnectionStatus("Down")
+)
+
 type TokenRequestRenewalOption struct {
 	// RenewTokenRequestInterval is the interval at which to renew the TokenRequest
 	RenewTokenRequestInterval metav1.Duration `json:"renewTokenRequestInterval"`
@@ -50,6 +74,18 @@ type SveltosClusterSpec struct {
 	// ArbitraryData allows for arbitrary nested structures
 	// +optional
 	ArbitraryData map[string]string `json:"data,omitempty"`
+
+	// ActiveWindow is an optional field for automatically pausing and unpausing
+	// the cluster.
+	// If not specified, the cluster will not be paused or unpaused automatically.
+	// +optional
+	ActiveWindow *ActiveWindow `json:"activeWindow,omitempty"`
+
+	// ConsecutiveFailureThreshold is the maximum number of consecutive connection
+	// failures before setting the problem status in Status.ConnectionStatus
+	// +kubebuilder:default:=3
+	// +optional
+	ConsecutiveFailureThreshold int `json:"consecutiveFailureThreshold,omitempty"`
 }
 
 // SveltosClusterStatus defines the status of SveltosCluster
@@ -62,6 +98,11 @@ type SveltosClusterStatus struct {
 	// +optional
 	Ready bool `json:"ready,omitempty"`
 
+	// ConnectionStatus indicates whether connection from the management cluster
+	// to the managed cluster is healthy
+	// +optional
+	ConnectionStatus ConnectionStatus `json:"connectionStatus,omitempty"`
+
 	// FailureMessage is a human consumable message explaining the
 	// misconfiguration
 	// +optional
@@ -71,6 +112,19 @@ type SveltosClusterStatus struct {
 	// was renewed.
 	// +optional
 	LastReconciledTokenRequestAt string `json:"lastReconciledTokenRequestAt,omitempty"`
+
+	// Information when next unpause cluster is scheduled
+	// +optional
+	NextUnpause *metav1.Time `json:"nextUnpause,omitempty"`
+
+	// Information when next pause cluster is scheduled
+	// +optional
+	NextPause *metav1.Time `json:"nextPause,omitempty"`
+
+	// connectionFailures is the number of consecutive failed attempts to connect
+	// to the remote cluster.
+	// +optional
+	ConnectionFailures int `json:"connectionFailures,omitempty"`
 }
 
 //+kubebuilder:object:root=true

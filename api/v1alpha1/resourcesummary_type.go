@@ -102,6 +102,11 @@ type ResourceSummarySpec struct {
 	// Resources deployed by ClusterSummary because of referenced Helm charts
 	// +optional
 	ChartResources []HelmResources `json:"chartResources,omitempty"`
+
+	// Defines additional inline patches specifically designed to exclude certain fields from
+	// configuration drift evaluation.
+	// +optional
+	Patches []Patch `json:"patches,omitempty"`
 }
 
 // ResourceSummaryStatus defines the status of ResourceSummary
