@@ -156,6 +156,10 @@ type ResourceSelector struct {
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
+	// Name of the resource deployed in the  Cluster.
+	// +optional
+	Name string `json:"name,omitempty"`
+
 	// Evaluate contains a function "evaluate" in lua language.
 	// The function will be passed one of the object selected based on
 	// above criteria.
