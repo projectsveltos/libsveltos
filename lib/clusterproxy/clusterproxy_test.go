@@ -117,7 +117,7 @@ var _ = Describe("clusterproxy ", func() {
 
 		_, err := clusterproxy.GetCAPISecretData(context.TODO(), logger, c, cluster.Namespace, cluster.Name)
 		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Failed to get secret %s/%s%s", cluster.Namespace, cluster.Name,
+		Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("secrets \"%s%s\" not found", cluster.Name,
 			clusterproxy.CapiKubeconfigSecretNamePostfix)))
 	})
 
@@ -129,7 +129,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      cluster.Name + clusterproxy.CapiKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"data": randomData,
+				"value": randomData,
 			},
 		}
 
@@ -160,7 +160,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      cluster.Name + clusterproxy.CapiKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"data": testEnv.Kubeconfig,
+				"value": testEnv.Kubeconfig,
 			},
 		}
 
@@ -274,7 +274,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"data": randomData,
+				"value": randomData,
 			},
 		}
 
@@ -333,7 +333,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      sveltosClusterWithOverride.Spec.KubeconfigName,
 			},
 			Data: map[string][]byte{
-				"data": randomData,
+				"value": randomData,
 			},
 		}
 
@@ -358,7 +358,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"data": randomData,
+				"value": randomData,
 			},
 		}
 

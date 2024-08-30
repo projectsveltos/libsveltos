@@ -113,20 +113,20 @@ var _ = Describe("Cluster utils", func() {
 		sveltosSecret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: sveltosCluster.Namespace,
-				Name:      sveltosCluster.Name + "-sveltos-kubeconfig",
+				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"data": randomData,
+				"value": randomData,
 			},
 		}
 
 		capiSecret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: cluster.Namespace,
-				Name:      cluster.Name + "-kubeconfig",
+				Name:      cluster.Name + clusterproxy.CapiKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"data": randomData,
+				"value": randomData,
 			},
 		}
 
