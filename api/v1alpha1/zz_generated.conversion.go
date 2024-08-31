@@ -2442,6 +2442,7 @@ func autoConvert_v1alpha1_ResourceSelector_To_v1beta1_ResourceSelector(in *Resou
 	out.Kind = in.Kind
 	out.LabelFilters = *(*[]v1beta1.LabelFilter)(unsafe.Pointer(&in.LabelFilters))
 	out.Namespace = in.Namespace
+	out.Name = in.Name
 	out.Evaluate = in.Evaluate
 	return nil
 }
@@ -2457,6 +2458,7 @@ func autoConvert_v1beta1_ResourceSelector_To_v1alpha1_ResourceSelector(in *v1bet
 	out.Kind = in.Kind
 	out.LabelFilters = *(*[]LabelFilter)(unsafe.Pointer(&in.LabelFilters))
 	out.Namespace = in.Namespace
+	out.Name = in.Name
 	out.Evaluate = in.Evaluate
 	return nil
 }

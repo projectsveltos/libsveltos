@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
@@ -107,9 +108,7 @@ func GetCAPISecretData(ctx context.Context, logger logr.Logger, c client.Client,
 		return nil, err
 	}
 
-	secretName := fmt.Sprintf("%s%s", cluster.Name, capiKubeconfigSecretNamePostfix)
-
-	return getSecretData(ctx, logger, c, clusterNamespace, secretName)
+	return utilkubeconfig.FromSecret(ctx, c, key)
 }
 
 // GetSveltosKubernetesRestConfig returns rest.Config for a Sveltos Cluster clusterNamespace/clusterName

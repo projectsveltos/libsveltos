@@ -119,6 +119,9 @@ spec:
                         - value
                         type: object
                       type: array
+                    name:
+                      description: Name of the resource deployed in the  Cluster.
+                      type: string
                     namespace:
                       description: |-
                         Namespace of the resource deployed in the  Cluster.
@@ -227,6 +230,9 @@ spec:
                         - value
                         type: object
                       type: array
+                    name:
+                      description: Name of the resource deployed in the  Cluster.
+                      type: string
                     namespace:
                       description: |-
                         Namespace of the resource deployed in the  Cluster.
