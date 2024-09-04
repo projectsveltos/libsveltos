@@ -31,11 +31,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-var _ = Describe("SveltosAgent compatibility checks", func() {
-	const (
-		version = "v1.31.0"
-	)
+const (
+	version = "v1.31.0"
+)
 
+var _ = Describe("SveltosAgent compatibility checks", func() {
 	It("Create ConfigMap with Sveltos-agent version", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
 
@@ -43,7 +43,7 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 
 		cm := &corev1.ConfigMap{}
 		Expect(c.Get(context.TODO(),
-			types.NamespacedName{Namespace: sveltos_upgrade.ConfigMapNamespace, Name: sveltos_upgrade.ConfigMapName},
+			types.NamespacedName{Namespace: sveltos_upgrade.ConfigMapNamespace, Name: sveltos_upgrade.SveltosAgentConfigMapName},
 			cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
@@ -53,7 +53,7 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: sveltos_upgrade.ConfigMapNamespace,
-				Name:      sveltos_upgrade.ConfigMapName,
+				Name:      sveltos_upgrade.SveltosAgentConfigMapName,
 			},
 			Data: map[string]string{
 				sveltos_upgrade.ConfigMapKey: randomString(),
@@ -64,17 +64,19 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, version)).To(Succeed())
 
 		Expect(c.Get(context.TODO(),
-			types.NamespacedName{Namespace: sveltos_upgrade.ConfigMapNamespace, Name: sveltos_upgrade.ConfigMapName},
+			types.NamespacedName{
+				Namespace: sveltos_upgrade.ConfigMapNamespace,
+				Name:      sveltos_upgrade.SveltosAgentConfigMapName},
 			cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
 	})
 
-	It("IsVersionCompatible returns true Sveltos-agent version is compatible", func() {
+	It("IsSveltosAgentVersionCompatible returns true Sveltos-agent version is compatible", func() {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: sveltos_upgrade.ConfigMapNamespace,
-				Name:      sveltos_upgrade.ConfigMapName,
+				Name:      sveltos_upgrade.SveltosAgentConfigMapName,
 			},
 			Data: map[string]string{
 				sveltos_upgrade.ConfigMapKey: version,
@@ -86,7 +88,65 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
-		Expect(sveltos_upgrade.IsVersionCompatible(context.TODO(), c, version)).To(BeTrue())
-		Expect(sveltos_upgrade.IsVersionCompatible(context.TODO(), c, randomString())).To(BeFalse())
+		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, version)).To(BeTrue())
+		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, randomString())).To(BeFalse())
+	})
+})
+
+var _ = Describe("DriftDetection compatibility checks", func() {
+	It("IsDriftDetectionVersionCompatible returns true when drift-detection version is compatible", func() {
+		cm := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: sveltos_upgrade.ConfigMapNamespace,
+				Name:      sveltos_upgrade.DriftDetectionConfigMapName,
+			},
+			Data: map[string]string{
+				sveltos_upgrade.ConfigMapKey: version,
+			},
+		}
+		initObjects := []client.Object{
+			cm,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, version)).To(BeTrue())
+		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, randomString())).To(BeFalse())
+	})
+
+	It("Create ConfigMap with drift-detection-manager version", func() {
+		c := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, version)).To(Succeed())
+
+		cm := &corev1.ConfigMap{}
+		Expect(c.Get(context.TODO(),
+			types.NamespacedName{Namespace: sveltos_upgrade.ConfigMapNamespace, Name: sveltos_upgrade.DriftDetectionConfigMapName},
+			cm)).To(Succeed())
+		Expect(cm.Data).ToNot(BeNil())
+		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+	})
+
+	It("Update ConfigMap with drift-detection-manager version", func() {
+		cm := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: sveltos_upgrade.ConfigMapNamespace,
+				Name:      sveltos_upgrade.DriftDetectionConfigMapName,
+			},
+			Data: map[string]string{
+				sveltos_upgrade.ConfigMapKey: randomString(),
+			},
+		}
+		c := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, version)).To(Succeed())
+
+		Expect(c.Get(context.TODO(),
+			types.NamespacedName{
+				Namespace: sveltos_upgrade.ConfigMapNamespace,
+				Name:      sveltos_upgrade.DriftDetectionConfigMapName},
+			cm)).To(Succeed())
+		Expect(cm.Data).ToNot(BeNil())
+		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
 	})
 })

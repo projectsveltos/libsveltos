@@ -46,12 +46,13 @@ import (
 // - verify versions are compatible
 
 const (
-	configMapNamespace = "projectsveltos"
-	configMapName      = "sveltos-agent-version"
-	configMapKey       = "sveltos-agent-version"
+	configMapNamespace          = "projectsveltos"
+	sveltosAgentConfigMapName   = "sveltos-agent-version"
+	driftDetectionConfigMapName = "drift-detection-version"
+	configMapKey                = "version"
 )
 
-// IsVersionCompatible returns true if Sveltos-agent running in a managed cluster is compatible
+// IsSveltosAgentVersionCompatible returns true if Sveltos-agent running in a managed cluster is compatible
 // with the provided version.
 
 // It takes three arguments:
@@ -59,10 +60,33 @@ const (
 //   - c (client.Client): Kubernetes client used to interact with the API server
 //   - version (string): Version to compare against the sveltos-agent version
 
-func IsVersionCompatible(ctx context.Context, c client.Client, version string) bool {
+func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, version string) bool {
 	cm := &corev1.ConfigMap{}
 
-	err := c.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: configMapName}, cm)
+	err := c.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: sveltosAgentConfigMapName}, cm)
+	if err != nil {
+		return false
+	}
+
+	if cm.Data == nil {
+		return false
+	}
+
+	return cm.Data[configMapKey] == version
+}
+
+// IsDriftDetectionVersionCompatible returns true if drift-detection-manager running in a managed cluster
+// is compatible with the provided version.
+
+// It takes three arguments:
+//   - ctx (context.Context): Context for the function call
+//   - c (client.Client): Kubernetes client used to interact with the API server
+//   - version (string): Version to compare against the drift-detection-manager version
+
+func IsDriftDetectionVersionCompatible(ctx context.Context, c client.Client, version string) bool {
+	cm := &corev1.ConfigMap{}
+
+	err := c.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: driftDetectionConfigMapName}, cm)
 	if err != nil {
 		return false
 	}
@@ -82,10 +106,10 @@ func IsVersionCompatible(ctx context.Context, c client.Client, version string) b
 func StoreSveltosAgentVersion(ctx context.Context, c client.Client, version string) error {
 	cm := &corev1.ConfigMap{}
 
-	err := c.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: configMapName}, cm)
+	err := c.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: sveltosAgentConfigMapName}, cm)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return createConfigMap(ctx, c, version)
+			return createConfigMap(ctx, c, sveltosAgentConfigMapName, version)
 		}
 		return err
 	}
@@ -97,11 +121,34 @@ func StoreSveltosAgentVersion(ctx context.Context, c client.Client, version stri
 	return c.Update(ctx, cm)
 }
 
-func createConfigMap(ctx context.Context, c client.Client, version string) error {
+// StoreDriftDetectionVersion stores the provided drift-detection-manager version in a ConfigMap.
+// It takes three arguments:
+//   - ctx (context.Context): Context for the function call
+//   - c (client.Client): Kubernetes client used to interact with the API server
+//   - version (string): Version of the drift-detection-manager to be stored
+func StoreDriftDetectionVersion(ctx context.Context, c client.Client, version string) error {
+	cm := &corev1.ConfigMap{}
+
+	err := c.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: driftDetectionConfigMapName}, cm)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return createConfigMap(ctx, c, driftDetectionConfigMapName, version)
+		}
+		return err
+	}
+
+	if cm.Data == nil {
+		cm.Data = map[string]string{}
+	}
+	cm.Data[configMapKey] = version
+	return c.Update(ctx, cm)
+}
+
+func createConfigMap(ctx context.Context, c client.Client, name, version string) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: configMapNamespace,
-			Name:      configMapName,
+			Name:      name,
 		},
 		Data: map[string]string{
 			configMapKey: version,
