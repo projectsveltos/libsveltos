@@ -24,8 +24,8 @@ type SmtpMailer struct {
 	smtpInfo *smtpInfo
 }
 
-func NewMailer(c client.Client, n *v1beta1.Notification) (*SmtpMailer, error) {
-	s, err := getSmtpInfo(context.Background(), c, n)
+func NewMailer(ctx context.Context, c client.Client, n *v1beta1.Notification) (*SmtpMailer, error) {
+	s, err := getSmtpInfo(ctx, c, n)
 	if err != nil {
 		return nil, fmt.Errorf("could not create mailer, %w", err)
 	}
