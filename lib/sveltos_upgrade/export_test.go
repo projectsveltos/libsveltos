@@ -17,7 +17,8 @@ limitations under the License.
 package sveltos_upgrade
 
 const (
-	ConfigMapNamespace = configMapNamespace
-	ConfigMapName      = configMapName
-	ConfigMapKey       = configMapKey
+	ConfigMapNamespace          = configMapNamespace
+	SveltosAgentConfigMapName   = sveltosAgentConfigMapName
+	DriftDetectionConfigMapName = driftDetectionConfigMapName
+	ConfigMapKey                = configMapKey
 )

@@ -156,7 +156,7 @@ endif
 ##@ TESTING
 
 .PHONY: test
-test: generate manifests fmt vet $(SETUP_ENVTEST) check-manifests ## Run tests.
+test: generate generate-go-conversions manifests fmt vet $(SETUP_ENVTEST) check-manifests ## Run tests.
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test $(shell go list ./... | grep -v internal/test | grep -v lib/deployer/fake ) $(TEST_ARGS) -coverprofile cover.out 
 
 ##@ Build
