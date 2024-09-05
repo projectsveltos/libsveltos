@@ -6,8 +6,9 @@ import (
 	"net/smtp"
 	"strings"
 
-	"github.com/projectsveltos/libsveltos/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
 type smtpInfo struct {

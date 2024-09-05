@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/projectsveltos/libsveltos/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
 func getSecret(ctx context.Context, c client.Client, notification *v1beta1.Notification) (*corev1.Secret, error) {
