@@ -21,7 +21,7 @@ var EventSourceCRD = []byte(`apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.16.2
   name: eventsources.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
