@@ -62,6 +62,19 @@ const (
 	TeamsWebhookURL = "TEAMS_WEBHOOK_URL"
 )
 
+// SMTP constant
+// To have Sveltos sends an SMTP notification, create a Secret of type "addons.projectsveltos.io/cluster-profile"
+// In the data section set the SMTP identity, password, host, port, and from email
+const (
+	SmtpRecipients = "SMTP_RECIPIENTS"
+	SmtpBcc        = "SMTP_BCC"
+	SmtpIdentity   = "SMTP_IDENTITY"
+	SmtpSender     = "SMTP_SENDER"
+	SmtpPassword   = "SMTP_PASSWORD"
+	SmtpHost       = "SMTP_HOST"
+	SmtpPort       = "SMTP_PORT"
+)
+
 // ConditionSeverity expresses the severity of a Condition Type failing.
 type ConditionSeverity string
 
@@ -171,8 +184,11 @@ const (
 	// NotificationTypeDiscord refers to generating a Discord message
 	NotificationTypeDiscord = NotificationType("Discord")
 
-	// NotificationTypeDiscord refers to generating a Teams message
+	// NotificationTypeTeams refers to generating a Teams message
 	NotificationTypeTeams = NotificationType("Teams")
+
+	// NotificationTypeSMTP refers to generating an email message
+	NotificationTypeSMTP = NotificationType("SMTP")
 )
 
 type Notification struct {
