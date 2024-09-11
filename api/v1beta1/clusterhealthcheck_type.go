@@ -168,7 +168,7 @@ type LivenessCheck struct {
 }
 
 // NotificationType specifies different type of notifications
-// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex;Discord;Teams
+// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex;Discord;Teams;SMTP
 type NotificationType string
 
 const (
