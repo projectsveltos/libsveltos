@@ -202,6 +202,7 @@ spec:
                       - Webex
                       - Discord
                       - Teams
+                      - SMTP
                       type: string
                   required:
                   - name
@@ -622,6 +623,7 @@ spec:
                       - Webex
                       - Discord
                       - Teams
+                      - SMTP
                       type: string
                   required:
                   - name
