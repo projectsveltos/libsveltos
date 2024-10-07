@@ -2951,6 +2951,8 @@ func Convert_v1beta1_SveltosClusterStatus_To_v1alpha1_SveltosClusterStatus(in *v
 
 func autoConvert_v1alpha1_TokenRequestRenewalOption_To_v1beta1_TokenRequestRenewalOption(in *TokenRequestRenewalOption, out *v1beta1.TokenRequestRenewalOption, s conversion.Scope) error {
 	out.RenewTokenRequestInterval = in.RenewTokenRequestInterval
+	out.SANamespace = in.SANamespace
+	out.SAName = in.SAName
 	return nil
 }
 
@@ -2961,6 +2963,8 @@ func Convert_v1alpha1_TokenRequestRenewalOption_To_v1beta1_TokenRequestRenewalOp
 
 func autoConvert_v1beta1_TokenRequestRenewalOption_To_v1alpha1_TokenRequestRenewalOption(in *v1beta1.TokenRequestRenewalOption, out *TokenRequestRenewalOption, s conversion.Scope) error {
 	out.RenewTokenRequestInterval = in.RenewTokenRequestInterval
+	out.SANamespace = in.SANamespace
+	out.SAName = in.SAName
 	return nil
 }
 
