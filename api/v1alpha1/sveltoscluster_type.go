@@ -51,6 +51,18 @@ const (
 type TokenRequestRenewalOption struct {
 	// RenewTokenRequestInterval is the interval at which to renew the TokenRequest
 	RenewTokenRequestInterval metav1.Duration `json:"renewTokenRequestInterval"`
+
+	// SANamespace is the namespace of the ServiceAccount to renew the token for.
+	// If specified, ServiceAccount must exist in the managed cluster.
+	// If not specified, sveltos will try to deduce it from current kubeconfig
+	// +optional
+	SANamespace string `json:"saNamespace,omitempty"`
+
+	// SAName is name of the ServiceAccount to renew the token for.
+	// If specified, ServiceAccount must exist in the managed cluster.
+	// If not specified, sveltos will try to deduce it from current kubeconfig
+	// +optional
+	SAName string `json:"saName,omitempty"`
 }
 
 // SveltosClusterSpec defines the desired state of SveltosCluster
