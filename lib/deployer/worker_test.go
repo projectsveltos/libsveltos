@@ -18,12 +18,13 @@ package deployer_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
-	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/go-logr/logr"
 	"k8s.io/klog/v2/textlogger"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -195,7 +196,8 @@ var _ = Describe("Worker", func() {
 		cleanup := true
 		key := deployer.GetKey(ns, name, applicant, featureID, sveltosv1beta1.ClusterTypeCapi, cleanup)
 
-		r := map[string]error{key: fmt.Errorf("failed to deploy")}
+		resultErr := errors.New("failed to deploy")
+		r := map[string]error{key: resultErr}
 		d.SetResults(r)
 		Expect(len(d.GetResults())).To(Equal(1))
 
@@ -203,6 +205,7 @@ var _ = Describe("Worker", func() {
 		Expect(err).To(BeNil())
 		Expect(resp).ToNot(BeNil())
 		Expect(deployer.IsResponseFailed(resp)).To(BeTrue())
+		Expect(deployer.GetResponseError(resp)).To(Equal(resultErr))
 	})
 
 	It("getRequestStatus returns nil response when request is still queued (currently in progress)", func() {
