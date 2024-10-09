@@ -149,13 +149,11 @@ func GetSveltosKubernetesClient(ctx context.Context, logger logr.Logger, c clien
 	return client.New(config, client.Options{Scheme: s})
 }
 
-// GetSveltosSecretData verifies Cluster exists and returns the content of secret containing
-// the kubeconfig for Sveltos cluster
-func GetSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Client,
-	clusterNamespace, clusterName string) ([]byte, error) {
+func GetSveltosSecretName(ctx context.Context, logger logr.Logger, c client.Client,
+	clusterNamespace, clusterName string) (string, error) {
 
 	logger.WithValues("namespace", clusterNamespace, "cluster", clusterName)
-	logger.V(logs.LogVerbose).Info("Get secret")
+	logger.V(logs.LogVerbose).Info("Get secret name")
 	key := client.ObjectKey{
 		Namespace: clusterNamespace,
 		Name:      clusterName,
@@ -165,18 +163,33 @@ func GetSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Clie
 	if err := c.Get(ctx, key, &cluster); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("SveltosCluster does not exist")
-			return nil, errors.Wrap(err,
+			return "", errors.Wrap(err,
 				fmt.Sprintf("SveltosCluster %s/%s does not exist",
 					clusterNamespace,
 					clusterName,
 				))
 		}
-		return nil, err
+		return "", err
 	}
 
 	secretName := cluster.Spec.KubeconfigName
 	if secretName == "" {
 		secretName = fmt.Sprintf("%s%s", cluster.Name, sveltosKubeconfigSecretNamePostfix)
+	}
+
+	return secretName, nil
+}
+
+// GetSveltosSecretData verifies Cluster exists and returns the content of secret containing
+// the kubeconfig for Sveltos cluster
+func GetSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Client,
+	clusterNamespace, clusterName string) ([]byte, error) {
+
+	logger.WithValues("namespace", clusterNamespace, "cluster", clusterName)
+	logger.V(logs.LogVerbose).Info("Get secret")
+	secretName, err := GetSveltosSecretName(ctx, logger, c, clusterNamespace, clusterName)
+	if err != nil {
+		return nil, err
 	}
 
 	return getSecretData(ctx, logger, c, clusterNamespace, secretName)

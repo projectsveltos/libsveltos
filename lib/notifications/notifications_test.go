@@ -124,14 +124,6 @@ var _ = Describe("Notification", func() {
 		Expect(err).To(Equal(fmt.Errorf("notification must reference v1 secret containing smtp configuration")))
 	})
 	It("NewMailer creates a new mailer", func() {
-		smtpRecipients := fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())
-		smtpBcc := fmt.Sprintf("%s@c.com", randomString())
-		smtpIdentity := randomString()
-		smtpSender := fmt.Sprintf("%s@d.com", randomString())
-		smtpPassword := randomString()
-		smtpHost := fmt.Sprintf("%s.com", randomString())
-		smtpPort := rand.IntnRange(444, 9999)
-
 		secretNamespace := randomString()
 		secretNs := &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
@@ -147,13 +139,13 @@ var _ = Describe("Notification", func() {
 				Namespace: secretNamespace,
 			},
 			Data: map[string][]byte{
-				libsveltosv1beta1.SmtpRecipients: []byte(smtpRecipients),
-				libsveltosv1beta1.SmtpBcc:        []byte(smtpBcc),
-				libsveltosv1beta1.SmtpIdentity:   []byte(smtpIdentity),
-				libsveltosv1beta1.SmtpSender:     []byte(smtpSender),
-				libsveltosv1beta1.SmtpPassword:   []byte(smtpPassword),
-				libsveltosv1beta1.SmtpHost:       []byte(smtpHost),
-				libsveltosv1beta1.SmtpPort:       []byte(fmt.Sprintf("%d", smtpPort)),
+				libsveltosv1beta1.SmtpRecipients: []byte(fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())),
+				libsveltosv1beta1.SmtpBcc:        []byte(fmt.Sprintf("%s@c.com", randomString())),
+				libsveltosv1beta1.SmtpIdentity:   []byte(randomString()),
+				libsveltosv1beta1.SmtpSender:     []byte(fmt.Sprintf("%s@d.com", randomString())),
+				libsveltosv1beta1.SmtpPassword:   []byte(randomString()),
+				libsveltosv1beta1.SmtpHost:       []byte(fmt.Sprintf("%s.com", randomString())),
+				libsveltosv1beta1.SmtpPort:       []byte(fmt.Sprintf("%d", rand.IntnRange(444, 9999))),
 			},
 		}
 
@@ -176,14 +168,6 @@ var _ = Describe("Notification", func() {
 		Expect(mailer).ToNot(BeNil())
 	})
 	It("NewMailer raises exception if notification is nil", func() {
-		smtpRecipients := fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())
-		smtpBcc := fmt.Sprintf("%s@c.com", randomString())
-		smtpIdentity := randomString()
-		smtpSender := fmt.Sprintf("%s@d.com", randomString())
-		smtpPassword := randomString()
-		smtpHost := fmt.Sprintf("%s.com", randomString())
-		smtpPort := rand.IntnRange(444, 9999)
-
 		secretNamespace := randomString()
 		secretNs := &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
@@ -199,13 +183,13 @@ var _ = Describe("Notification", func() {
 				Namespace: secretNamespace,
 			},
 			Data: map[string][]byte{
-				libsveltosv1beta1.SmtpRecipients: []byte(smtpRecipients),
-				libsveltosv1beta1.SmtpBcc:        []byte(smtpBcc),
-				libsveltosv1beta1.SmtpIdentity:   []byte(smtpIdentity),
-				libsveltosv1beta1.SmtpSender:     []byte(smtpSender),
-				libsveltosv1beta1.SmtpPassword:   []byte(smtpPassword),
-				libsveltosv1beta1.SmtpHost:       []byte(smtpHost),
-				libsveltosv1beta1.SmtpPort:       []byte(fmt.Sprintf("%d", smtpPort)),
+				libsveltosv1beta1.SmtpRecipients: []byte(fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())),
+				libsveltosv1beta1.SmtpBcc:        []byte(fmt.Sprintf("%s@c.com", randomString())),
+				libsveltosv1beta1.SmtpIdentity:   []byte(randomString()),
+				libsveltosv1beta1.SmtpSender:     []byte(fmt.Sprintf("%s@d.com", randomString())),
+				libsveltosv1beta1.SmtpPassword:   []byte(randomString()),
+				libsveltosv1beta1.SmtpHost:       []byte(fmt.Sprintf("%s.com", randomString())),
+				libsveltosv1beta1.SmtpPort:       []byte(fmt.Sprintf("%d", rand.IntnRange(444, 9999))),
 			},
 		}
 
@@ -220,8 +204,6 @@ var _ = Describe("Notification", func() {
 	It("SendMail sends mail successfully", func() {
 		smtpHost := "127.0.0.1"
 		smtpPort := 2525
-		smtpRecipients := fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())
-		smtpSender := fmt.Sprintf("%s@d.com", randomString())
 		// test server does not support auth
 		emailSubject := "Test Subject"
 		plainEmailMessage := "Test Message"
@@ -250,8 +232,8 @@ var _ = Describe("Notification", func() {
 				Namespace: secretNamespace,
 			},
 			Data: map[string][]byte{
-				libsveltosv1beta1.SmtpRecipients: []byte(smtpRecipients),
-				libsveltosv1beta1.SmtpSender:     []byte(smtpSender),
+				libsveltosv1beta1.SmtpRecipients: []byte(fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())),
+				libsveltosv1beta1.SmtpSender:     []byte(fmt.Sprintf("%s@d.com", randomString())),
 				libsveltosv1beta1.SmtpHost:       []byte(smtpHost),
 				libsveltosv1beta1.SmtpPort:       []byte(fmt.Sprintf("%d", smtpPort)),
 			},

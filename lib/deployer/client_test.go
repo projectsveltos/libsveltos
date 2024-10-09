@@ -18,12 +18,12 @@ package deployer_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/klog/v2/textlogger"
 
+	"k8s.io/klog/v2/textlogger"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
@@ -86,12 +86,14 @@ var _ = Describe("Client", func() {
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
 
-		r := map[string]error{key: fmt.Errorf("failed to deploy")}
+		err := errors.New("failed to deploy")
+		r := map[string]error{key: err}
 		d.SetResults(r)
 		Expect(len(d.GetResults())).To(Equal(1))
 
 		result := d.GetResult(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
 		Expect(result.Err).ToNot(BeNil())
+		Expect(result.Err).To(Equal(err))
 		Expect(result.ResultStatus).To(Equal(deployer.Failed))
 	})
 
