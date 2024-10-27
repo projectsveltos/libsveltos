@@ -179,7 +179,8 @@ func GetSecretData(ctx context.Context, c client.Client,
 	}
 
 	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
-		return GetSveltosSecretData(ctx, logger, c, clusterNamespace, clusterName)
+		data, err := GetSveltosSecretData(ctx, logger, c, clusterNamespace, clusterName)
+		return data, err
 	}
 	return GetCAPISecretData(ctx, logger, c, clusterNamespace, clusterName)
 }
