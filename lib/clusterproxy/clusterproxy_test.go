@@ -268,13 +268,14 @@ var _ = Describe("clusterproxy ", func() {
 
 	It("UpdateSveltosSecretData updates secret with SveltosCluster kubeconfig", func() {
 		randomData := []byte(randomString())
+		kubeconfigKey := randomString()
 		secret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: sveltosCluster.Namespace,
 				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"value": randomData,
+				kubeconfigKey: randomData,
 			},
 		}
 
@@ -286,7 +287,8 @@ var _ = Describe("clusterproxy ", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		newKubeconfig := randomString()
-		err := clusterproxy.UpdateSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace, sveltosCluster.Name, newKubeconfig)
+		err := clusterproxy.UpdateSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace,
+			sveltosCluster.Name, newKubeconfig, kubeconfigKey)
 		Expect(err).To(BeNil())
 
 		currentSecret := &corev1.Secret{}
@@ -294,7 +296,7 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(err).To(BeNil())
 		Expect(currentSecret.Data).ToNot(BeNil())
 
-		Expect(reflect.DeepEqual(currentSecret.Data["kubeconfig"], []byte(newKubeconfig))).To(BeTrue())
+		Expect(reflect.DeepEqual(currentSecret.Data[kubeconfigKey], []byte(newKubeconfig))).To(BeTrue())
 	})
 
 	It("getSveltosSecretData returns an error when cluster does not exist", func() {
@@ -322,9 +324,37 @@ var _ = Describe("clusterproxy ", func() {
 				clusterproxy.SveltosKubeconfigSecretNamePostfix)))
 	})
 
+	It("getSveltosSecretData returns an error when key with kubeconfig does not exist", func() {
+		randomData := []byte(randomString())
+		kubeconfigKey := "kubeconfig"
+		secret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: sveltosCluster.Namespace,
+				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
+			},
+			Data: map[string][]byte{
+				kubeconfigKey: randomData,
+			},
+		}
+
+		sveltosCluster.Spec.KubeconfigKeyName = randomString()
+		initObjects := []client.Object{
+			sveltosCluster,
+			&secret,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		_, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace, sveltosCluster.Name)
+		Expect(err).ToNot(BeNil())
+		Expect(err.Error()).To(ContainSubstring(
+			fmt.Sprintf("data section does not contain key: %s", sveltosCluster.Spec.KubeconfigKeyName)))
+	})
+
 	It("getSveltosSecretData returns overridden secret data", func() {
 		sveltosClusterWithOverride := sveltosCluster.DeepCopy()
 		sveltosClusterWithOverride.Spec.KubeconfigName = randomString()
+		sveltosClusterWithOverride.Spec.KubeconfigKeyName = randomString()
 
 		randomData := []byte(randomString())
 		secret := corev1.Secret{
@@ -333,7 +363,8 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      sveltosClusterWithOverride.Spec.KubeconfigName,
 			},
 			Data: map[string][]byte{
-				"value": randomData,
+				"value": []byte(randomString()),
+				sveltosClusterWithOverride.Spec.KubeconfigKeyName: randomData,
 			},
 		}
 
@@ -350,18 +381,48 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(data).To(Equal(randomData))
 	})
 
-	It("getSveltosSecretData returns default secret data", func() {
+	It("getSveltosSecretData returns default secret data (multiple keys)", func() {
 		randomData := []byte(randomString())
+		key := randomString()
 		secret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: sveltosCluster.Namespace,
 				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"value": randomData,
+				randomString(): []byte(randomString()),
+				key:            randomData,
 			},
 		}
 
+		sveltosCluster.Spec.KubeconfigKeyName = key
+		initObjects := []client.Object{
+			sveltosCluster,
+			&secret,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		data, err := clusterproxy.GetSveltosSecretData(context.TODO(), logger, c, sveltosCluster.Namespace,
+			sveltosCluster.Name)
+		Expect(err).To(BeNil())
+		Expect(data).To(Equal(randomData))
+	})
+
+	It("getSveltosSecretData returns default secret data (single key)", func() {
+		randomData := []byte(randomString())
+		key := "value"
+		secret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: sveltosCluster.Namespace,
+				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
+			},
+			Data: map[string][]byte{
+				key: randomData,
+			},
+		}
+
+		sveltosCluster.Spec.KubeconfigKeyName = key
 		initObjects := []client.Object{
 			sveltosCluster,
 			&secret,
