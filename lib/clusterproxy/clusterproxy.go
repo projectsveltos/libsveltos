@@ -241,9 +241,11 @@ func UpdateSveltosSecretData(ctx context.Context, logger logr.Logger, c client.C
 				clusterNamespace, secretName))
 	}
 
-	secret.Data = map[string][]byte{
-		kubeconfigKey: []byte(kubeconfig),
+	if secret.Data == nil {
+		secret.Data = map[string][]byte{}
 	}
+	secret.Data[kubeconfigKey] = []byte(kubeconfig)
+
 	return c.Update(ctx, secret)
 }
 
