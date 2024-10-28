@@ -74,6 +74,12 @@ type SveltosClusterSpec struct {
 	// and will be used to connect to the Kubernetes cluster.
 	// +optional
 	KubeconfigName string `json:"kubeconfigName,omitempty"`
+
+	// KubeconfigKeyName specifies the key within the Secret that holds the kubeconfig.
+	// If not specified, Sveltos will use first key in the Secret.
+	// +optional
+	KubeconfigKeyName string `json:"kubeconfigKeyName,omitempty"`
+
 	// Paused can be used to prevent controllers from processing the
 	// SveltosCluster and all its associated objects.
 	// +optional

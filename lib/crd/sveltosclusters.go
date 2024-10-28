@@ -21,7 +21,7 @@ var SveltosClusterCRD = []byte(`apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.16.4
   name: sveltosclusters.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
@@ -99,6 +99,11 @@ spec:
                   type: string
                 description: ArbitraryData allows for arbitrary nested structures
                 type: object
+              kubeconfigKeyName:
+                description: |-
+                  KubeconfigKeyName specifies the key within the Secret that holds the kubeconfig.
+                  If not specified, Sveltos will use first key in the Secret.
+                type: string
               kubeconfigName:
                 description: |-
                   KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig
@@ -249,6 +254,11 @@ spec:
                   type: string
                 description: ArbitraryData allows for arbitrary nested structures
                 type: object
+              kubeconfigKeyName:
+                description: |-
+                  KubeconfigKeyName specifies the key within the Secret that holds the kubeconfig.
+                  If not specified, Sveltos will use first key in the Secret.
+                type: string
               kubeconfigName:
                 description: |-
                   KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig

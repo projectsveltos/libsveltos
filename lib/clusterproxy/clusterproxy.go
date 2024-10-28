@@ -149,8 +149,10 @@ func GetSveltosKubernetesClient(ctx context.Context, logger logr.Logger, c clien
 	return client.New(config, client.Options{Scheme: s})
 }
 
-func GetSveltosSecretName(ctx context.Context, logger logr.Logger, c client.Client,
-	clusterNamespace, clusterName string) (string, error) {
+// GetSveltosSecretNameAndKey returns the name of the Secret containing the Kubeconfig
+// for the SveltosCluster. If a key is specified, returns the name of the key to use.
+func GetSveltosSecretNameAndKey(ctx context.Context, logger logr.Logger, c client.Client,
+	clusterNamespace, clusterName string) (secretName, secretkey string, err error) {
 
 	logger.WithValues("namespace", clusterNamespace, "cluster", clusterName)
 	logger.V(logs.LogVerbose).Info("Get secret name")
@@ -163,42 +165,43 @@ func GetSveltosSecretName(ctx context.Context, logger logr.Logger, c client.Clie
 	if err := c.Get(ctx, key, &cluster); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("SveltosCluster does not exist")
-			return "", errors.Wrap(err,
+			return "", "", errors.Wrap(err,
 				fmt.Sprintf("SveltosCluster %s/%s does not exist",
 					clusterNamespace,
 					clusterName,
 				))
 		}
-		return "", err
+		return "", "", err
 	}
 
-	secretName := cluster.Spec.KubeconfigName
+	secretName = cluster.Spec.KubeconfigName
 	if secretName == "" {
 		secretName = fmt.Sprintf("%s%s", cluster.Name, sveltosKubeconfigSecretNamePostfix)
 	}
 
-	return secretName, nil
+	return secretName, cluster.Spec.KubeconfigKeyName, nil
 }
 
 // GetSveltosSecretData verifies Cluster exists and returns the content of secret containing
-// the kubeconfig for Sveltos cluster
+// the kubeconfig for Sveltos cluster.
 func GetSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Client,
 	clusterNamespace, clusterName string) ([]byte, error) {
 
 	logger.WithValues("namespace", clusterNamespace, "cluster", clusterName)
 	logger.V(logs.LogVerbose).Info("Get secret")
-	secretName, err := GetSveltosSecretName(ctx, logger, c, clusterNamespace, clusterName)
+	secretName, secretKey, err := GetSveltosSecretNameAndKey(ctx, logger, c, clusterNamespace, clusterName)
 	if err != nil {
 		return nil, err
 	}
 
-	return getSecretData(ctx, logger, c, clusterNamespace, secretName)
+	data, err := getSecretData(ctx, logger, c, clusterNamespace, secretName, secretKey)
+	return data, err
 }
 
 // UpdateSveltosSecretData updates the content of the secret containing the
 // the kubeconfig for Sveltos cluster
 func UpdateSveltosSecretData(ctx context.Context, logger logr.Logger, c client.Client,
-	clusterNamespace, clusterName, kubeconfig string) error {
+	clusterNamespace, clusterName, kubeconfig, kubeconfigKey string) error {
 
 	logger.WithValues("namespace", clusterNamespace, "cluster", clusterName)
 	logger.V(logs.LogVerbose).Info("Get secret")
@@ -238,9 +241,11 @@ func UpdateSveltosSecretData(ctx context.Context, logger logr.Logger, c client.C
 				clusterNamespace, secretName))
 	}
 
-	secret.Data = map[string][]byte{
-		"kubeconfig": []byte(kubeconfig),
+	if secret.Data == nil {
+		secret.Data = map[string][]byte{}
 	}
+	secret.Data[kubeconfigKey] = []byte(kubeconfig)
+
 	return c.Update(ctx, secret)
 }
 
@@ -348,9 +353,9 @@ func CreateKubeconfig(logger logr.Logger, kubeconfigContent []byte) (string, err
 }
 
 func getSecretData(ctx context.Context, logger logr.Logger, c client.Client,
-	clusterNamespace, secretName string) ([]byte, error) {
+	clusterNamespace, secretName, secretKey string) ([]byte, error) {
 
-	logger = logger.WithValues("secret", secretName)
+	logger = logger.WithValues("secret", secretName, "key", secretKey)
 
 	secret := &corev1.Secret{}
 	key := client.ObjectKey{
@@ -365,9 +370,22 @@ func getSecretData(ctx context.Context, logger logr.Logger, c client.Client,
 				clusterNamespace, secretName))
 	}
 
-	for k, contents := range secret.Data {
+	if secret.Data == nil {
+		return nil, errors.New("data section is empty")
+	}
+
+	if secretKey != "" {
+		content, ok := secret.Data[secretKey]
+		if !ok {
+			return nil, errors.New(fmt.Sprintf("data section does not contain key: %s", secretKey))
+		}
+
+		return content, nil
+	}
+
+	for k, content := range secret.Data {
 		logger.V(logs.LogVerbose).Info("Reading secret", "key", k)
-		return contents, nil
+		return content, nil
 	}
 
 	return nil, nil
