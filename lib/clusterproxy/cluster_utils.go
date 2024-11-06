@@ -19,7 +19,6 @@ package clusterproxy
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync/atomic"
 
 	"github.com/go-logr/logr"
@@ -140,11 +139,11 @@ func getKubernetesRestConfigForAdmin(ctx context.Context, c client.Client,
 		return nil, err
 	}
 
-	kubeconfig, err := CreateKubeconfig(logger, kubeconfigContent)
+	kubeconfig, closer, err := CreateKubeconfig(logger, kubeconfigContent)
 	if err != nil {
 		return nil, err
 	}
-	defer os.Remove(kubeconfig)
+	defer closer()
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {

@@ -55,11 +55,11 @@ func GetCAPIKubernetesRestConfig(ctx context.Context, logger logr.Logger, c clie
 		return nil, err
 	}
 
-	kubeconfig, err := CreateKubeconfig(logger, kubeconfigContent)
+	kubeconfig, closer, err := CreateKubeconfig(logger, kubeconfigContent)
 	if err != nil {
 		return nil, err
 	}
-	defer os.Remove(kubeconfig)
+	defer closer()
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
@@ -121,11 +121,11 @@ func GetSveltosKubernetesRestConfig(ctx context.Context, logger logr.Logger, c c
 		return nil, err
 	}
 
-	kubeconfig, err := CreateKubeconfig(logger, kubeconfigContent)
+	kubeconfig, closer, err := CreateKubeconfig(logger, kubeconfigContent)
 	if err != nil {
 		return nil, err
 	}
-	defer os.Remove(kubeconfig)
+	defer closer()
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
@@ -336,20 +336,27 @@ func GetMachinesForCluster(
 }
 
 // CreateKubeconfig creates a temporary file with the Kubeconfig to access CAPI cluster
-func CreateKubeconfig(logger logr.Logger, kubeconfigContent []byte) (string, error) {
-	tmpfile, err := os.CreateTemp("", "kubeconfig")
+func CreateKubeconfig(logger logr.Logger, kubeconfigContent []byte) (fileName string, closer func(), err error) {
+	var tmpfile *os.File
+	tmpfile, err = os.CreateTemp("", "kubeconfig")
 	if err != nil {
 		logger.Error(err, "failed to create temporary file")
-		return "", errors.Wrap(err, "os.CreateTemp")
+		err = errors.Wrap(err, "os.CreateTemp")
+		return fileName, closer, err
 	}
 	defer tmpfile.Close()
 
-	if _, err := tmpfile.Write(kubeconfigContent); err != nil {
+	_, err = tmpfile.Write(kubeconfigContent)
+	if err != nil {
 		logger.Error(err, "failed to write to temporary file")
-		return "", errors.Wrap(err, "failed to write to temporary file")
+		err = errors.Wrap(err, "failed to write to temporary file")
+		return fileName, closer, err
 	}
 
-	return tmpfile.Name(), nil
+	fileName = tmpfile.Name()
+	closer = func() { os.Remove(tmpfile.Name()) }
+
+	return fileName, closer, err
 }
 
 func getSecretData(ctx context.Context, logger logr.Logger, c client.Client,
