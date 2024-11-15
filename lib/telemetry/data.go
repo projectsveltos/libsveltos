@@ -24,4 +24,7 @@ type Cluster struct {
 	ManagedSveltosClusters int    `json:"sveltosClusters"`
 	ReadySveltosClusters   int    `json:"readySveltosClusters"`
 	ManagedCAPIClusters    int    `json:"capiClusters"`
+	ClusterProfiles        int    `json:"clusterProfiles"`
+	Profiles               int    `json:"profiles"`
+	ClusterSummaries       int    `json:"clusterSummaries"`
 }
