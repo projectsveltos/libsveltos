@@ -24,8 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	sveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
+	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 	"github.com/projectsveltos/libsveltos/lib/patcher"
-	"github.com/projectsveltos/libsveltos/lib/utils"
 )
 
 var (
@@ -138,13 +138,13 @@ metadata:
   name: my-serviceaccount
   namespace: my-test`
 
-			namespace, err := utils.GetUnstructured([]byte(nsYAML))
+			namespace, err := k8s_utils.GetUnstructured([]byte(nsYAML))
 			Expect(err).To(BeNil())
 
-			sa, err := utils.GetUnstructured([]byte(saYAML))
+			sa, err := k8s_utils.GetUnstructured([]byte(saYAML))
 			Expect(err).To(BeNil())
 
-			pod, err := utils.GetUnstructured([]byte(podYAML))
+			pod, err := k8s_utils.GetUnstructured([]byte(podYAML))
 			Expect(err).To(BeNil())
 
 			outputObjects, err := renderer.RunUnstructured([]*unstructured.Unstructured{namespace, sa, pod})

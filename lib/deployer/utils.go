@@ -27,6 +27,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 )
 
 const (
@@ -67,17 +69,43 @@ func (e *ConflictError) Error() string {
 }
 
 type ResourceInfo struct {
-	// indicates whethere resource currently exists (only
-	// existing resources have a Version set)
-	ResourceVersion string
-
-	// Resource's OwnerReferences
-	OwnerReferences []corev1.ObjectReference
+	CurrentResource *unstructured.Unstructured
 
 	// Current profile owner's tier
 	OwnerTier string
 
 	Hash string
+}
+
+func (r *ResourceInfo) GetOwnerReferences() []corev1.ObjectReference {
+	if r == nil {
+		return nil
+	}
+	if r.CurrentResource == nil {
+		return nil
+	}
+
+	references := r.CurrentResource.GetOwnerReferences()
+	result := make([]corev1.ObjectReference, len(references))
+	for i := range references {
+		result[i] = corev1.ObjectReference{
+			Kind:       references[i].Kind,
+			APIVersion: references[i].APIVersion,
+			Name:       references[i].Name,
+		}
+	}
+
+	return result
+}
+
+func (r *ResourceInfo) GetResourceVersion() string {
+	if r == nil {
+		return ""
+	}
+	if r.CurrentResource == nil {
+		return ""
+	}
+	return r.CurrentResource.GetResourceVersion()
 }
 
 // validateObjectForUpdate finds if object currently exists. If object exists:
@@ -103,14 +131,13 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 	currentObject, err := dr.Get(ctx, object.GetName(), metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			resourceInfo.ResourceVersion = ""
+			resourceInfo = nil
 			return resourceInfo, nil
 		}
 		return nil, err
 	}
 
-	resourceInfo.OwnerReferences = getOwnerReferences(currentObject)
-	resourceInfo.ResourceVersion = currentObject.GetResourceVersion()
+	resourceInfo.CurrentResource = currentObject
 
 	// If currently set, get the Tier of current owner
 	if annotations := currentObject.GetAnnotations(); annotations != nil {
@@ -148,7 +175,7 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 						addOwnerMessage(currentObject))}
 			}
 		}
-		if hasSveltosResourcesAsOwnerReference(currentObject) && !IsOwnerReference(currentObject, profile) {
+		if k8s_utils.HasSveltosResourcesAsOwnerReference(currentObject) && !k8s_utils.IsOwnerReference(currentObject, profile) {
 			return resourceInfo, &ConflictError{
 				message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
 					object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
@@ -207,137 +234,4 @@ func addOwnerMessage(u *unstructured.Unstructured) string {
 	}
 	message += "\n"
 	return message
-}
-
-// AddOwnerReference adds Sveltos resource owning a resource as an object's OwnerReference.
-// OwnerReferences are used as ref count. Different Sveltos resources might match same cluster and
-// reference same ConfigMap. This means a policy contained in a ConfigMap is deployed in a Cluster
-// because of different Sveltos resources.
-// When cleaning up, a policy can be removed only if no more Sveltos resources are listed as OwnerReferences.
-func AddOwnerReference(object, owner client.Object) {
-	onwerReferences := object.GetOwnerReferences()
-	if onwerReferences == nil {
-		onwerReferences = make([]metav1.OwnerReference, 0)
-	}
-
-	for i := range onwerReferences {
-		ref := &onwerReferences[i]
-		if ref.Kind == owner.GetObjectKind().GroupVersionKind().Kind &&
-			ref.Name == owner.GetName() {
-
-			return
-		}
-	}
-
-	apiVersion, kind := owner.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
-
-	onwerReferences = append(onwerReferences,
-		metav1.OwnerReference{
-			APIVersion: apiVersion,
-			Kind:       kind,
-			Name:       owner.GetName(),
-			UID:        owner.GetUID(),
-		},
-	)
-
-	object.SetOwnerReferences(onwerReferences)
-}
-
-// RemoveOwnerReference removes Sveltos resource as an OwnerReference from object.
-// OwnerReferences are used as ref count. Different Sveltos resources might match same cluster and
-// reference same ConfigMap. This means a policy contained in a ConfigMap is deployed in a Cluster
-// because of different SveltosResources. When cleaning up, a policy can be removed only if no more
-// SveltosResources are listed as OwnerReferences.
-func RemoveOwnerReference(object, owner client.Object) {
-	onwerReferences := object.GetOwnerReferences()
-	if onwerReferences == nil {
-		return
-	}
-
-	_, kind := owner.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
-
-	for i := range onwerReferences {
-		ref := &onwerReferences[i]
-		if ref.Kind == kind &&
-			ref.Name == owner.GetName() {
-
-			onwerReferences[i] = onwerReferences[len(onwerReferences)-1]
-			onwerReferences = onwerReferences[:len(onwerReferences)-1]
-			break
-		}
-	}
-
-	object.SetOwnerReferences(onwerReferences)
-}
-
-// IsOnlyOwnerReference returns true if clusterprofile is the only ownerreference for object
-func IsOnlyOwnerReference(object, owner client.Object) bool {
-	onwerReferences := object.GetOwnerReferences()
-	if onwerReferences == nil {
-		return false
-	}
-
-	if len(onwerReferences) != 1 {
-		return false
-	}
-
-	kind := owner.GetObjectKind().GroupVersionKind().Kind
-
-	ref := &onwerReferences[0]
-	return ref.Kind == kind &&
-		ref.Name == owner.GetName()
-}
-
-// IsOwnerReference returns true is owner is one of the OwnerReferences
-// for object
-func IsOwnerReference(object, owner client.Object) bool {
-	onwerReferences := object.GetOwnerReferences()
-	if onwerReferences == nil {
-		return false
-	}
-
-	kind := owner.GetObjectKind().GroupVersionKind().Kind
-
-	for i := range onwerReferences {
-		ref := &onwerReferences[i]
-		if ref.Kind == kind &&
-			ref.Name == owner.GetName() {
-
-			return true
-		}
-	}
-
-	return false
-}
-
-// hasSveltosResourcesAsOwnerReference returns true if at least one
-// of current OwnerReferences is a Sveltos resource
-func hasSveltosResourcesAsOwnerReference(object client.Object) bool {
-	onwerReferences := object.GetOwnerReferences()
-	if onwerReferences == nil {
-		return false
-	}
-
-	for i := range onwerReferences {
-		ref := &onwerReferences[i]
-		if strings.Contains(ref.APIVersion, "projectsveltos.io") {
-			return true
-		}
-	}
-
-	return false
-}
-
-func getOwnerReferences(currentObject client.Object) []corev1.ObjectReference {
-	references := currentObject.GetOwnerReferences()
-	result := make([]corev1.ObjectReference, len(references))
-	for i := range references {
-		result[i] = corev1.ObjectReference{
-			Kind:       references[i].Kind,
-			APIVersion: references[i].APIVersion,
-			Name:       references[i].Name,
-		}
-	}
-
-	return result
 }
