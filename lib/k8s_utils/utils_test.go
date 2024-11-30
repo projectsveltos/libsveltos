@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package utils_test
+package k8s_utils_test
 
 import (
 	"context"
@@ -31,7 +31,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2/textlogger"
 
-	"github.com/projectsveltos/libsveltos/lib/utils"
+	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 )
 
 const (
@@ -51,16 +51,16 @@ rules:
 
 var _ = Describe("utils ", func() {
 	It("GetUnstructured returns proper object", func() {
-		policy, err := utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
+		policy, err := k8s_utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
 		Expect(err).To(BeNil())
 		Expect(policy.GetKind()).To(Equal("ClusterRole"))
 	})
 
 	It("GetDynamicResourceInterface returns dynamic resource interface", func() {
-		policy, err := utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
+		policy, err := k8s_utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
 		Expect(err).To(BeNil())
 
-		dr, err := utils.GetDynamicResourceInterface(testEnv.Config, policy.GroupVersionKind(), policy.GetNamespace())
+		dr, err := k8s_utils.GetDynamicResourceInterface(testEnv.Config, policy.GroupVersionKind(), policy.GetNamespace())
 		Expect(err).To(BeNil())
 
 		_, err = dr.Create(ctx, policy, metav1.CreateOptions{})
@@ -76,11 +76,11 @@ var _ = Describe("utils ", func() {
 	})
 
 	It("should validate UserID and IDToken input in GetKubeconfigWithUserToken()", func() {
-		_, err := utils.GetKubeconfigWithUserToken(ctx, nil, []byte(caData), "user@example.org", serverValue)
+		_, err := k8s_utils.GetKubeconfigWithUserToken(ctx, nil, []byte(caData), "user@example.org", serverValue)
 		Expect(err).NotTo(BeNil())
 		Expect(err.Error()).To(ContainSubstring("userID and IDToken cannot be empty"))
 
-		_, err = utils.GetKubeconfigWithUserToken(ctx, []byte("0x123456"), []byte(caData), "", serverValue)
+		_, err = k8s_utils.GetKubeconfigWithUserToken(ctx, []byte("0x123456"), []byte(caData), "", serverValue)
 		Expect(err).NotTo(BeNil())
 		Expect(err.Error()).To(ContainSubstring("userID and IDToken cannot be empty"))
 	})
@@ -89,7 +89,7 @@ var _ = Describe("utils ", func() {
 		server := serverValue
 
 		By("Calling GetKubeconfigWithUserToken()")
-		kubeconfig, err := utils.GetKubeconfigWithUserToken(ctx, []byte("0x123456"), []byte(caData), "user@example.org", server)
+		kubeconfig, err := k8s_utils.GetKubeconfigWithUserToken(ctx, []byte("0x123456"), []byte(caData), "user@example.org", server)
 		Expect(err).To(Succeed())
 		Expect(kubeconfig).ToNot(BeNil())
 
@@ -106,7 +106,7 @@ var _ = Describe("utils ", func() {
 	})
 
 	It("GetKubernetesVersion returns cluster Kubernetes version", func() {
-		version, err := utils.GetKubernetesVersion(context.TODO(), testEnv.Config,
+		version, err := k8s_utils.GetKubernetesVersion(context.TODO(), testEnv.Config,
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(version).ToNot(BeEmpty())

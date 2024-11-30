@@ -79,3 +79,7 @@ func IsResponseDeployed(resp *responseParams) bool {
 func IsResponseFailed(resp *responseParams) bool {
 	return resp != nil && resp.err != nil
 }
+
+func GetResponseError(resp *responseParams) error {
+	return resp.err
+}

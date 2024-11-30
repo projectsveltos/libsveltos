@@ -51,6 +51,18 @@ const (
 type TokenRequestRenewalOption struct {
 	// RenewTokenRequestInterval is the interval at which to renew the TokenRequest
 	RenewTokenRequestInterval metav1.Duration `json:"renewTokenRequestInterval"`
+
+	// SANamespace is the namespace of the ServiceAccount to renew the token for.
+	// If specified, ServiceAccount must exist in the managed cluster.
+	// If not specified, sveltos will try to deduce it from current kubeconfig
+	// +optional
+	SANamespace string `json:"saNamespace,omitempty"`
+
+	// SAName is name of the ServiceAccount to renew the token for.
+	// If specified, ServiceAccount must exist in the managed cluster.
+	// If not specified, sveltos will try to deduce it from current kubeconfig
+	// +optional
+	SAName string `json:"saName,omitempty"`
 }
 
 // SveltosClusterSpec defines the desired state of SveltosCluster
@@ -62,6 +74,12 @@ type SveltosClusterSpec struct {
 	// and will be used to connect to the Kubernetes cluster.
 	// +optional
 	KubeconfigName string `json:"kubeconfigName,omitempty"`
+
+	// KubeconfigKeyName specifies the key within the Secret that holds the kubeconfig.
+	// If not specified, Sveltos will use first key in the Secret.
+	// +optional
+	KubeconfigKeyName string `json:"kubeconfigKeyName,omitempty"`
+
 	// Paused can be used to prevent controllers from processing the
 	// SveltosCluster and all its associated objects.
 	// +optional

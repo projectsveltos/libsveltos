@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	"github.com/projectsveltos/libsveltos/lib/deployer"
+	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 )
 
 const (
@@ -118,7 +118,7 @@ func DeleteSecret(ctx context.Context, c client.Client,
 	}
 
 	for i := range secretList.Items {
-		deployer.RemoveOwnerReference(&secretList.Items[i], owner)
+		k8s_utils.RemoveOwnerReference(&secretList.Items[i], owner)
 
 		if len(secretList.Items[i].GetOwnerReferences()) != 0 {
 			err = c.Update(ctx, &secretList.Items[i])
@@ -156,7 +156,7 @@ func ListSecretForOwner(ctx context.Context, c client.Client, owner client.Objec
 
 	for i := range secretList.Items {
 		secret := &secretList.Items[i]
-		if deployer.IsOwnerReference(secret, owner) {
+		if k8s_utils.IsOwnerReference(secret, owner) {
 			results = append(results, *secret)
 		}
 	}
@@ -295,7 +295,7 @@ func getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountNamesp
 // - kubeconfig stored in the secret and the new kubeconfig are different;
 // - owner is currently not one of the secret's ownerReferences
 func shouldUpdate(secret *corev1.Secret, kubeconfig []byte, owner client.Object) bool {
-	if !deployer.IsOwnerReference(secret, owner) {
+	if !k8s_utils.IsOwnerReference(secret, owner) {
 		return true
 	}
 
@@ -310,7 +310,7 @@ func shouldUpdate(secret *corev1.Secret, kubeconfig []byte, owner client.Object)
 func updateSecret(ctx context.Context, c client.Client, secret *corev1.Secret,
 	kubeconfig []byte, owner client.Object) (*corev1.Secret, error) {
 
-	deployer.AddOwnerReference(secret, owner)
+	k8s_utils.AddOwnerReference(secret, owner)
 
 	secret.Data = map[string][]byte{
 		key: kubeconfig,

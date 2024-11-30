@@ -14,16 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package utils
+package k8s_utils
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
@@ -34,6 +36,7 @@ import (
 	"k8s.io/client-go/restmapper"
 	apiv1 "k8s.io/client-go/tools/clientcmd/api/v1"
 	"k8s.io/kubectl/pkg/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
@@ -183,4 +186,123 @@ func GetKubernetesVersion(ctx context.Context, cfg *rest.Config, logger logr.Log
 
 	logger.V(logs.LogDebug).Info(fmt.Sprintf("cluster version: %s", k8sVersion.String()))
 	return k8sVersion.String(), nil
+}
+
+// AddOwnerReference adds Sveltos resource owning a resource as an object's OwnerReference.
+// OwnerReferences are used as ref count. Different Sveltos resources might match same cluster and
+// reference same ConfigMap. This means a policy contained in a ConfigMap is deployed in a Cluster
+// because of different Sveltos resources.
+// When cleaning up, a policy can be removed only if no more Sveltos resources are listed as OwnerReferences.
+func AddOwnerReference(object, owner client.Object) {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		onwerReferences = make([]metav1.OwnerReference, 0)
+	}
+
+	for i := range onwerReferences {
+		ref := &onwerReferences[i]
+		if ref.Kind == owner.GetObjectKind().GroupVersionKind().Kind &&
+			ref.Name == owner.GetName() {
+
+			return
+		}
+	}
+
+	apiVersion, kind := owner.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
+
+	onwerReferences = append(onwerReferences,
+		metav1.OwnerReference{
+			APIVersion: apiVersion,
+			Kind:       kind,
+			Name:       owner.GetName(),
+			UID:        owner.GetUID(),
+		},
+	)
+
+	object.SetOwnerReferences(onwerReferences)
+}
+
+// RemoveOwnerReference removes Sveltos resource as an OwnerReference from object.
+// OwnerReferences are used as ref count. Different Sveltos resources might match same cluster and
+// reference same ConfigMap. This means a policy contained in a ConfigMap is deployed in a Cluster
+// because of different SveltosResources. When cleaning up, a policy can be removed only if no more
+// SveltosResources are listed as OwnerReferences.
+func RemoveOwnerReference(object, owner client.Object) {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		return
+	}
+
+	_, kind := owner.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
+
+	for i := range onwerReferences {
+		ref := &onwerReferences[i]
+		if ref.Kind == kind &&
+			ref.Name == owner.GetName() {
+
+			onwerReferences[i] = onwerReferences[len(onwerReferences)-1]
+			onwerReferences = onwerReferences[:len(onwerReferences)-1]
+			break
+		}
+	}
+
+	object.SetOwnerReferences(onwerReferences)
+}
+
+// IsOnlyOwnerReference returns true if clusterprofile is the only ownerreference for object
+func IsOnlyOwnerReference(object, owner client.Object) bool {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		return false
+	}
+
+	if len(onwerReferences) != 1 {
+		return false
+	}
+
+	kind := owner.GetObjectKind().GroupVersionKind().Kind
+
+	ref := &onwerReferences[0]
+	return ref.Kind == kind &&
+		ref.Name == owner.GetName()
+}
+
+// IsOwnerReference returns true is owner is one of the OwnerReferences
+// for object
+func IsOwnerReference(object, owner client.Object) bool {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		return false
+	}
+
+	kind := owner.GetObjectKind().GroupVersionKind().Kind
+
+	for i := range onwerReferences {
+		ref := &onwerReferences[i]
+		if ref.Kind == kind &&
+			ref.Name == owner.GetName() {
+
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasSveltosResourcesAsOwnerReference returns true if at least one
+// of current OwnerReferences is a Sveltos resource
+func HasSveltosResourcesAsOwnerReference(object client.Object) bool {
+	onwerReferences := object.GetOwnerReferences()
+	if onwerReferences == nil {
+		return false
+	}
+
+	for i := range onwerReferences {
+		ref := &onwerReferences[i]
+		if strings.Contains(ref.APIVersion, "projectsveltos.io") {
+			return true
+		}
+	}
+
+	return false
 }
