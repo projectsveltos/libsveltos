@@ -27,7 +27,7 @@ import (
 	"k8s.io/klog/v2/textlogger"
 
 	"github.com/projectsveltos/libsveltos/lib/crd"
-	"github.com/projectsveltos/libsveltos/lib/utils"
+	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 )
 
 var (
@@ -91,7 +91,7 @@ var _ = Describe("WatchCustomResourceDefinition", func() {
 		defer cancel()
 		go crd.WatchCustomResourceDefinition(watcherCtx, testEnv.Config, handler, logger)
 
-		crd, err := utils.GetUnstructured([]byte(crdYAML))
+		crd, err := k8s_utils.GetUnstructured([]byte(crdYAML))
 		Expect(err).To(BeNil())
 
 		Expect(testEnv.Create(watcherCtx, crd)).To(Succeed())

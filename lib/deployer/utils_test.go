@@ -29,7 +29,7 @@ import (
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/deployer"
-	"github.com/projectsveltos/libsveltos/lib/utils"
+	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 )
 
 const (
@@ -59,7 +59,7 @@ var _ = Describe("Client", func() {
 		func() {
 			name := randomString()
 
-			cp, err := utils.GetUnstructured([]byte(clusterProfile))
+			cp, err := k8s_utils.GetUnstructured([]byte(clusterProfile))
 			Expect(err).To(BeNil())
 
 			nsInstance := fmt.Sprintf(nsTemplate, name)
@@ -95,11 +95,11 @@ var _ = Describe("Client", func() {
 
 			Expect(addTypeInformationToObject(scheme, ns))
 
-			dr, err := utils.GetDynamicResourceInterface(testEnv.Config, ns.GroupVersionKind(), "")
+			dr, err := k8s_utils.GetDynamicResourceInterface(testEnv.Config, ns.GroupVersionKind(), "")
 			Expect(err).To(BeNil())
 
 			var u *unstructured.Unstructured
-			u, err = utils.GetUnstructured([]byte(nsInstance))
+			u, err = k8s_utils.GetUnstructured([]byte(nsInstance))
 			Expect(err).To(BeNil())
 
 			// If different configMap, return error
@@ -112,8 +112,11 @@ var _ = Describe("Client", func() {
 			resourceInfo, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
 				configMapNs, configMapName, cp)
 			Expect(err).To(BeNil())
-			Expect(resourceInfo.ResourceVersion).ToNot(BeEmpty())
+			Expect(resourceInfo.CurrentResource).ToNot(BeNil())
+			Expect(resourceInfo.CurrentResource.GetResourceVersion()).ToNot(BeEmpty())
 			Expect(resourceInfo.Hash).To(Equal(policyHash))
+			Expect(resourceInfo.CurrentResource).ToNot(BeNil())
+			Expect(resourceInfo.CurrentResource.GetName()).To(Equal(ns.Name))
 		})
 
 	It("addOwnerReference adds an OwnerReference to an object. removeOwnerReference removes it", func() {
@@ -124,20 +127,20 @@ var _ = Describe("Client", func() {
 		}
 		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
 
-		policy, err := utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
+		policy, err := k8s_utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
 		Expect(err).To(BeNil())
 		Expect(policy.GetKind()).To(Equal("ClusterRole"))
 
 		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
 
-		deployer.AddOwnerReference(policy, roleRequest)
+		k8s_utils.AddOwnerReference(policy, roleRequest)
 
 		Expect(policy.GetOwnerReferences()).ToNot(BeNil())
 		Expect(len(policy.GetOwnerReferences())).To(Equal(1))
 		Expect(policy.GetOwnerReferences()[0].Kind).To(Equal(libsveltosv1beta1.RoleRequestKind))
 		Expect(policy.GetOwnerReferences()[0].Name).To(Equal(roleRequest.Name))
 
-		deployer.RemoveOwnerReference(policy, roleRequest)
+		k8s_utils.RemoveOwnerReference(policy, roleRequest)
 		Expect(len(policy.GetOwnerReferences())).To(Equal(0))
 	})
 
@@ -149,15 +152,15 @@ var _ = Describe("Client", func() {
 		}
 		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
 
-		policy, err := utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
+		policy, err := k8s_utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
 		Expect(err).To(BeNil())
 		Expect(policy.GetKind()).To(Equal("ClusterRole"))
 
 		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
 
-		deployer.AddOwnerReference(policy, roleRequest)
+		k8s_utils.AddOwnerReference(policy, roleRequest)
 
-		Expect(deployer.IsOnlyOwnerReference(policy, roleRequest)).To(BeTrue())
+		Expect(k8s_utils.IsOnlyOwnerReference(policy, roleRequest)).To(BeTrue())
 
 		roleRequest2 := &libsveltosv1beta1.RoleRequest{
 			ObjectMeta: metav1.ObjectMeta{
@@ -165,8 +168,8 @@ var _ = Describe("Client", func() {
 			},
 		}
 		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest2)).To(Succeed())
-		deployer.AddOwnerReference(policy, roleRequest2)
-		Expect(deployer.IsOnlyOwnerReference(policy, roleRequest)).To(BeFalse())
+		k8s_utils.AddOwnerReference(policy, roleRequest2)
+		Expect(k8s_utils.IsOnlyOwnerReference(policy, roleRequest)).To(BeFalse())
 	})
 
 	It("IsOwnerReference returns true when owner is present", func() {
@@ -184,18 +187,18 @@ var _ = Describe("Client", func() {
 		}
 		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest2)).To(Succeed())
 
-		policy, err := utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
+		policy, err := k8s_utils.GetUnstructured([]byte(fmt.Sprintf(viewClusterRole, randomString())))
 		Expect(err).To(BeNil())
 		Expect(policy.GetKind()).To(Equal("ClusterRole"))
 
 		Expect(addTypeInformationToObject(testEnv.Scheme(), roleRequest)).To(Succeed())
 
-		deployer.AddOwnerReference(policy, roleRequest)
+		k8s_utils.AddOwnerReference(policy, roleRequest)
 
-		Expect(deployer.IsOwnerReference(policy, roleRequest)).To(BeTrue())
-		Expect(deployer.IsOwnerReference(policy, roleRequest2)).To(BeFalse())
+		Expect(k8s_utils.IsOwnerReference(policy, roleRequest)).To(BeTrue())
+		Expect(k8s_utils.IsOwnerReference(policy, roleRequest2)).To(BeFalse())
 
-		deployer.AddOwnerReference(policy, roleRequest2)
-		Expect(deployer.IsOwnerReference(policy, roleRequest)).To(BeTrue())
+		k8s_utils.AddOwnerReference(policy, roleRequest2)
+		Expect(k8s_utils.IsOwnerReference(policy, roleRequest)).To(BeTrue())
 	})
 })

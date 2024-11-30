@@ -2887,6 +2887,7 @@ func Convert_v1beta1_SveltosClusterList_To_v1alpha1_SveltosClusterList(in *v1bet
 
 func autoConvert_v1alpha1_SveltosClusterSpec_To_v1beta1_SveltosClusterSpec(in *SveltosClusterSpec, out *v1beta1.SveltosClusterSpec, s conversion.Scope) error {
 	out.KubeconfigName = in.KubeconfigName
+	out.KubeconfigKeyName = in.KubeconfigKeyName
 	out.Paused = in.Paused
 	out.TokenRequestRenewalOption = (*v1beta1.TokenRequestRenewalOption)(unsafe.Pointer(in.TokenRequestRenewalOption))
 	out.ArbitraryData = *(*map[string]string)(unsafe.Pointer(&in.ArbitraryData))
@@ -2902,6 +2903,7 @@ func Convert_v1alpha1_SveltosClusterSpec_To_v1beta1_SveltosClusterSpec(in *Svelt
 
 func autoConvert_v1beta1_SveltosClusterSpec_To_v1alpha1_SveltosClusterSpec(in *v1beta1.SveltosClusterSpec, out *SveltosClusterSpec, s conversion.Scope) error {
 	out.KubeconfigName = in.KubeconfigName
+	out.KubeconfigKeyName = in.KubeconfigKeyName
 	out.Paused = in.Paused
 	out.TokenRequestRenewalOption = (*TokenRequestRenewalOption)(unsafe.Pointer(in.TokenRequestRenewalOption))
 	out.ArbitraryData = *(*map[string]string)(unsafe.Pointer(&in.ArbitraryData))
@@ -2951,6 +2953,8 @@ func Convert_v1beta1_SveltosClusterStatus_To_v1alpha1_SveltosClusterStatus(in *v
 
 func autoConvert_v1alpha1_TokenRequestRenewalOption_To_v1beta1_TokenRequestRenewalOption(in *TokenRequestRenewalOption, out *v1beta1.TokenRequestRenewalOption, s conversion.Scope) error {
 	out.RenewTokenRequestInterval = in.RenewTokenRequestInterval
+	out.SANamespace = in.SANamespace
+	out.SAName = in.SAName
 	return nil
 }
 
@@ -2961,6 +2965,8 @@ func Convert_v1alpha1_TokenRequestRenewalOption_To_v1beta1_TokenRequestRenewalOp
 
 func autoConvert_v1beta1_TokenRequestRenewalOption_To_v1alpha1_TokenRequestRenewalOption(in *v1beta1.TokenRequestRenewalOption, out *TokenRequestRenewalOption, s conversion.Scope) error {
 	out.RenewTokenRequestInterval = in.RenewTokenRequestInterval
+	out.SANamespace = in.SANamespace
+	out.SAName = in.SAName
 	return nil
 }
 

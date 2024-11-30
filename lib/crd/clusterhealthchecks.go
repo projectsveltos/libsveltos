@@ -22,7 +22,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: projectsveltos/projectsveltos-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.2
+    controller-gen.kubebuilder.io/version: v0.16.5
   name: clusterhealthchecks.lib.projectsveltos.io
 spec:
   conversion:
@@ -202,7 +202,6 @@ spec:
                       - Webex
                       - Discord
                       - Teams
-                      - SMTP
                       type: string
                   required:
                   - name
@@ -623,7 +622,6 @@ spec:
                       - Webex
                       - Discord
                       - Teams
-                      - SMTP
                       type: string
                   required:
                   - name

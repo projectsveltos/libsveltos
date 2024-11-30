@@ -14,8 +14,8 @@ import (
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/crd"
+	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 	"github.com/projectsveltos/libsveltos/lib/roles"
-	"github.com/projectsveltos/libsveltos/lib/utils"
 )
 
 var _ = Describe("Roles", func() {
@@ -145,7 +145,7 @@ var _ = Describe("Roles", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
 
-		roleRequestCRD, err := utils.GetUnstructured(crd.GetRoleRequestCRDYAML())
+		roleRequestCRD, err := k8s_utils.GetUnstructured(crd.GetRoleRequestCRDYAML())
 		Expect(err).To(BeNil())
 		Expect(c.Create(context.TODO(), roleRequestCRD)).To(Succeed())
 
