@@ -22,6 +22,9 @@ import (
 	"testing"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -118,4 +121,29 @@ func waitForObject(ctx context.Context, c client.Client, obj client.Object) erro
 		return errors.Wrapf(err, "object %s, %s is not being added to the testenv client cache", obj.GetObjectKind().GroupVersionKind().String(), key)
 	}
 	return nil
+}
+
+func createNamespaceAndSecret(data map[string][]byte) (string, string) {
+	namespaceName := randomString()
+	secretName := randomString()
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespaceName,
+		},
+	}
+	Expect(k8sClient.Create(context.TODO(), ns)).To(Succeed())
+	Expect(waitForObject(context.TODO(), k8sClient, ns)).To(Succeed())
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespaceName,
+		},
+		Data: data,
+	}
+
+	Expect(k8sClient.Create(context.TODO(), secret)).To(Succeed())
+	Expect(waitForObject(context.TODO(), k8sClient, secret)).To(Succeed())
+
+	return namespaceName, secretName
 }
