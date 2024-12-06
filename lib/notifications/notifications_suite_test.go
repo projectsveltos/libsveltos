@@ -123,7 +123,7 @@ func waitForObject(ctx context.Context, c client.Client, obj client.Object) erro
 	return nil
 }
 
-func createNamespaceAndSecret(data map[string][]byte) (namespaceName string, secretName string) {
+func createNamespaceAndSecret(data map[string][]byte) (namespaceName, secretName string) {
 	namespaceName = randomString()
 	secretName = randomString()
 	ns := &corev1.Namespace{
