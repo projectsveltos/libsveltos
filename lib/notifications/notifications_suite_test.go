@@ -123,9 +123,9 @@ func waitForObject(ctx context.Context, c client.Client, obj client.Object) erro
 	return nil
 }
 
-func createNamespaceAndSecret(data map[string][]byte) (string, string) {
-	namespaceName := randomString()
-	secretName := randomString()
+func createNamespaceAndSecret(data map[string][]byte) (namespaceName string, secretName string) {
+	namespaceName = randomString()
+	secretName = randomString()
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: namespaceName,
@@ -144,6 +144,5 @@ func createNamespaceAndSecret(data map[string][]byte) (string, string) {
 
 	Expect(k8sClient.Create(context.TODO(), secret)).To(Succeed())
 	Expect(waitForObject(context.TODO(), k8sClient, secret)).To(Succeed())
-
-	return namespaceName, secretName
+	return
 }

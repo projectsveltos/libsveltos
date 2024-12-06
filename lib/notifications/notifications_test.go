@@ -262,8 +262,8 @@ var _ = Describe("Notification", func() {
 		Expect(err).To(Equal(fmt.Errorf("notification must reference v1 secret containing notification configuration")))
 	})
 	It("SendWebexMessage sends message successfully", func() {
-		webexRoom := fmt.Sprintf("%s", randomString())
-		webexToken := fmt.Sprintf("%s", randomString())
+		webexRoom := randomString()
+		webexToken := randomString()
 
 		data := map[string][]byte{
 			libsveltosv1beta1.WebexRoomID: []byte(webexRoom),
@@ -293,8 +293,8 @@ var _ = Describe("Notification", func() {
 		Expect(err).To(BeNil())
 	})
 	It("SendWebexMessage raises error if message was not sent successfully", func() {
-		webexRoom := fmt.Sprintf("%s", randomString())
-		webexToken := fmt.Sprintf("%s", randomString())
+		webexRoom := randomString()
+		webexToken := randomString()
 
 		data := map[string][]byte{
 			libsveltosv1beta1.WebexRoomID: []byte(webexRoom),

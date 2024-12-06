@@ -23,9 +23,11 @@ type WebexNotifier struct {
 	webexInfo *webexInfo
 }
 
-var sendWebexMessage = func(wc *webexteams.Client, message *webexteams.MessageCreateRequest) (*webexteams.Message, *resty.Response, error) {
-	return wc.Messages.CreateMessage(message)
-}
+var (
+	sendWebexMessage = func(wc *webexteams.Client, message *webexteams.MessageCreateRequest) (*webexteams.Message, *resty.Response, error) {
+		return wc.Messages.CreateMessage(message)
+	}
+)
 
 func NewWebexNotifier(ctx context.Context, c client.Client, notification *libsveltosv1beta1.Notification) (*WebexNotifier, error) {
 	info, err := getWebexInfo(ctx, c, notification)
@@ -36,7 +38,6 @@ func NewWebexNotifier(ctx context.Context, c client.Client, notification *libsve
 }
 
 func (wn *WebexNotifier) SendNotification(message string, files []webexteams.File, logger logr.Logger) error {
-
 	l := logger.WithValues("room", wn.webexInfo.room)
 	l.V(logs.LogInfo).Info("send webex message")
 
