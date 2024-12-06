@@ -11,7 +11,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.36.0
 	github.com/pkg/errors v0.9.1
-	golang.org/x/text v0.20.0
+	golang.org/x/text v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.31.3
 	k8s.io/apiextensions-apiserver v0.31.3
