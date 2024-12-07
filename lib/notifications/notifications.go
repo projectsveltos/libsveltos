@@ -13,15 +13,15 @@ import (
 
 func getSecret(ctx context.Context, c client.Client, notification *v1beta1.Notification) (*corev1.Secret, error) {
 	if notification.NotificationRef == nil {
-		return nil, fmt.Errorf("notification must reference v1 secret containing smtp configuration")
+		return nil, fmt.Errorf("notification must reference v1 secret containing notification configuration")
 	}
 
 	if notification.NotificationRef.Kind != "Secret" {
-		return nil, fmt.Errorf("notification must reference v1 secret containing smtp configuration")
+		return nil, fmt.Errorf("notification must reference v1 secret containing notification configuration")
 	}
 
 	if notification.NotificationRef.APIVersion != "v1" {
-		return nil, fmt.Errorf("notification must reference v1 secret containing smtp configuration")
+		return nil, fmt.Errorf("notification must reference v1 secret containing notification configuration")
 	}
 
 	secret := &corev1.Secret{}
@@ -34,7 +34,7 @@ func getSecret(ctx context.Context, c client.Client, notification *v1beta1.Notif
 	}
 
 	if secret.Data == nil {
-		return nil, fmt.Errorf("notification must reference v1 secret containing smtp configuration")
+		return nil, fmt.Errorf("notification must reference v1 secret containing notification configuration")
 	}
 
 	return secret, nil
