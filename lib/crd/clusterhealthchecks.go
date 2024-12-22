@@ -22,7 +22,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: projectsveltos/projectsveltos-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.5
+    controller-gen.kubebuilder.io/version: v0.17.0
   name: clusterhealthchecks.lib.projectsveltos.io
 spec:
   conversion:
@@ -561,7 +561,7 @@ spec:
                   type: object
                 type: array
               notifications:
-                description: Notification is a list of source of events to evaluate.
+                description: Notification is a list of notification mechanisms.
                 items:
                   properties:
                     name:

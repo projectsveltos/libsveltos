@@ -136,4 +136,7 @@ func main() {
 
 	setFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_sets.lib.projectsveltos.io.yaml"
 	generate(setFile, "sets", "Set")
+
+	techsupportFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_techsupports.lib.projectsveltos.io.yaml"
+	generate(techsupportFile, "techsupports", "Techsupport")
 }
