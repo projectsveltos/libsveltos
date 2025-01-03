@@ -622,6 +622,7 @@ spec:
                       - Webex
                       - Discord
                       - Teams
+                      - Telegram
                       type: string
                   required:
                   - name

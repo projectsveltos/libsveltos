@@ -474,6 +474,7 @@ spec:
                       - Webex
                       - Discord
                       - Teams
+                      - Telegram
                       type: string
                   required:
                   - name
@@ -534,8 +535,6 @@ spec:
                 description: Information when next techsupport is scheduled
                 format: date-time
                 type: string
-            required:
-            - hash
             type: object
         type: object
     served: true
