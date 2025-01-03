@@ -62,6 +62,14 @@ const (
 	TeamsWebhookURL = "TEAMS_WEBHOOK_URL"
 )
 
+// Telegram constant
+// To have Sveltos sends a Telegram notification, create a Secret of type "addons.projectsveltos.io/cluster-profile"
+// In the data section set both discord token and discord server ID
+const (
+	TelegramToken  = "TELEGRAM_TOKEN"
+	TelegramChatID = "TELEGRAM_CHAT_ID"
+)
+
 // SMTP constant
 // To have Sveltos sends an SMTP notification, create a Secret of type "addons.projectsveltos.io/cluster-profile"
 // In the data section set the SMTP identity, password, host, port, and from email
@@ -168,7 +176,7 @@ type LivenessCheck struct {
 }
 
 // NotificationType specifies different type of notifications
-// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex;Discord;Teams
+// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex;Discord;Teams;Telegram
 type NotificationType string
 
 const (
@@ -189,6 +197,9 @@ const (
 
 	// NotificationTypeSMTP refers to generating an email message
 	NotificationTypeSMTP = NotificationType("SMTP")
+
+	// NotificationTypeTelegram refers to generating a telegram message
+	NotificationTypeTelegram = NotificationType("Telegram")
 )
 
 type Notification struct {

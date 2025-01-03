@@ -171,11 +171,13 @@ type TechsupportStatus struct {
 
 	// FailureMessage provides more information about the error, if
 	// any occurred
+	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
 
 	// Hash represents of a unique value for techsupport Spec at a fixed point in
 	// time
-	Hash []byte `json:"hash"`
+	// +optional
+	Hash []byte `json:"hash,omitempty"`
 }
 
 //+kubebuilder:object:root=true
