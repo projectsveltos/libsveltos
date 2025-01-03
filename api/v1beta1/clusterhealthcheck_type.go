@@ -243,7 +243,7 @@ type ClusterHealthCheckSpec struct {
 	// +patchStrategy=merge,retainKeys
 	LivenessChecks []LivenessCheck `json:"livenessChecks"`
 
-	// Notification is a list of source of events to evaluate.
+	// Notification is a list of notification mechanisms.
 	// +patchMergeKey=name
 	// +patchStrategy=merge,retainKeys
 	Notifications []Notification `json:"notifications"`

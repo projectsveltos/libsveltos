@@ -185,4 +185,14 @@ var _ = Describe("CRD", func() {
 
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
+
+	It("Gets the Techsupport CustomResourceDefinition", func() {
+		yaml := crd.GetTechsupportCRDYAML()
+
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_techsupports.lib.projectsveltos.io.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
 })

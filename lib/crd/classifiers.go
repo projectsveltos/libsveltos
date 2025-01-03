@@ -21,7 +21,7 @@ var ClassifierCRD = []byte(`apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.5
+    controller-gen.kubebuilder.io/version: v0.17.0
   name: classifiers.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
@@ -468,6 +468,7 @@ spec:
                           description: |-
                             Namespace of the resource deployed in the  Cluster.
                             Empty for resources scoped at cluster level.
+                            For namespaced resources, an empty string "" indicates all namespaces.
                           type: string
                         version:
                           description: Version of the resource deployed in the Cluster.

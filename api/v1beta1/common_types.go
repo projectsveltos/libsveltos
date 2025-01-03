@@ -162,6 +162,7 @@ type ResourceSelector struct {
 
 	// Namespace of the resource deployed in the  Cluster.
 	// Empty for resources scoped at cluster level.
+	// For namespaced resources, an empty string "" indicates all namespaces.
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 

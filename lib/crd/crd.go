@@ -81,3 +81,7 @@ func GetClusterSetCRDYAML() []byte {
 func GetSetCRDYAML() []byte {
 	return SetCRD
 }
+
+func GetTechsupportCRDYAML() []byte {
+	return TechsupportCRD
+}
