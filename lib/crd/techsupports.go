@@ -475,6 +475,7 @@ spec:
                       - Discord
                       - Teams
                       - Telegram
+                      - SMTP
                       type: string
                   required:
                   - name

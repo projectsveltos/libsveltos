@@ -1,9 +1,15 @@
 package notifications
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
+	"mime/multipart"
+	"net/http"
 	"net/smtp"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -12,17 +18,24 @@ import (
 )
 
 type smtpInfo struct {
-	recipients string
-	bcc        string
-	identity   string
-	fromEmail  string
-	password   string
-	host       string
-	port       string
+	to        []string
+	cc        []string
+	bcc       []string
+	fromEmail string
+	password  string
+	host      string
+	port      string
 }
 
 type SmtpMailer struct {
 	smtpInfo *smtpInfo
+}
+
+type messageInfo struct {
+	smtpInfo
+	subject     string
+	body        string
+	attachments map[string][]byte
 }
 
 func NewMailer(ctx context.Context, c client.Client, n *v1beta1.Notification) (*SmtpMailer, error) {
@@ -33,29 +46,91 @@ func NewMailer(ctx context.Context, c client.Client, n *v1beta1.Notification) (*
 	return &SmtpMailer{smtpInfo: s}, nil
 }
 
-func (m *SmtpMailer) SendMail(subject, message string, sendAsHtml bool) error {
-	server := fmt.Sprintf("%s:%s", m.smtpInfo.host, m.smtpInfo.port)
-	to := strings.Split(m.smtpInfo.recipients, ",")
-	msg := []byte(buildMessageHeaders(sendAsHtml, m.smtpInfo.identity, m.smtpInfo.fromEmail, m.smtpInfo.recipients, subject) + message)
-	if m.smtpInfo.password == "" {
-		return sendWithoutAuth(server, m.smtpInfo.fromEmail, to, msg)
+func (m *SmtpMailer) SendMail(subject, message string, sendAsHtml bool, compressedFile *os.File) error {
+	msgInfo := messageInfo{
+		smtpInfo: *m.smtpInfo,
+		subject:  subject,
+		body:     message,
 	}
-	return sendWithAuth(server, m.smtpInfo.identity, m.smtpInfo.fromEmail, m.smtpInfo.password, to, msg)
+
+	if compressedFile != nil {
+		msgInfo.attachments = map[string][]byte{}
+		b, err := os.ReadFile(compressedFile.Name())
+		if err != nil {
+			return err
+		}
+
+		_, fileName := filepath.Split(compressedFile.Name())
+		msgInfo.attachments[fileName] = b
+	}
+
+	msg := toBytes(&msgInfo, sendAsHtml)
+
+	// Sending "Bcc" messages is accomplished by including an email address in the to
+	// parameter but not including it in the msg headers.
+	to := msgInfo.to
+	if len(msgInfo.cc) > 0 {
+		to = append(to, msgInfo.cc...)
+	}
+	if len(msgInfo.bcc) > 0 {
+		to = append(to, msgInfo.bcc...)
+	}
+	if msgInfo.password == "" {
+		server := fmt.Sprintf("%s:%s", msgInfo.host, msgInfo.port)
+		return sendWithoutAuth(server, msgInfo.fromEmail, to, msg)
+	}
+	return sendWithAuth(msgInfo.host, msgInfo.port, msgInfo.fromEmail, msgInfo.password,
+		to, msg)
 }
 
-func buildMessageHeaders(isHtml bool, identity, from, to, subject string) string {
-	if identity != "" {
-		from = fmt.Sprintf("%s <%s>", identity, from)
+func toBytes(msgInfo *messageInfo, sendAsHtml bool) []byte {
+	buf := bytes.NewBuffer(nil)
+	withAttachments := len(msgInfo.attachments) > 0
+	fmt.Fprintf(buf, "From: %s\n", msgInfo.fromEmail)
+	fmt.Fprintf(buf, "Subject: %s\n", msgInfo.subject)
+	fmt.Fprintf(buf, "To: %s\n", strings.Join(msgInfo.to, ","))
+
+	if sendAsHtml {
+		fmt.Fprintf(buf, "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n")
 	}
-	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n", from, to, subject)
-	if isHtml {
-		msg += "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n"
+
+	if len(msgInfo.cc) > 0 {
+		fmt.Fprintf(buf, "Cc: %s\n", strings.Join(msgInfo.cc, ","))
 	}
-	return msg
+
+	buf.WriteString("MIME-Version: 1.0\n")
+	writer := multipart.NewWriter(buf)
+	boundary := writer.Boundary()
+	if withAttachments {
+		fmt.Fprintf(buf, "Content-Type: multipart/mixed; boundary=%s\n", boundary)
+		fmt.Fprintf(buf, "--%s\n", boundary)
+	} else {
+		buf.WriteString("Content-Type: text/plain; charset=utf-8\n")
+	}
+
+	buf.WriteString(msgInfo.body)
+	if withAttachments {
+		for k, v := range msgInfo.attachments {
+			fmt.Fprintf(buf, "\n\n--%s\n", boundary)
+			fmt.Fprintf(buf, "Content-Type: %s\n", http.DetectContentType(v))
+			buf.WriteString("Content-Transfer-Encoding: base64\n")
+			fmt.Fprintf(buf, "Content-Disposition: attachment; filename=%s\n", k)
+
+			b := make([]byte, base64.StdEncoding.EncodedLen(len(v)))
+			base64.StdEncoding.Encode(b, v)
+			buf.Write(b)
+			fmt.Fprintf(buf, "\n--%s", boundary)
+		}
+
+		buf.WriteString("--")
+	}
+
+	return buf.Bytes()
 }
 
-func sendWithAuth(server, identity, from, password string, to []string, msg []byte) error {
-	auth := smtp.PlainAuth(identity, from, password, server)
+func sendWithAuth(host, port, from, password string, to []string, msg []byte) error {
+	auth := smtp.PlainAuth("", from, password, host)
+	server := fmt.Sprintf("%s:%s", host, port)
 	return smtp.SendMail(server, auth, from, to, msg)
 }
 
@@ -84,6 +159,7 @@ func sendWithoutAuth(server, from string, to []string, msg []byte) error {
 	if err != nil {
 		return err
 	}
+
 	return c.Quit()
 }
 
@@ -98,15 +174,9 @@ func getSmtpInfo(ctx context.Context, c client.Client, notification *v1beta1.Not
 		return nil, fmt.Errorf("secret does not contain email recipients")
 	}
 
-	bcc, ok := secret.Data[v1beta1.SmtpBcc]
-	if !ok {
-		bcc = []byte{}
-	}
+	cc := secret.Data[v1beta1.SmtpCc]
 
-	identity, ok := secret.Data[v1beta1.SmtpIdentity]
-	if !ok {
-		identity = []byte{}
-	}
+	bcc := secret.Data[v1beta1.SmtpBcc]
 
 	from, ok := secret.Data[v1beta1.SmtpSender]
 	if !ok {
@@ -129,13 +199,19 @@ func getSmtpInfo(ctx context.Context, c client.Client, notification *v1beta1.Not
 		port = []byte("587")
 	}
 
-	return &smtpInfo{
-		recipients: string(to),
-		bcc:        string(bcc),
-		identity:   string(identity),
-		fromEmail:  string(from),
-		password:   string(pass),
-		host:       string(host),
-		port:       string(port),
-	}, nil
+	info := &smtpInfo{
+		to:        strings.Split(string(to), ","),
+		fromEmail: string(from),
+		password:  string(pass),
+		host:      string(host),
+		port:      string(port),
+	}
+	if cc != nil {
+		info.cc = strings.Split(string(cc), ",")
+	}
+	if bcc != nil {
+		info.bcc = strings.Split(string(bcc), ",")
+	}
+
+	return info, nil
 }

@@ -72,11 +72,11 @@ const (
 
 // SMTP constant
 // To have Sveltos sends an SMTP notification, create a Secret of type "addons.projectsveltos.io/cluster-profile"
-// In the data section set the SMTP identity, password, host, port, and from email
+// In the data section set the SMTP information
 const (
 	SmtpRecipients = "SMTP_RECIPIENTS"
+	SmtpCc         = "SMTP_CC"
 	SmtpBcc        = "SMTP_BCC"
-	SmtpIdentity   = "SMTP_IDENTITY"
 	SmtpSender     = "SMTP_SENDER"
 	SmtpPassword   = "SMTP_PASSWORD"
 	SmtpHost       = "SMTP_HOST"
@@ -176,7 +176,7 @@ type LivenessCheck struct {
 }
 
 // NotificationType specifies different type of notifications
-// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex;Discord;Teams;Telegram
+// +kubebuilder:validation:Enum:=KubernetesEvent;Slack;Webex;Discord;Teams;Telegram;SMTP
 type NotificationType string
 
 const (

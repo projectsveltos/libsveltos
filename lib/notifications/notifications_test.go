@@ -20,8 +20,8 @@ import (
 var _ = Describe("Notification", func() {
 	It("getSmtpInfo get smtp information from Secret", func() {
 		smtpRecipients := fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())
+		smtpCc := fmt.Sprintf("%s@c.com", randomString())
 		smtpBcc := fmt.Sprintf("%s@c.com", randomString())
-		smtpIdentity := randomString()
 		smtpSender := fmt.Sprintf("%s@d.com", randomString())
 		smtpPassword := randomString()
 		smtpHost := fmt.Sprintf("%s.com", randomString())
@@ -43,8 +43,8 @@ var _ = Describe("Notification", func() {
 			},
 			Data: map[string][]byte{
 				libsveltosv1beta1.SmtpRecipients: []byte(smtpRecipients),
+				libsveltosv1beta1.SmtpCc:         []byte(smtpCc),
 				libsveltosv1beta1.SmtpBcc:        []byte(smtpBcc),
-				libsveltosv1beta1.SmtpIdentity:   []byte(smtpIdentity),
 				libsveltosv1beta1.SmtpSender:     []byte(smtpSender),
 				libsveltosv1beta1.SmtpPassword:   []byte(smtpPassword),
 				libsveltosv1beta1.SmtpHost:       []byte(smtpHost),
@@ -70,10 +70,10 @@ var _ = Describe("Notification", func() {
 		Expect(err).To(BeNil())
 		Expect(smptInfo).ToNot(BeNil())
 
-		recip, bcc, identity, sender, pass, host, port := notifications.ExtractSmtpConfiguration(smptInfo)
-		Expect(recip).To(Equal(smtpRecipients))
-		Expect(bcc).To(Equal(smtpBcc))
-		Expect(identity).To(Equal(smtpIdentity))
+		to, cc, bcc, sender, pass, host, port := notifications.ExtractSmtpConfiguration(smptInfo)
+		Expect(strings.Join(to, ",")).To(Equal(smtpRecipients))
+		Expect(strings.Join(cc, ",")).To(Equal(smtpCc))
+		Expect(strings.Join(bcc, ",")).To(Equal(smtpBcc))
 		Expect(sender).To(Equal(smtpSender))
 		Expect(pass).To(Equal(smtpPassword))
 		Expect(host).To(Equal(smtpHost))
@@ -143,7 +143,6 @@ var _ = Describe("Notification", func() {
 			Data: map[string][]byte{
 				libsveltosv1beta1.SmtpRecipients: []byte(fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())),
 				libsveltosv1beta1.SmtpBcc:        []byte(fmt.Sprintf("%s@c.com", randomString())),
-				libsveltosv1beta1.SmtpIdentity:   []byte(randomString()),
 				libsveltosv1beta1.SmtpSender:     []byte(fmt.Sprintf("%s@d.com", randomString())),
 				libsveltosv1beta1.SmtpPassword:   []byte(randomString()),
 				libsveltosv1beta1.SmtpHost:       []byte(fmt.Sprintf("%s.com", randomString())),
@@ -187,7 +186,6 @@ var _ = Describe("Notification", func() {
 			Data: map[string][]byte{
 				libsveltosv1beta1.SmtpRecipients: []byte(fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())),
 				libsveltosv1beta1.SmtpBcc:        []byte(fmt.Sprintf("%s@c.com", randomString())),
-				libsveltosv1beta1.SmtpIdentity:   []byte(randomString()),
 				libsveltosv1beta1.SmtpSender:     []byte(fmt.Sprintf("%s@d.com", randomString())),
 				libsveltosv1beta1.SmtpPassword:   []byte(randomString()),
 				libsveltosv1beta1.SmtpHost:       []byte(fmt.Sprintf("%s.com", randomString())),
@@ -259,10 +257,10 @@ var _ = Describe("Notification", func() {
 		Expect(err).To(BeNil())
 		Expect(mailer).ToNot(BeNil())
 
-		err = mailer.SendMail(emailSubject, plainEmailMessage, false)
+		err = mailer.SendMail(emailSubject, plainEmailMessage, false, nil)
 		Expect(err).To(BeNil())
 
-		err = mailer.SendMail(emailSubject, htmlEmailMessage, true)
+		err = mailer.SendMail(emailSubject, htmlEmailMessage, true, nil)
 		Expect(err).To(BeNil())
 
 		Eventually(func() bool {
