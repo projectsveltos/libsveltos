@@ -35,7 +35,7 @@ const (
 	SFTPPort     = "SFTP_PORT"
 	SFTPPath     = "SFTP_PATH"
 	SFTPHostKey  = "SFTP_HOST_KEY"
-	SFTPUsername = "STFP_USERNAME"
+	SFTPUsername = "SFTP_USERNAME"
 	SFTPPassowrd = "SFTP_PASSWORD"
 	SFTPCert     = "SFTP_CERT"
 )
@@ -143,7 +143,7 @@ const (
 )
 
 // DeliveryType specifies different type of delivery mechanism
-// +kubebuilder:validation:Enum:=Slack;Webex;Discord;Telegram;SMTP;STFP
+// +kubebuilder:validation:Enum:=Slack;Webex;Discord;Telegram;SMTP;SFTP
 type DeliveryType string
 
 const (
