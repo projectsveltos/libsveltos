@@ -89,7 +89,7 @@ spec:
                       - Discord
                       - Telegram
                       - SMTP
-                      - STFP
+                      - SFTP
                       type: string
                   required:
                   - name
