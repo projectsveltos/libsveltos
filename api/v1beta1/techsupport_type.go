@@ -27,6 +27,19 @@ const (
 	TechsupportFinalizer = "techsupportfinalizer.projectsveltos.io"
 )
 
+// SFTP constant
+// To have Sveltos upload to an SFTP, create a Secret of type "addons.projectsveltos.io/cluster-profile"
+// In the data section set following fields
+const (
+	SFTPHost     = "SFTP_HOST"
+	SFTPPort     = "SFTP_PORT"
+	SFTPPath     = "SFTP_PATH"
+	SFTPHostKey  = "SFTP_HOST_KEY"
+	SFTPUsername = "STFP_USERNAME"
+	SFTPPassowrd = "SFTP_PASSWORD"
+	SFTPCert     = "SFTP_CERT"
+)
+
 // LogFilter allows to select which logs to collect
 type Log struct {
 	// Namespace of the pods deployed in the Cluster.
