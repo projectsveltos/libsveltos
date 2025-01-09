@@ -129,6 +129,44 @@ const (
 	CollectionStatusFailed = CollectionStatus("Failed")
 )
 
+// DeliveryType specifies different type of delivery mechanism
+// +kubebuilder:validation:Enum:=Slack;Webex;Discord;Telegram;SMTP;STFP
+type DeliveryType string
+
+const (
+	// DeliveryTypeSlack refers to generating a Slack message
+	DeliveryTypeSlack = DeliveryType("Slack")
+
+	// DeliveryTypeWebex refers to generating a Webex message
+	DeliveryTypeWebex = DeliveryType("Webex")
+
+	// DeliveryTypeDiscord refers to generating a Discord message
+	DeliveryTypeDiscord = DeliveryType("Discord")
+
+	// DeliveryTypeTelegram refers to generating a telegram message
+	DeliveryTypeTelegram = DeliveryType("Telegram")
+
+	// DeliveryTypeSMTP refers to generating an email message
+	DeliveryTypeSMTP = DeliveryType("SMTP")
+
+	// DeliveryTypeSFTP refers to uploading to an SFTP server
+	DeliveryTypeSFTP = DeliveryType("SFTP")
+)
+
+type DeliveryMethod struct {
+	// Name of the delivery mechanism.
+	// Must be a DNS_LABEL and unique within the TechsupportSpec.
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+
+	// DeliveryType specifies the type of notification
+	Type DeliveryType `json:"type"`
+
+	// NotificationRef is a reference to a delivery mechanism-specific resource
+	// that holds the details for the delivery.
+	// +optional
+	DeliveryRef *corev1.ObjectReference `json:"deliveryRef,omitempty"`
+}
+
 // TechsupportSpec defines the desired state of Techsupport
 type TechsupportSpec struct {
 	// FromManagement identifies which resources and logs to collect
@@ -150,10 +188,10 @@ type TechsupportSpec struct {
 	// +optional
 	SchedulingConfig *SchedulingConfig `json:"schedulingConfig,omitempty"`
 
-	// Notification is a list of notification mechanisms.
+	// Notification is a list of delivery mechanisms.
 	// +patchMergeKey=name
 	// +patchStrategy=merge,retainKeys
-	Notifications []Notification `json:"notifications"`
+	DeliveryMethods []DeliveryMethod `json:"deliveryMethods"`
 }
 
 // TechsupportStatus defines the observed state of Techsupport
