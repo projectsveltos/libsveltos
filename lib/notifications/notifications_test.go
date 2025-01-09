@@ -66,7 +66,7 @@ var _ = Describe("Notification", func() {
 		Expect(k8sClient.Create(context.TODO(), secret)).To(Succeed())
 		Expect(waitForObject(context.TODO(), k8sClient, secret)).To(Succeed())
 
-		smptInfo, err := notifications.GetSmtpInfo(context.TODO(), k8sClient, notification)
+		smptInfo, err := notifications.GetSmtpInfo(context.TODO(), k8sClient, notification.NotificationRef)
 		Expect(err).To(BeNil())
 		Expect(smptInfo).ToNot(BeNil())
 
@@ -110,7 +110,7 @@ var _ = Describe("Notification", func() {
 		Expect(k8sClient.Create(context.TODO(), secret)).To(Succeed())
 		Expect(waitForObject(context.TODO(), k8sClient, secret)).To(Succeed())
 
-		smptInfo, err := notifications.GetSmtpInfo(context.TODO(), k8sClient, notification)
+		smptInfo, err := notifications.GetSmtpInfo(context.TODO(), k8sClient, notification.NotificationRef)
 		Expect(smptInfo).To(BeNil())
 		Expect(err).ToNot(BeNil())
 		Expect(err).To(Equal(fmt.Errorf("notification must reference v1 secret containing smtp configuration")))
@@ -121,7 +121,7 @@ var _ = Describe("Notification", func() {
 			Type: libsveltosv1beta1.NotificationTypeSMTP,
 		}
 
-		_, err := notifications.GetSmtpInfo(context.TODO(), k8sClient, notification)
+		_, err := notifications.GetSmtpInfo(context.TODO(), k8sClient, notification.NotificationRef)
 		Expect(err).ToNot(BeNil())
 		Expect(err).To(Equal(fmt.Errorf("notification must reference v1 secret containing smtp configuration")))
 	})
@@ -164,7 +164,7 @@ var _ = Describe("Notification", func() {
 		Expect(k8sClient.Create(context.TODO(), secret)).To(Succeed())
 		Expect(waitForObject(context.TODO(), k8sClient, secret)).To(Succeed())
 
-		mailer, err := notifications.NewMailer(context.Background(), k8sClient, notification)
+		mailer, err := notifications.NewMailer(context.Background(), k8sClient, notification.NotificationRef)
 		Expect(err).To(BeNil())
 		Expect(mailer).ToNot(BeNil())
 	})
@@ -196,7 +196,7 @@ var _ = Describe("Notification", func() {
 		Expect(k8sClient.Create(context.TODO(), secret)).To(Succeed())
 		Expect(waitForObject(context.TODO(), k8sClient, secret)).To(Succeed())
 
-		mailer, err := notifications.NewMailer(context.Background(), k8sClient, &libsveltosv1beta1.Notification{})
+		mailer, err := notifications.NewMailer(context.Background(), k8sClient, &corev1.ObjectReference{})
 		Expect(mailer).To(BeNil())
 		Expect(err).ToNot(BeNil())
 		Expect(err).To(Equal(fmt.Errorf("could not create mailer, %w", fmt.Errorf("notification must reference v1 secret containing smtp configuration"))))
@@ -253,7 +253,7 @@ var _ = Describe("Notification", func() {
 		Expect(k8sClient.Create(context.TODO(), secret)).To(Succeed())
 		Expect(waitForObject(context.TODO(), k8sClient, secret)).To(Succeed())
 
-		mailer, err := notifications.NewMailer(context.Background(), k8sClient, notification)
+		mailer, err := notifications.NewMailer(context.Background(), k8sClient, notification.NotificationRef)
 		Expect(err).To(BeNil())
 		Expect(mailer).ToNot(BeNil())
 
