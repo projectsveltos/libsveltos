@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/projectsveltos/libsveltos/api/v1beta1"
@@ -38,8 +39,8 @@ type messageInfo struct {
 	attachments map[string][]byte
 }
 
-func NewMailer(ctx context.Context, c client.Client, n *v1beta1.Notification) (*SmtpMailer, error) {
-	s, err := getSmtpInfo(ctx, c, n)
+func NewMailer(ctx context.Context, c client.Client, secretRef *corev1.ObjectReference) (*SmtpMailer, error) {
+	s, err := getSmtpInfo(ctx, c, secretRef)
 	if err != nil {
 		return nil, fmt.Errorf("could not create mailer, %w", err)
 	}
@@ -163,8 +164,8 @@ func sendWithoutAuth(server, from string, to []string, msg []byte) error {
 	return c.Quit()
 }
 
-func getSmtpInfo(ctx context.Context, c client.Client, notification *v1beta1.Notification) (*smtpInfo, error) {
-	secret, err := getSecret(ctx, c, notification)
+func getSmtpInfo(ctx context.Context, c client.Client, secretRef *corev1.ObjectReference) (*smtpInfo, error) {
+	secret, err := getSecret(ctx, c, secretRef)
 	if err != nil {
 		return nil, err
 	}

@@ -174,10 +174,10 @@ type DeliveryMethod struct {
 	// DeliveryType specifies the type of notification
 	Type DeliveryType `json:"type"`
 
-	// NotificationRef is a reference to a delivery mechanism-specific resource
+	// SecretRef is a reference to a delivery mechanism-specific Secret
 	// that holds the details for the delivery.
 	// +optional
-	DeliveryRef *corev1.ObjectReference `json:"deliveryRef,omitempty"`
+	SecretRef *corev1.SecretReference `json:"secretRef,omitempty"`
 }
 
 // TechsupportSpec defines the desired state of Techsupport
