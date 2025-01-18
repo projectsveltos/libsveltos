@@ -26,8 +26,12 @@ import (
 
 const (
 	// PolicyTemplateAnnotation is the annotation that must be set on a policy when the
-	// policy is a template and needs variable sustitution.
+	// policy is a template and needs variable substitution.
 	PolicyTemplateAnnotation = "projectsveltos.io/template"
+
+	// PolicyLuaAnnotation is the annotation that must be set on a policy when the
+	// policy contains Lua script.
+	PolicyLuaAnnotation = "projectsveltos.io/lua"
 )
 
 const (
