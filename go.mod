@@ -5,12 +5,15 @@ go 1.23.4
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
+	github.com/chai2010/glua-strings v0.0.0-20200705094630-a37fb1f4ddeb
 	github.com/go-logr/logr v1.4.2
 	github.com/google/gofuzz v1.2.0
+	github.com/layeh/gopher-json v0.0.0-20201124131017-552bb3c4c3bf
 	github.com/mocktools/go-smtp-mock/v2 v2.4.0
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/pkg/errors v0.9.1
+	github.com/yuin/gopher-lua v1.1.1
 	golang.org/x/text v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.32.1
@@ -33,6 +36,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/chai2010/glua-helper v0.0.0-20171228064744-0e9a290dbcdf // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
