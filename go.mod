@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/chai2010/glua-strings v0.0.0-20200705094630-a37fb1f4ddeb
+	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/go-logr/logr v1.4.2
 	github.com/google/gofuzz v1.2.0
 	github.com/layeh/gopher-json v0.0.0-20201124131017-552bb3c4c3bf

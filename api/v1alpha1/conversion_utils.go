@@ -20,9 +20,11 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	conversion "k8s.io/apimachinery/pkg/conversion"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
+	v1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
 var (
@@ -44,4 +46,24 @@ func convertV1Beta1SelectorToV1Alpha1(clusterSelector *libsveltosv1beta1.Selecto
 	}
 
 	return Selector(labelSelector.String()), nil
+}
+
+func Convert_v1beta1_EventReportSpec_To_v1alpha1_EventReportSpec(srcSpec *v1beta1.EventReportSpec,
+	dstSpec *EventReportSpec, scope conversion.Scope) error {
+
+	if err := autoConvert_v1beta1_EventReportSpec_To_v1alpha1_EventReportSpec(srcSpec, dstSpec, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Convert_v1beta1_EventSourceSpec_To_v1alpha1_EventSourceSpec(srcSpec *v1beta1.EventSourceSpec,
+	dstSpec *EventSourceSpec, scope conversion.Scope) error {
+
+	if err := autoConvert_v1beta1_EventSourceSpec_To_v1alpha1_EventSourceSpec(srcSpec, dstSpec, nil); err != nil {
+		return err
+	}
+
+	return nil
 }

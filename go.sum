@@ -18,6 +18,8 @@ github.com/chai2010/glua-helper v0.0.0-20171228064744-0e9a290dbcdf h1:83/SiZ9gCO
 github.com/chai2010/glua-helper v0.0.0-20171228064744-0e9a290dbcdf/go.mod h1:g4T7SP6g4zcVGZu2Xt2l9v+j8WRUKnrSFI13MYeQtD4=
 github.com/chai2010/glua-strings v0.0.0-20200705094630-a37fb1f4ddeb h1:veL8m2ukpS0WornX1koriByiNIils7J+wB6urWgB18c=
 github.com/chai2010/glua-strings v0.0.0-20200705094630-a37fb1f4ddeb/go.mod h1:Ujv8AWr5PquFfwTqGV6c8MP+tuG1q7SgYdkZ7umTUsQ=
+github.com/cloudevents/sdk-go/v2 v2.15.2 h1:54+I5xQEnI73RBhWHxbI1XJcqOFOVJN85vb41+8mHUc=
+github.com/cloudevents/sdk-go/v2 v2.15.2/go.mod h1:lL7kSWAE/V8VI4Wh0jbL2v/jvqsm6tjmaQBSvxcv4uE=
 github.com/cpuguy83/go-md2man/v2 v2.0.4/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

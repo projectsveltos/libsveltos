@@ -157,6 +157,13 @@ spec:
             type: object
           spec:
             properties:
+              cloudEvents:
+                description: CloudEvents contains a list of CloudEvents matching an
+                  EventSource
+                items:
+                  format: byte
+                  type: string
+                type: array
               clusterName:
                 description: |-
                   ClusterName is the name of the Cluster this EventReport
@@ -179,7 +186,7 @@ spec:
                 type: string
               matchingResources:
                 description: MatchingResources contains a list of resources matching
-                  an event
+                  an EventSource
                 items:
                   description: ObjectReference contains enough information to let
                     you inspect or modify the referred object.

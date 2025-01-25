@@ -73,7 +73,7 @@ type EventReportSpec struct {
 	// is for.
 	EventSourceName string `json:"eventSourceName"`
 
-	// MatchingResources contains a list of resources matching an event
+	// MatchingResources contains a list of resources matching an EventSource
 	// +optional
 	MatchingResources []corev1.ObjectReference `json:"matchingResources,omitempty"`
 
@@ -81,6 +81,10 @@ type EventReportSpec struct {
 	// will be collected and contained in the Resources field.
 	// +optional
 	Resources []byte `json:"resources,omitempty"`
+
+	// CloudEvents contains a list of CloudEvents matching an EventSource
+	// +optional
+	CloudEvents [][]byte `json:"cloudEvents,omitempty"`
 }
 
 // EventReportStatus defines the observed state of EventReport
