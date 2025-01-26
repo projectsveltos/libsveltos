@@ -18,6 +18,7 @@ package sveltos_upgrade
 
 import (
 	"context"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -63,7 +64,11 @@ const (
 func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, version string) bool {
 	cm := &corev1.ConfigMap{}
 
-	err := c.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: sveltosAgentConfigMapName}, cm)
+	const timeout = 10 * time.Second
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	err := c.Get(ctxWithTimeout, types.NamespacedName{Namespace: configMapNamespace, Name: sveltosAgentConfigMapName}, cm)
 	if err != nil {
 		return false
 	}

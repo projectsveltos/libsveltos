@@ -30,8 +30,9 @@ const (
 
 // EventSourceSpec defines the desired state of EventSource
 type EventSourceSpec struct {
-	// ResourceSelectors identifies what resources to select
-	ResourceSelectors []ResourceSelector `json:"resourceSelectors"`
+	// ResourceSelectors identifies what Kubernetes resources to select
+	// +optional
+	ResourceSelectors []ResourceSelector `json:"resourceSelectors,omitempty"`
 
 	// This field is optional and can be used to specify a Lua function
 	// that will be used to further select a subset of the resources that
@@ -53,6 +54,11 @@ type EventSourceSpec struct {
 	// +kubebuilder:default:=false
 	// +optional
 	CollectResources bool `json:"collectResources,omitempty"`
+
+	// MessagingMatchCriteria defines a list of MessagingMatchCriteria. Each criteria specifies
+	// how to match CloudEvents received on specific NATS/JetStream subjects.
+	// +optional
+	MessagingMatchCriteria []MessagingMatchCriteria `json:"messagingMatchCriteria,omitempty"`
 }
 
 //+kubebuilder:object:root=true
