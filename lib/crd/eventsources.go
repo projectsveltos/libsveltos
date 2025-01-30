@@ -206,26 +206,26 @@ spec:
                       description: |-
                         CloudEventSource filters CloudEvents based on their "source" attribute.
                         If specified, only CloudEvents with a matching source will be considered.
-                        Supports exact matching.
+                        Regular expressions are supported.
                       type: string
                     cloudEventSubject:
                       description: |-
                         CloudEventSubject filters CloudEvents based on their "subject" attribute.
                         If specified, only CloudEvents with a matching subject will be considered.
-                        Supports exact matching.
+                        Regular expressions are supported.
                       type: string
                     cloudEventType:
                       description: |-
                         CloudEventType filters CloudEvents based on their "type" attribute.
                         If specified, only CloudEvents with a matching type will be considered.
-                        Supports exact matching.
+                        Regular expressions are supported.
                       type: string
                     subject:
                       description: |-
                         Subject is an optional NATS/JetStream subject filter. If specified, this criteria will
                         only consider CloudEvents received on this specific subject. Leaving it empty
                         means the criteria will match CloudEvents from any of the subjects Sveltos
-                        is subscribed to.
+                        is subscribed to. Regular expressions are supported.
                       type: string
                   type: object
                 type: array

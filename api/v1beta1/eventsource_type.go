@@ -28,6 +28,36 @@ const (
 	EventSourceKind = "EventSource"
 )
 
+// MessagingMatchCriteria defines criteria for matching CloudEvents received via NATS.
+// Sveltos listens to NATS/JetStream subjects, and the messages delivered on those
+// subjects are expected to be CloudEvents.
+type MessagingMatchCriteria struct {
+	// Subject is an optional NATS/JetStream subject filter. If specified, this criteria will
+	// only consider CloudEvents received on this specific subject. Leaving it empty
+	// means the criteria will match CloudEvents from any of the subjects Sveltos
+	// is subscribed to. Regular expressions are supported.
+	// +optional
+	Subject string `json:"subject,omitempty"`
+
+	// CloudEventSource filters CloudEvents based on their "source" attribute.
+	// If specified, only CloudEvents with a matching source will be considered.
+	// Regular expressions are supported.
+	// +optional
+	CloudEventSource string `json:"cloudEventSource,omitempty"`
+
+	// CloudEventType filters CloudEvents based on their "type" attribute.
+	// If specified, only CloudEvents with a matching type will be considered.
+	// Regular expressions are supported.
+	// +optional
+	CloudEventType string `json:"cloudEventType,omitempty"`
+
+	// CloudEventSubject filters CloudEvents based on their "subject" attribute.
+	// If specified, only CloudEvents with a matching subject will be considered.
+	// Regular expressions are supported.
+	// +optional
+	CloudEventSubject string `json:"cloudEventSubject,omitempty"`
+}
+
 // EventSourceSpec defines the desired state of EventSource
 type EventSourceSpec struct {
 	// ResourceSelectors identifies what Kubernetes resources to select
