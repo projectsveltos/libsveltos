@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2/textlogger"
 
 	"github.com/projectsveltos/libsveltos/lib/sveltos_upgrade"
 
@@ -87,9 +88,9 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 		}
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-
-		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, version)).To(BeTrue())
-		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, randomString())).To(BeFalse())
+		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, version, logger)).To(BeTrue())
+		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, randomString(), logger)).To(BeFalse())
 	})
 })
 
@@ -109,9 +110,9 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 		}
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-
-		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, version)).To(BeTrue())
-		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, randomString())).To(BeFalse())
+		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, version, logger)).To(BeTrue())
+		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, randomString(), logger)).To(BeFalse())
 	})
 
 	It("Create ConfigMap with drift-detection-manager version", func() {
