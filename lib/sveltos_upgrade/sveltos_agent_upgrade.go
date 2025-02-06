@@ -18,14 +18,18 @@ package sveltos_upgrade
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/go-logr/logr"
+
+	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 // Sveltos-agent evaluates classifier, healthCheck, eventSource, and reloader
@@ -61,7 +65,9 @@ const (
 //   - c (client.Client): Kubernetes client used to interact with the API server
 //   - version (string): Version to compare against the sveltos-agent version
 
-func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, version string) bool {
+func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, version string,
+	logger logr.Logger) bool {
+
 	cm := &corev1.ConfigMap{}
 
 	const timeout = 10 * time.Second
@@ -70,14 +76,22 @@ func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, versi
 
 	err := c.Get(ctxWithTimeout, types.NamespacedName{Namespace: configMapNamespace, Name: sveltosAgentConfigMapName}, cm)
 	if err != nil {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("configMap %s/%s not found", configMapNamespace, sveltosAgentConfigMapName))
 		return false
 	}
 
 	if cm.Data == nil {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("configMap %s/%s Data is empty", configMapNamespace, sveltosAgentConfigMapName))
 		return false
 	}
 
-	return cm.Data[configMapKey] == version
+	if cm.Data[configMapKey] != version {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("configMap %s/%s current version %q. Expected version %q",
+			configMapNamespace, sveltosAgentConfigMapName, cm.Data[configMapKey], version))
+		return false
+	}
+
+	return true
 }
 
 // IsDriftDetectionVersionCompatible returns true if drift-detection-manager running in a managed cluster
@@ -88,19 +102,29 @@ func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, versi
 //   - c (client.Client): Kubernetes client used to interact with the API server
 //   - version (string): Version to compare against the drift-detection-manager version
 
-func IsDriftDetectionVersionCompatible(ctx context.Context, c client.Client, version string) bool {
+func IsDriftDetectionVersionCompatible(ctx context.Context, c client.Client, version string,
+	logger logr.Logger) bool {
+
 	cm := &corev1.ConfigMap{}
 
 	err := c.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: driftDetectionConfigMapName}, cm)
 	if err != nil {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("configMap %s/%s not found", configMapNamespace, driftDetectionConfigMapName))
 		return false
 	}
 
 	if cm.Data == nil {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("configMap %s/%s Data is empty", configMapNamespace, driftDetectionConfigMapName))
 		return false
 	}
 
-	return cm.Data[configMapKey] == version
+	if cm.Data[configMapKey] != version {
+		logger.V(logs.LogVerbose).Info(fmt.Sprintf("configMap %s/%s current version %q. Expected version %q",
+			configMapNamespace, driftDetectionConfigMapName, cm.Data[configMapKey], version))
+		return false
+	}
+
+	return true
 }
 
 // StoreSveltosAgentVersion stores the provided Sveltos-agent version in a ConfigMap.
