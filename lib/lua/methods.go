@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"time"
 
-	luastrings "github.com/chai2010/glua-strings"
 	luajson "github.com/layeh/gopher-json"
+	luastrings "github.com/projectsveltos/lua-utils/glua-strings"
 	lua "github.com/yuin/gopher-lua"
 )
 
