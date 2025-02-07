@@ -42,7 +42,7 @@ import (
 
 // TxtFuncMap returns an aggregated template function map. Currently (custom functions + sprig)
 func SveltosFuncMap() template.FuncMap {
-	funcMap := sprig.FuncMap()
+	funcMap := sprig.TxtFuncMap()
 
 	extraFuncs := template.FuncMap{
 		"toToml":        toTOML,
