@@ -42,7 +42,7 @@ const (
 )
 
 //nolint:lll // kubebuilder marker
-// +kubebuilder:validation:Enum:=AddonManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager;ShardController;UIBackend
+// +kubebuilder:validation:Enum:=AddonManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager;ShardController;UIBackend;SveltosAgent;ConversionWebhook;Techsupport
 
 type Component string
 
@@ -54,7 +54,7 @@ const (
 	ComponentClassifier = Component("Classifier")
 
 	// ClassifierAgent is the classifier agent pod
-	ComponentClassifierAgent = Component("ClassifierAgent")
+	ComponentSveltosAgent = Component("SveltosAgent")
 
 	// ComponentSveltosClusterManager is the sveltoscluster-manager pod
 	ComponentSveltosClusterManager = Component("SveltosClusterManager")
@@ -75,7 +75,13 @@ const (
 	ComponentShardController = Component("ShardController")
 
 	// ComponentUIBackend is the ui backend pod
-	ComponentUIBackend = Component("UIBaeckend")
+	ComponentUIBackend = Component("UIBackend")
+
+	// ComponentConversionWebhook is conversion webhook pod
+	ComponentConversionWebhook = Component("ConversionWebhook")
+
+	// ComponentTechsupport is the techsupport pod
+	ComponentTechsupport = Component("Techsupport")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.
