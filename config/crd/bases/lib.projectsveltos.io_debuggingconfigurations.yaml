@@ -127,6 +127,9 @@ spec:
                       - EventManager
                       - ShardController
                       - UIBackend
+                      - SveltosAgent
+                      - ConversionWebhook
+                      - Techsupport
                       type: string
                     logLevel:
                       description: 'LogLevel is the log severity above which logs

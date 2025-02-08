@@ -20,5 +20,11 @@ spec:
     logLevel: LogLevelInfo
   - component: UIBackend
     logLevel: LogLevelInfo
-  - component: ClassifierAgent
+  - component: SveltosAgent
+    logLevel: LogLevelInfo
+  - component: ShardController
+    logLevel: LogLevelInfo
+  - component: ConversionWebhook
+    logLevel: LogLevelInfo
+  - component: Techsupport
     logLevel: LogLevelInfo
