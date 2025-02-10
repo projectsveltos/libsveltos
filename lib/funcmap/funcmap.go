@@ -40,9 +40,29 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// TxtFuncMap returns an aggregated template function map. Currently (custom functions + sprig)
-func SveltosFuncMap() template.FuncMap {
+const (
+	// TextTemplateAnnotation is the annotation that must be set on a ClusterProfile/Profile
+	// or EventTrigger to use sprig.TxtFuncMap instead of sprig.FuncMap
+	textTemplateAnnotation = "projectsveltos.io/tex-template"
+)
+
+// HasTextTemplateAnnotation returns true if the annotation projectsveltos.io/tex-template"
+// is present
+func HasTextTemplateAnnotation(annotations map[string]string) bool {
+	if annotations == nil {
+		return false
+	}
+
+	_, ok := annotations[textTemplateAnnotation]
+	return ok
+}
+
+// SveltosFuncMap returns an aggregated template function map. Currently (custom functions + sprig)
+func SveltosFuncMap(useTextTemplate bool) template.FuncMap {
 	funcMap := sprig.FuncMap()
+	if useTextTemplate {
+		funcMap = sprig.TxtFuncMap()
+	}
 
 	extraFuncs := template.FuncMap{
 		"toToml":        toTOML,
