@@ -22,8 +22,9 @@ import (
 	"time"
 
 	luajson "github.com/layeh/gopher-json"
-	luastrings "github.com/projectsveltos/lua-utils/glua-strings"
 	lua "github.com/yuin/gopher-lua"
+
+	luastrings "github.com/projectsveltos/lua-utils/glua-strings"
 )
 
 const (
