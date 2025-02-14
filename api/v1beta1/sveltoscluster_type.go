@@ -48,6 +48,23 @@ const (
 	ConnectionDown = ConnectionStatus("Down")
 )
 
+type ClusterCheck struct {
+	// Name of the cluster check.
+	// Must be a DNS_LABEL and unique within the ClusterChecks.
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+
+	// ResourceSelectors identifies what Kubernetes resources to select
+	ResourceSelectors []ResourceSelector `json:"resourceSelectors"`
+
+	// This field is  used to specify a Lua function that will be used to evaluate
+	// this check.
+	// The function will receive the array of resources selected by ResourceSelectors.
+	// The Lua function must return a struct with:
+	// - "result" field: boolean indicating whether check passed or failed;
+	// - "message" field: (optional) message.
+	Condition string `json:"condition"`
+}
+
 type TokenRequestRenewalOption struct {
 	// RenewTokenRequestInterval is the interval at which to renew the TokenRequest
 	RenewTokenRequestInterval metav1.Duration `json:"renewTokenRequestInterval"`
@@ -103,6 +120,11 @@ type SveltosClusterSpec struct {
 	// +kubebuilder:default:=3
 	// +optional
 	ConsecutiveFailureThreshold int `json:"consecutiveFailureThreshold,omitempty"`
+
+	// ClusterCheck is an optional list of custom checks to verify cluster
+	// readiness
+	// +optional
+	ClusterChecks []ClusterCheck `json:"clusterChecks,omitempty"`
 }
 
 // SveltosClusterStatus defines the status of SveltosCluster

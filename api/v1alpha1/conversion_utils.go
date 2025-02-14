@@ -67,3 +67,13 @@ func Convert_v1beta1_EventSourceSpec_To_v1alpha1_EventSourceSpec(srcSpec *v1beta
 
 	return nil
 }
+
+func Convert_v1beta1_SveltosClusterSpec_To_v1alpha1_SveltosClusterSpec(srcSpec *v1beta1.SveltosClusterSpec,
+	dstSpec *SveltosClusterSpec, scope conversion.Scope) error {
+
+	if err := autoConvert_v1beta1_SveltosClusterSpec_To_v1alpha1_SveltosClusterSpec(srcSpec, dstSpec, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
