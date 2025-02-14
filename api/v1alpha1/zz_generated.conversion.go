@@ -2961,7 +2961,8 @@ func autoConvert_v1beta1_SveltosClusterSpec_To_v1alpha1_SveltosClusterSpec(in *v
 	out.ArbitraryData = *(*map[string]string)(unsafe.Pointer(&in.ArbitraryData))
 	out.ActiveWindow = (*ActiveWindow)(unsafe.Pointer(in.ActiveWindow))
 	out.ConsecutiveFailureThreshold = in.ConsecutiveFailureThreshold
-	// WARNING: in.ClusterChecks requires manual conversion: does not exist in peer-type
+	// WARNING: in.ReadinessChecks requires manual conversion: does not exist in peer-type
+	// WARNING: in.LivenessChecks requires manual conversion: does not exist in peer-type
 	return nil
 }
 

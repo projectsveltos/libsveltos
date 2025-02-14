@@ -59,7 +59,7 @@ type ClusterCheck struct {
 	// This field is  used to specify a Lua function that will be used to evaluate
 	// this check.
 	// The function will receive the array of resources selected by ResourceSelectors.
-	// The Lua function must return a struct with:
+	// The Lua function name is evaluate and must return a struct with:
 	// - "result" field: boolean indicating whether check passed or failed;
 	// - "message" field: (optional) message.
 	Condition string `json:"condition"`
@@ -121,10 +121,15 @@ type SveltosClusterSpec struct {
 	// +optional
 	ConsecutiveFailureThreshold int `json:"consecutiveFailureThreshold,omitempty"`
 
-	// ClusterCheck is an optional list of custom checks to verify cluster
+	// ReadinessChecks is an optional list of custom checks to verify cluster
 	// readiness
 	// +optional
-	ClusterChecks []ClusterCheck `json:"clusterChecks,omitempty"`
+	ReadinessChecks []ClusterCheck `json:"readinessChecks,omitempty"`
+
+	// LivenessChecks is an optional list of custom checks to verify cluster
+	// is healthy
+	// +optional
+	LivenessChecks []ClusterCheck `json:"livenessChecks,omitempty"`
 }
 
 // SveltosClusterStatus defines the status of SveltosCluster

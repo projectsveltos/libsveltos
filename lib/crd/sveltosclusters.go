@@ -243,10 +243,34 @@ spec:
                 - from
                 - to
                 type: object
-              clusterChecks:
+              consecutiveFailureThreshold:
+                default: 3
                 description: |-
-                  ClusterCheck is an optional list of custom checks to verify cluster
-                  readiness
+                  ConsecutiveFailureThreshold is the maximum number of consecutive connection
+                  failures before setting the problem status in Status.ConnectionStatus
+                type: integer
+              data:
+                additionalProperties:
+                  type: string
+                description: ArbitraryData allows for arbitrary nested structures
+                type: object
+              kubeconfigKeyName:
+                description: |-
+                  KubeconfigKeyName specifies the key within the Secret that holds the kubeconfig.
+                  If not specified, Sveltos will use first key in the Secret.
+                type: string
+              kubeconfigName:
+                description: |-
+                  KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig
+                  to be hosted in a secret with the pattern ${sveltosClusterName}-sveltos-kubeconfig.
+
+                  When a value is specified, the referenced Kubernetes Secret object must exist,
+                  and will be used to connect to the Kubernetes cluster.
+                type: string
+              livenessChecks:
+                description: |-
+                  LivenessChecks is an optional list of custom checks to verify cluster
+                  is healthy
                 items:
                   properties:
                     condition:
@@ -254,7 +278,7 @@ spec:
                         This field is  used to specify a Lua function that will be used to evaluate
                         this check.
                         The function will receive the array of resources selected by ResourceSelectors.
-                        The Lua function must return a struct with:
+                        The Lua function name is evaluate and must return a struct with:
                         - "result" field: boolean indicating whether check passed or failed;
                         - "message" field: (optional) message.
                       type: string
@@ -332,35 +356,100 @@ spec:
                   - resourceSelectors
                   type: object
                 type: array
-              consecutiveFailureThreshold:
-                default: 3
-                description: |-
-                  ConsecutiveFailureThreshold is the maximum number of consecutive connection
-                  failures before setting the problem status in Status.ConnectionStatus
-                type: integer
-              data:
-                additionalProperties:
-                  type: string
-                description: ArbitraryData allows for arbitrary nested structures
-                type: object
-              kubeconfigKeyName:
-                description: |-
-                  KubeconfigKeyName specifies the key within the Secret that holds the kubeconfig.
-                  If not specified, Sveltos will use first key in the Secret.
-                type: string
-              kubeconfigName:
-                description: |-
-                  KubeconfigName allows overriding the default Sveltos convention which expected a valid kubeconfig
-                  to be hosted in a secret with the pattern ${sveltosClusterName}-sveltos-kubeconfig.
-
-                  When a value is specified, the referenced Kubernetes Secret object must exist,
-                  and will be used to connect to the Kubernetes cluster.
-                type: string
               paused:
                 description: |-
                   Paused can be used to prevent controllers from processing the
                   SveltosCluster and all its associated objects.
                 type: boolean
+              readinessChecks:
+                description: |-
+                  ReadinessChecks is an optional list of custom checks to verify cluster
+                  readiness
+                items:
+                  properties:
+                    condition:
+                      description: |-
+                        This field is  used to specify a Lua function that will be used to evaluate
+                        this check.
+                        The function will receive the array of resources selected by ResourceSelectors.
+                        The Lua function name is evaluate and must return a struct with:
+                        - "result" field: boolean indicating whether check passed or failed;
+                        - "message" field: (optional) message.
+                      type: string
+                    name:
+                      description: |-
+                        Name of the cluster check.
+                        Must be a DNS_LABEL and unique within the ClusterChecks.
+                      type: string
+                    resourceSelectors:
+                      description: ResourceSelectors identifies what Kubernetes resources
+                        to select
+                      items:
+                        description: ResourceSelector defines what resources are a
+                          match
+                        properties:
+                          evaluate:
+                            description: |-
+                              Evaluate contains a function "evaluate" in lua language.
+                              The function will be passed one of the object selected based on
+                              above criteria.
+                              Must return struct with field "matching" representing whether
+                              object is a match and an optional "message" field.
+                            type: string
+                          group:
+                            description: Group of the resource deployed in the Cluster.
+                            type: string
+                          kind:
+                            description: Kind of the resource deployed in the Cluster.
+                            minLength: 1
+                            type: string
+                          labelFilters:
+                            description: LabelFilters allows to filter resources based
+                              on current labels.
+                            items:
+                              properties:
+                                key:
+                                  description: Key is the label key
+                                  type: string
+                                operation:
+                                  description: Operation is the comparison operation
+                                  enum:
+                                  - Equal
+                                  - Different
+                                  type: string
+                                value:
+                                  description: Value is the label value
+                                  type: string
+                              required:
+                              - key
+                              - operation
+                              - value
+                              type: object
+                            type: array
+                          name:
+                            description: Name of the resource deployed in the  Cluster.
+                            type: string
+                          namespace:
+                            description: |-
+                              Namespace of the resource deployed in the  Cluster.
+                              Empty for resources scoped at cluster level.
+                              For namespaced resources, an empty string "" indicates all namespaces.
+                            type: string
+                          version:
+                            description: Version of the resource deployed in the Cluster.
+                            type: string
+                        required:
+                        - group
+                        - kind
+                        - version
+                        type: object
+                      type: array
+                  required:
+                  - condition
+                  - name
+                  - resourceSelectors
+                  type: object
+                type: array
               tokenRequestRenewalOption:
                 description: TokenRequestRenewalOption contains options describing
                   how to renew TokenRequest
