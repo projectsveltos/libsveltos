@@ -2198,8 +2198,15 @@ func (in *SveltosClusterSpec) DeepCopyInto(out *SveltosClusterSpec) {
 		*out = new(ActiveWindow)
 		**out = **in
 	}
-	if in.ClusterChecks != nil {
-		in, out := &in.ClusterChecks, &out.ClusterChecks
+	if in.ReadinessChecks != nil {
+		in, out := &in.ReadinessChecks, &out.ReadinessChecks
+		*out = make([]ClusterCheck, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.LivenessChecks != nil {
+		in, out := &in.LivenessChecks, &out.LivenessChecks
 		*out = make([]ClusterCheck, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
