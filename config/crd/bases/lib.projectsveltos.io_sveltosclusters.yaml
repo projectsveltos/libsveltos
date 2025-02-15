@@ -460,6 +460,7 @@ spec:
             description: SveltosClusterStatus defines the status of SveltosCluster
             properties:
               connectionFailures:
+                default: 0
                 description: |-
                   connectionFailures is the number of consecutive failed attempts to connect
                   to the remote cluster.
