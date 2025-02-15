@@ -167,6 +167,7 @@ type SveltosClusterStatus struct {
 
 	// connectionFailures is the number of consecutive failed attempts to connect
 	// to the remote cluster.
+	// +kubebuilder:default:=0
 	// +optional
 	ConnectionFailures int `json:"connectionFailures,omitempty"`
 }
