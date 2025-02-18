@@ -47,6 +47,7 @@ func TestLoadModulesAndRegisterMethods(t *testing.T) {
 	modules := []string{
 		"json",
 		"strings",
+		"runes",
 	}
 
 	for _, module := range modules {

@@ -21,9 +21,10 @@ import (
 	"fmt"
 	"time"
 
-	luajson "github.com/layeh/gopher-json"
 	lua "github.com/yuin/gopher-lua"
 
+	luajson "github.com/projectsveltos/lua-utils/glua-json"
+	luarunes "github.com/projectsveltos/lua-utils/glua-runes"
 	luastrings "github.com/projectsveltos/lua-utils/glua-strings"
 )
 
@@ -35,6 +36,7 @@ const (
 func LoadModulesAndRegisterMethods(l *lua.LState) {
 	l.PreloadModule("json", luajson.Loader)
 	l.PreloadModule("strings", luastrings.Loader)
+	l.PreloadModule("runes", luarunes.Loader)
 
 	l.SetGlobal("base64Encode", l.NewFunction(base64Encode))
 	l.SetGlobal("base64Decode", l.NewFunction(base64Decode))

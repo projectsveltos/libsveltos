@@ -7,11 +7,12 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/go-logr/logr v1.4.2
 	github.com/google/gofuzz v1.2.0
-	github.com/layeh/gopher-json v0.0.0-20201124131017-552bb3c4c3bf
 	github.com/mocktools/go-smtp-mock/v2 v2.4.0
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/pkg/errors v0.9.1
+	github.com/projectsveltos/lua-utils/glua-json v0.0.0-20250215155204-2e8364e9ce73
+	github.com/projectsveltos/lua-utils/glua-runes v0.0.0-20250215155204-2e8364e9ce73
 	github.com/projectsveltos/lua-utils/glua-strings v0.0.0-20250215155204-2e8364e9ce73
 	github.com/yuin/gopher-lua v1.1.1
 	golang.org/x/text v0.22.0
