@@ -301,7 +301,7 @@ var _ = Describe("Cluster utils", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
 
-		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "",
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "", "",
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(0))
@@ -361,7 +361,7 @@ var _ = Describe("Cluster utils", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
 
-		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "",
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "", "",
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(2))
@@ -373,7 +373,7 @@ var _ = Describe("Cluster utils", func() {
 				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
 
 		matches, err = clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector,
-			sveltosCluster.Namespace, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+			sveltosCluster.Namespace, "", textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(
@@ -382,7 +382,7 @@ var _ = Describe("Cluster utils", func() {
 
 	})
 
-	It("getMatchingClusters returns matchin CAPI Cluster", func() {
+	It("getMatchingClusters returns matching CAPI Cluster", func() {
 		key1 := randomString()
 		value1 := randomString()
 		key2 := randomString()
@@ -445,7 +445,7 @@ var _ = Describe("Cluster utils", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
 
-		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "",
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "", "",
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(2))
@@ -457,12 +457,94 @@ var _ = Describe("Cluster utils", func() {
 				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
 
 		matches, err = clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector,
-			sveltosCluster.Namespace, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+			sveltosCluster.Namespace, "", textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
 				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
+	})
 
+	It("getMatchingClusters skips CAPI Cluster with no matching onboard annotation", func() {
+		key1 := randomString()
+		value1 := randomString()
+		key2 := randomString()
+		value2 := randomString()
+
+		selector := libsveltosv1beta1.Selector{
+			LabelSelector: metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      key1,
+						Operator: metav1.LabelSelectorOpIn,
+						Values:   []string{value1},
+					},
+					{
+						Key:      key2,
+						Operator: metav1.LabelSelectorOpIn,
+						Values:   []string{value2},
+					},
+				},
+			},
+		}
+
+		currentLabels := map[string]string{
+			key1: value1,
+			key2: value2,
+		}
+
+		onboardAnnotation := randomString()
+
+		matchingCapiCluster := &clusterv1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+				Labels:    currentLabels,
+				Annotations: map[string]string{
+					onboardAnnotation: "ok",
+				},
+			},
+			Status: clusterv1.ClusterStatus{
+				ControlPlaneReady: true,
+			},
+		}
+
+		nonMatchingCapiCluster := &clusterv1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        randomString(),
+				Namespace:   randomString(),
+				Labels:      currentLabels,
+				Annotations: map[string]string{},
+			},
+			Status: clusterv1.ClusterStatus{
+				ControlPlaneReady: true,
+			},
+		}
+
+		cluster.Labels = currentLabels
+
+		initObjects := []client.Object{
+			cluster,
+			matchingCapiCluster,
+			nonMatchingCapiCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(initObjects...).WithObjects(initObjects...).Build()
+
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "",
+			onboardAnnotation, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: matchingCapiCluster.Namespace, Name: matchingCapiCluster.Name,
+				Kind: clusterv1.ClusterKind, APIVersion: clusterv1.GroupVersion.String()}))
+
+		matches, err = clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector,
+			matchingCapiCluster.Namespace, "", textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(len(matches)).To(Equal(1))
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: matchingCapiCluster.Namespace, Name: matchingCapiCluster.Name,
+				Kind: clusterv1.ClusterKind, APIVersion: clusterv1.GroupVersion.String()}))
 	})
 })

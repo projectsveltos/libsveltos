@@ -388,7 +388,7 @@ func GetListOfClustersForShardKey(ctx context.Context, c client.Client, namespac
 }
 
 func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labels.Selector,
-	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
+	namespace, onboardAnnotation string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
 	present, err := isCAPIPresent(ctx, c, logger)
 	if err != nil {
@@ -421,7 +421,7 @@ func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labe
 			continue
 		}
 
-		if !isCAPIControlPlaneReady(cluster) {
+		if !isCAPIClusterReady(cluster, onboardAnnotation) {
 			// Only ready cluster can match
 			continue
 		}
@@ -490,7 +490,7 @@ func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector l
 
 // GetMatchingClusters returns all Sveltos/CAPI Clusters currently matching selector
 func GetMatchingClusters(ctx context.Context, c client.Client, selector *metav1.LabelSelector,
-	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
+	namespace, capiOnboardAnnotation string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
 	if selector == nil {
 		logger.V(logs.LogInfo).Info(nilSelectorMessage)
@@ -510,7 +510,8 @@ func GetMatchingClusters(ctx context.Context, c client.Client, selector *metav1.
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	tmpMatching, err := getMatchingCAPIClusters(ctx, c, clusterSelector, namespace, logger)
+	tmpMatching, err := getMatchingCAPIClusters(ctx, c, clusterSelector, namespace,
+		capiOnboardAnnotation, logger)
 	if err != nil {
 		return nil, err
 	}

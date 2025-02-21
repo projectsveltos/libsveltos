@@ -225,7 +225,7 @@ var _ = Describe("clusterproxy ", func() {
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
 			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name, Kind: "Cluster"},
-			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+			"", textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(false))
 	})
@@ -240,7 +240,7 @@ var _ = Describe("clusterproxy ", func() {
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
 			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name},
-			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+			"", textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(true))
 	})
@@ -261,10 +261,47 @@ var _ = Describe("clusterproxy ", func() {
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
 			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name},
-			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+			"", textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(true))
 	})
+
+	It("IsCAPIClusterReadyToBeConfigured returns false for a cluster when ControlPlaneInitialized is true when annotation is required",
+		func() {
+			cluster.Status.Conditions = []clusterv1.Condition{
+				{
+					Type:   clusterv1.ControlPlaneInitializedCondition,
+					Status: corev1.ConditionTrue,
+				},
+			}
+
+			initObjects := []client.Object{
+				cluster,
+			}
+
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+			annotation := randomString()
+			ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
+				&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name},
+				annotation, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+			Expect(err).To(BeNil())
+			Expect(ready).To(Equal(false))
+
+			// Add the required annotation on the CAPI cluster
+			currentCluster := &clusterv1.Cluster{}
+			Expect(c.Get(context.TODO(),
+				types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Name}, currentCluster)).To(Succeed())
+			currentCluster.Annotations = map[string]string{annotation: randomString()}
+			Expect(c.Update(context.TODO(), currentCluster)).To(Succeed())
+
+			// Verify now cluster is ready
+			ready, err = clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
+				&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name},
+				annotation, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+			Expect(err).To(BeNil())
+			Expect(ready).To(Equal(true))
+		})
 
 	It("UpdateSveltosSecretData updates secret with SveltosCluster kubeconfig", func() {
 		randomData := []byte(randomString())
@@ -449,7 +486,7 @@ var _ = Describe("clusterproxy ", func() {
 				Namespace: sveltosCluster.Namespace,
 				Name:      sveltosCluster.Name,
 				Kind:      libsveltosv1beta1.SveltosClusterKind},
-			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+			"", textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(true))
 
@@ -461,7 +498,7 @@ var _ = Describe("clusterproxy ", func() {
 				Namespace: sveltosCluster.Namespace,
 				Name:      sveltosCluster.Name,
 				Kind:      libsveltosv1beta1.SveltosClusterKind},
-			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+			"", textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(false))
 	})
