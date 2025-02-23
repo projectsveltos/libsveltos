@@ -251,10 +251,12 @@ func addTypeInformationToObject(scheme *runtime.Scheme, obj client.Object) {
 	}
 }
 
-// getListOfCAPIClusters returns all CAPI Clusters.
-// If shard is set, returns only clusters matching shard.
-func getListOfCAPICluster(ctx context.Context, c client.Client, namespace string, shard *string,
-	logger logr.Logger) ([]corev1.ObjectReference, error) {
+// getListOfCAPIClusters returns existing CAPI Clusters.
+// If namespace is not empty, clusters in different namespaces are filtered out.
+// If onboardAnnotation is set, clusters without this annotation are filtered out.
+// If shard is set, clusters not matching the shard are filtered out.
+func getListOfCAPICluster(ctx context.Context, c client.Client, namespace, onboardAnnotation string,
+	shard *string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
 	present, err := isCAPIPresent(ctx, c, logger)
 	if err != nil {
@@ -285,6 +287,19 @@ func getListOfCAPICluster(ctx context.Context, c client.Client, namespace string
 		if !cluster.DeletionTimestamp.IsZero() {
 			// Only existing cluster can match
 			continue
+		}
+
+		if onboardAnnotation != "" {
+			// To manage Sveltos deployment on a management cluster with numerous existing CAPI clusters,
+			// Sveltos offers selective onboarding.  While Sveltos defaults to onboarding all CAPI clusters,
+			// user can use an annotation to specify which clusters should be managed.  When this annotation is present,
+			// Sveltos will only onboard CAPI clusters that have it.
+			if cluster.Annotations == nil {
+				continue
+			}
+			if _, ok := cluster.Annotations[onboardAnnotation]; !ok {
+				continue
+			}
 		}
 
 		if shard != nil && !sharding.IsShardAMatch(*shard, cluster) {
@@ -348,11 +363,12 @@ func getListOfSveltosCluster(ctx context.Context, c client.Client, namespace str
 }
 
 // GetListOfClusters returns all existing Sveltos/CAPI Clusters.
-// If namespace is not empty, only existing clusters in that namespace will be returned.
-func GetListOfClusters(ctx context.Context, c client.Client, namespace string, logger logr.Logger,
-) ([]corev1.ObjectReference, error) {
+// If namespace is not empty, clusters in different namespaces are filtered out.
+// If capiOnboardAnnotation is set, clusters without this annotation are filtered out.
+func GetListOfClusters(ctx context.Context, c client.Client, namespace, capiOnboardAnnotation string,
+	logger logr.Logger) ([]corev1.ObjectReference, error) {
 
-	clusters, err := getListOfCAPICluster(ctx, c, namespace, nil, logger)
+	clusters, err := getListOfCAPICluster(ctx, c, namespace, capiOnboardAnnotation, nil, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -368,11 +384,12 @@ func GetListOfClusters(ctx context.Context, c client.Client, namespace string, l
 }
 
 // GetListOfClustersForShardKey returns all existing Sveltos/CAPI Clusters for a given shard
-// If namespace is not empty, clusters will be further filtered by namespace.
-func GetListOfClustersForShardKey(ctx context.Context, c client.Client, namespace, shard string,
-	logger logr.Logger) ([]corev1.ObjectReference, error) {
+// If namespace is not empty, clusters in different namespaces are filtered out.
+// If capiOnboardAnnotation is set, clusters without this annotation are filtered out.
+func GetListOfClustersForShardKey(ctx context.Context, c client.Client,
+	namespace, capiOnboardAnnotation, shard string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
-	clusters, err := getListOfCAPICluster(ctx, c, namespace, &shard, logger)
+	clusters, err := getListOfCAPICluster(ctx, c, namespace, capiOnboardAnnotation, &shard, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -421,7 +438,20 @@ func getMatchingCAPIClusters(ctx context.Context, c client.Client, selector labe
 			continue
 		}
 
-		if !isCAPIClusterReady(cluster, onboardAnnotation) {
+		if onboardAnnotation != "" {
+			// To manage Sveltos deployment on a management cluster with numerous existing CAPI clusters,
+			// Sveltos offers selective onboarding.  While Sveltos defaults to onboarding all CAPI clusters,
+			// user can use an annotation to specify which clusters should be managed.  When this annotation is present,
+			// Sveltos will only onboard CAPI clusters that have it.
+			if cluster.Annotations == nil {
+				continue
+			}
+			if _, ok := cluster.Annotations[onboardAnnotation]; !ok {
+				continue
+			}
+		}
+
+		if !isCAPIClusterReady(cluster) {
 			// Only ready cluster can match
 			continue
 		}
@@ -488,7 +518,9 @@ func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector l
 	return matching, nil
 }
 
-// GetMatchingClusters returns all Sveltos/CAPI Clusters currently matching selector
+// GetMatchingClusters returns CAPI clusters matching the selector.
+// If capiOnboardAnnotation is set, only clusters with that annotation are considered and
+// selector match evaluated.
 func GetMatchingClusters(ctx context.Context, c client.Client, selector *metav1.LabelSelector,
 	namespace, capiOnboardAnnotation string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 

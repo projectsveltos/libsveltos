@@ -250,18 +250,16 @@ func UpdateSveltosSecretData(ctx context.Context, logger logr.Logger, c client.C
 }
 
 // IsClusterReadyToBeConfigured returns true if cluster is ready to be configured
-// capiOnboardAnnotation is the annotation that must be present on CAPI clusters to be
-// managed by Sveltos. Empty capiOnboardAnnotation means consider all existing CAPI clusters.
 func IsClusterReadyToBeConfigured(
 	ctx context.Context, c client.Client, cluster *corev1.ObjectReference,
-	capiOnboardAnnotation string, logger logr.Logger,
+	logger logr.Logger,
 ) (bool, error) {
 
 	if cluster.Kind == libsveltosv1beta1.SveltosClusterKind {
 		return isSveltosClusterReadyToBeConfigured(ctx, c, cluster, logger)
 	}
 
-	return isCAPIClusterReadyToBeConfigured(ctx, c, cluster, capiOnboardAnnotation, logger)
+	return isCAPIClusterReadyToBeConfigured(ctx, c, cluster, logger)
 }
 
 // isSveltosClusterReadyToBeConfigured  returns true if SveltosCluster
@@ -288,11 +286,8 @@ func isSveltosClusterStatusReady(sveltosCluster *libsveltosv1beta1.SveltosCluste
 // isCAPIClusterReadyToBeConfigured checks whether Cluster:
 // - ControlPlaneInitialized condition is set to true on Cluster object or
 // - Status.ControlPlaneReady is set to true
-// - if onboardAnnotation is set, only CAPI clusters that have this exact annotation will be considered
-func isCAPIClusterReadyToBeConfigured(
-	ctx context.Context, c client.Client,
-	cluster *corev1.ObjectReference, onboardAnnotation string, logger logr.Logger,
-) (bool, error) {
+func isCAPIClusterReadyToBeConfigured(ctx context.Context, c client.Client,
+	cluster *corev1.ObjectReference, logger logr.Logger) (bool, error) {
 
 	capiCluster := &clusterv1.Cluster{}
 	err := c.Get(ctx, types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Name}, capiCluster)
@@ -301,23 +296,10 @@ func isCAPIClusterReadyToBeConfigured(
 		return false, err
 	}
 
-	return isCAPIClusterReady(capiCluster, onboardAnnotation), nil
+	return isCAPIClusterReady(capiCluster), nil
 }
 
-func isCAPIClusterReady(capiCluster *clusterv1.Cluster, onboardAnnotation string) bool {
-	if onboardAnnotation != "" {
-		// To manage Sveltos deployment on a management cluster with numerous existing CAPI clusters,
-		// Sveltos offers selective onboarding.  While Sveltos defaults to onboarding all CAPI clusters,
-		// user can use an annotation to specify which clusters should be managed.  When this annotation is present,
-		// Sveltos will only onboard CAPI clusters that have it.
-		if capiCluster.Annotations == nil {
-			return false
-		}
-		if _, ok := capiCluster.Annotations[onboardAnnotation]; !ok {
-			return false
-		}
-	}
-
+func isCAPIClusterReady(capiCluster *clusterv1.Cluster) bool {
 	for i := range capiCluster.Status.Conditions {
 		c := capiCluster.Status.Conditions[i]
 		if c.Type == clusterv1.ControlPlaneInitializedCondition &&
