@@ -47,7 +47,7 @@ rules:
   resources: ["pods"]
   verbs: ["get", "watch", "list"]`
 
-	clusterProfile = `apiVersion: config.projectsveltos.io/v1alpha1
+	clusterProfile = `apiVersion: config.projectsveltos.io/v1beta1
 kind: ClusterProfile
 metadata:
   name: deploy-resources
@@ -82,7 +82,7 @@ var _ = Describe("Client", func() {
 					OwnerReferences: []metav1.OwnerReference{
 						{
 							Kind:       "ClusterProfile",
-							APIVersion: "config.projectsveltos.io/v1alpha1",
+							APIVersion: "config.projectsveltos.io/v1beta1",
 							Name:       cp.GetName(),
 							UID:        cp.GetUID(),
 						},
