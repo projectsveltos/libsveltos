@@ -25,6 +25,7 @@ import (
 
 	luajson "github.com/projectsveltos/lua-utils/glua-json"
 	luarunes "github.com/projectsveltos/lua-utils/glua-runes"
+	luasprig "github.com/projectsveltos/lua-utils/glua-sprig"
 	luastrings "github.com/projectsveltos/lua-utils/glua-strings"
 )
 
@@ -37,6 +38,7 @@ func LoadModulesAndRegisterMethods(l *lua.LState) {
 	l.PreloadModule("json", luajson.Loader)
 	l.PreloadModule("strings", luastrings.Loader)
 	l.PreloadModule("runes", luarunes.Loader)
+	l.PreloadModule("sprig", luasprig.Loader)
 
 	l.SetGlobal("base64Encode", l.NewFunction(base64Encode))
 	l.SetGlobal("base64Decode", l.NewFunction(base64Decode))
@@ -47,7 +49,7 @@ func LoadModulesAndRegisterMethods(l *lua.LState) {
 
 // MapToTable converts a Go map to a lua table
 // credit to: https://github.com/yuin/gopher-lua/issues/160#issuecomment-447608033
-func MapToTable(m map[string]interface{}) *lua.LTable {
+func MapToTable(m map[string]any) *lua.LTable {
 	// Main table pointer
 	resultTable := &lua.LTable{}
 
@@ -64,7 +66,7 @@ func MapToTable(m map[string]interface{}) *lua.LTable {
 			resultTable.RawSetString(key, lua.LBool(element))
 		case []byte:
 			resultTable.RawSetString(key, lua.LString(string(element)))
-		case map[string]interface{}:
+		case map[string]any:
 
 			// Get table from map
 			tble := MapToTable(element)
@@ -74,7 +76,7 @@ func MapToTable(m map[string]interface{}) *lua.LTable {
 		case time.Time:
 			resultTable.RawSetString(key, lua.LNumber(element.Unix()))
 
-		case []map[string]interface{}:
+		case []map[string]any:
 
 			// Create slice table
 			sliceTable := &lua.LTable{}
@@ -90,7 +92,7 @@ func MapToTable(m map[string]interface{}) *lua.LTable {
 			// Set slice table
 			resultTable.RawSetString(key, sliceTable)
 
-		case []interface{}:
+		case []any:
 
 			// Create slice table
 			sliceTable := &lua.LTable{}
@@ -99,7 +101,7 @@ func MapToTable(m map[string]interface{}) *lua.LTable {
 			for _, s := range element {
 				// Switch interface type
 				switch s := s.(type) {
-				case map[string]interface{}:
+				case map[string]any:
 
 					// Convert map to table
 					t := MapToTable(s)
@@ -134,7 +136,7 @@ func MapToTable(m map[string]interface{}) *lua.LTable {
 
 // ToGoValue converts the given LValue to a Go object.
 // Credit to: https://github.com/yuin/gluamapper/blob/master/gluamapper.go
-func ToGoValue(lv lua.LValue) interface{} {
+func ToGoValue(lv lua.LValue) any {
 	switch v := lv.(type) {
 	case *lua.LNilType:
 		return nil
@@ -147,14 +149,14 @@ func ToGoValue(lv lua.LValue) interface{} {
 	case *lua.LTable:
 		maxn := v.MaxN()
 		if maxn == 0 { // table
-			ret := make(map[string]interface{})
+			ret := make(map[string]any)
 			v.ForEach(func(key, value lua.LValue) {
 				keystr := fmt.Sprint(ToGoValue(key))
 				ret[keystr] = ToGoValue(value)
 			})
 			return ret
 		} else { // array
-			ret := make([]interface{}, 0, maxn)
+			ret := make([]any, 0, maxn)
 			for i := 1; i <= maxn; i++ {
 				ret = append(ret, ToGoValue(v.RawGetInt(i)))
 			}

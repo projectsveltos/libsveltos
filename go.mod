@@ -11,9 +11,10 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/pkg/errors v0.9.1
-	github.com/projectsveltos/lua-utils/glua-json v0.0.0-20250215155204-2e8364e9ce73
-	github.com/projectsveltos/lua-utils/glua-runes v0.0.0-20250215155204-2e8364e9ce73
-	github.com/projectsveltos/lua-utils/glua-strings v0.0.0-20250215155204-2e8364e9ce73
+	github.com/projectsveltos/lua-utils/glua-json v0.0.0-20250301182851-e4fbb9fd7ff7
+	github.com/projectsveltos/lua-utils/glua-runes v0.0.0-20250301182851-e4fbb9fd7ff7
+	github.com/projectsveltos/lua-utils/glua-strings v0.0.0-20250301182851-e4fbb9fd7ff7
+	github.com/projectsveltos/lua-utils/glua-sprig v0.0.0-20250301182851-e4fbb9fd7ff7
 	github.com/yuin/gopher-lua v1.1.1
 	golang.org/x/text v0.22.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -72,19 +73,19 @@ require (
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
-	github.com/spf13/cast v1.7.0 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.opentelemetry.io/otel v1.28.0 // indirect
 	go.opentelemetry.io/otel/trace v1.28.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
