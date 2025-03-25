@@ -210,6 +210,15 @@ func GetKubernetesClient(ctx context.Context, c client.Client,
 	}
 
 	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
+		pullMode, err := isSveltosClusterInPullMode(ctx, c, clusterNamespace, clusterName, logger)
+		if err != nil {
+			return nil, err
+		}
+
+		if pullMode {
+			return nil, nil
+		}
+
 		return GetSveltosKubernetesClient(ctx, logger, c, c.Scheme(), clusterNamespace, clusterName)
 	}
 	return GetCAPIKubernetesClient(ctx, logger, c, c.Scheme(), clusterNamespace, clusterName)
@@ -584,4 +593,23 @@ func isCAPIPresent(ctx context.Context, c client.Client, logger logr.Logger) (bo
 
 	present := atomic.LoadInt32(&capiPresent)
 	return present != 0, nil
+}
+
+func isSveltosClusterInPullMode(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName string, logger logr.Logger) (bool, error) {
+
+	sveltosCluster, err := getSveltosCluster(ctx, c, clusterNamespace, clusterName)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("SveltosCluster does not exist")
+			return false, errors.Wrap(err,
+				fmt.Sprintf("SveltosCluster %s/%s does not exist",
+					clusterNamespace,
+					clusterName,
+				))
+		}
+		return false, err
+	}
+
+	return sveltosCluster.Spec.PullMode, nil
 }

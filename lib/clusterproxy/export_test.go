@@ -21,3 +21,7 @@ const (
 
 	SveltosKubeconfigSecretNamePostfix = sveltosKubeconfigSecretNamePostfix
 )
+
+var (
+	IsSveltosClusterInPullMode = isSveltosClusterInPullMode
+)

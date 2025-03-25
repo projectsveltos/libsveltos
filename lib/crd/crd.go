@@ -85,3 +85,11 @@ func GetSetCRDYAML() []byte {
 func GetTechsupportCRDYAML() []byte {
 	return TechsupportCRD
 }
+
+func GetConfigurationBundleCRDYAML() []byte {
+	return ConfigurationBundleCRD
+}
+
+func GetConfigurationGroupCRDYAML() []byte {
+	return ConfigurationGroupCRD
+}

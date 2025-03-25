@@ -267,3 +267,167 @@ type Patch struct {
 	// +optional
 	Target *PatchSelector `json:"target,omitempty"`
 }
+
+type DriftExclusion struct {
+	// Paths is a slice of JSON6902 paths to exclude from configuration drift evaluation.
+	// +required
+	Paths []string `json:"paths"`
+
+	// Target points to the resources that the paths refers to.
+	// +optional
+	Target *PatchSelector `json:"target,omitempty"`
+}
+
+// +kubebuilder:validation:Enum:=Resources;Helm;Kustomize
+type FeatureID string
+
+const (
+	// FeatureResources is the identifier for generic Resources feature
+	FeatureResources = FeatureID("Resources")
+
+	// FeatureHelm is the identifier for Helm feature
+	FeatureHelm = FeatureID("Helm")
+
+	// FeatureKustomize is the identifier for Kustomize feature
+	FeatureKustomize = FeatureID("Kustomize")
+)
+
+type ValidateHealth struct {
+	// Name is the name of this check
+	Name string `json:"name"`
+
+	// FeatureID is an indentifier of the feature (Helm/Kustomize/Resources)
+	// This field indicates when to run this check.
+	// For instance:
+	// - if set to Helm this check will be run after all helm
+	// charts specified in the ClusterProfile are deployed.
+	// - if set to Resources this check will be run after the content
+	// of all the ConfigMaps/Secrets referenced by ClusterProfile in the
+	// PolicyRef sections is deployed
+	FeatureID FeatureID `json:"featureID"`
+
+	// Group of the resource to fetch in the managed Cluster.
+	Group string `json:"group"`
+
+	// Version of the resource to fetch in the managed Cluster.
+	Version string `json:"version"`
+
+	// Kind of the resource to fetch in the managed Cluster.
+	// +kubebuilder:validation:MinLength=1
+	Kind string `json:"kind"`
+
+	// LabelFilters allows to filter resources based on current labels.
+	// +optional
+	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
+
+	// Namespace of the resource to fetch in the managed Cluster.
+	// Empty for resources scoped at cluster level.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// Script is a text containing a lua script.
+	// Must return struct with field "health"
+	// representing whether object is a match (true or false)
+	// +optional
+	Script string `json:"script,omitempty"`
+}
+
+// +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;FailedNonRetriable;Removing;Removed
+type FeatureStatus string
+
+const (
+	// FeatureStatusProvisioning indicates that feature is being
+	// provisioned in the workload cluster
+	FeatureStatusProvisioning = FeatureStatus("Provisioning")
+
+	// FeatureStatusProvisioned indicates that feature has being
+	// provisioned in the workload cluster
+	FeatureStatusProvisioned = FeatureStatus("Provisioned")
+
+	// FeatureStatusFailed indicates that configuring the feature
+	// in the workload cluster failed
+	FeatureStatusFailed = FeatureStatus("Failed")
+
+	// FeatureStatusFailedNonRetriable indicates that configuring the feature
+	// in the workload cluster failed with a non retriable error
+	FeatureStatusFailedNonRetriable = FeatureStatus("FailedNonRetriable")
+
+	// FeatureStatusRemoving indicates that feature is being
+	// removed
+	FeatureStatusRemoving = FeatureStatus("Removing")
+
+	// FeatureStatusRemoved indicates that feature is removed
+	FeatureStatusRemoved = FeatureStatus("Removed")
+)
+
+type FeatureDeploymentInfo struct {
+	// FeatureID is an indentifier of the feature whose status is reported
+	FeatureID FeatureID `json:"featureID"`
+
+	// DeployedGroupVersionKind contains all GroupVersionKinds deployed in either
+	// the workload cluster or the management cluster because of this feature.
+	// Each element has format kind.version.group
+	// +optional
+	DeployedGroupVersionKind []string `json:"deployedGroupVersionKind,omitempty"`
+}
+
+type Resource struct {
+	// Name of the resource deployed in the Cluster.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Namespace of the resource deployed in the Cluster.
+	// Empty for resources scoped at cluster level.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// Group of the resource deployed in the Cluster.
+	Group string `json:"group"`
+
+	// Kind of the resource deployed in the Cluster.
+	// +kubebuilder:validation:MinLength=1
+	Kind string `json:"kind"`
+
+	// Version of the resource deployed in the Cluster.
+	// +kubebuilder:validation:MinLength=1
+	Version string `json:"version"`
+
+	// LastAppliedTime identifies when this resource was last applied to the cluster.
+	// +optional
+	LastAppliedTime *metav1.Time `json:"lastAppliedTime,omitempty"`
+
+	// Owner is the list of ConfigMap/Secret containing this resource.
+	Owner corev1.ObjectReference `json:"owner"`
+
+	// IgnoreForConfigurationDrift indicates to not track resource
+	// for configuration drift detection.
+	// This field has a meaning only when mode is ContinuousWithDriftDetection
+	// +kubebuilder:default:=false
+	// +optional
+	IgnoreForConfigurationDrift bool `json:"ignoreForConfigurationDrift,omitempty"`
+}
+
+type ResourceReport struct {
+	// Resource contains information about Kubernetes Resource
+	Resource Resource `json:"resource"`
+
+	// Action represent the type of operation on the Kubernetes resource.
+	// +kubebuilder:validation:Enum=No Action;Create;Update;Delete;Conflict
+	Action string `json:"action,omitempty"`
+
+	// Message is for any message that needs to added to better
+	// explain the action.
+	// +optional
+	Message string `json:"message,omitempty"`
+}
+
+type ResourceAction string
+
+// Define the Action constants.
+const (
+	NoResourceAction       ResourceAction = "No Action"
+	CreateResourceAction   ResourceAction = "Create"
+	UpdateResourceAction   ResourceAction = "Update"
+	DeleteResourceAction   ResourceAction = "Delete"
+	ConflictResourceAction ResourceAction = "Conflict"
+)

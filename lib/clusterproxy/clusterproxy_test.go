@@ -465,4 +465,18 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(false))
 	})
+
+	It("GetSveltosKubernetesRestConfig returns nil for a SveltosCluster in pull mode", func() {
+		sveltosCluster.Spec.PullMode = true
+		initObjects := []client.Object{
+			sveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		remoteConfig, err := clusterproxy.GetSveltosKubernetesRestConfig(context.TODO(), logger, c,
+			sveltosCluster.Namespace, sveltosCluster.Name)
+		Expect(err).To(BeNil())
+		Expect(remoteConfig).To(BeNil())
+	})
 })

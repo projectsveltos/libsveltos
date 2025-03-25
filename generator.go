@@ -139,4 +139,10 @@ func main() {
 
 	techsupportFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_techsupports.lib.projectsveltos.io.yaml"
 	generate(techsupportFile, "techsupports", "Techsupport")
+
+	configurationBundleFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_configurationbundles.lib.projectsveltos.io.yaml"
+	generate(configurationBundleFile, "configurationbundles", "ConfigurationBundle")
+
+	configurationGroupFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_configurationgroups.lib.projectsveltos.io.yaml"
+	generate(configurationGroupFile, "configurationgroups", "ConfigurationGroup")
 }

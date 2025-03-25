@@ -1,11 +1,11 @@
 /*
-Copyright 2023. projectsveltos.io. All rights reserved.
+Copyright 2025. projectsveltos.io. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-	http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package notifications_test
+
+package pullmode_test
 
 import (
 	"context"
@@ -25,7 +26,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -33,6 +36,8 @@ import (
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
 var (
@@ -89,13 +94,16 @@ func setupScheme() (*runtime.Scheme, error) {
 	if err := clientgoscheme.AddToScheme(s); err != nil {
 		return nil, err
 	}
+	if err := libsveltosv1beta1.AddToScheme(s); err != nil {
+		return nil, err
+	}
 
 	return s, nil
 }
 
 func randomString() string {
 	const length = 10
-	return util.RandomString(length)
+	return "a-" + util.RandomString(length)
 }
 
 // waitForObject waits for the cache to be updated helps in preventing test flakes due to the cache sync delays.
@@ -117,4 +125,15 @@ func waitForObject(ctx context.Context, c client.Client, obj client.Object) erro
 		return errors.Wrapf(err, "object %s, %s is not being added to the testenv client cache", obj.GetObjectKind().GroupVersionKind().String(), key)
 	}
 	return nil
+}
+
+func createNamespace(name string) {
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+
+	Expect(k8sClient.Create(context.TODO(), ns)).To(Succeed())
+	Expect(waitForObject(context.TODO(), k8sClient, ns)).To(Succeed())
 }

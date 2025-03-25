@@ -19,6 +19,8 @@ resources:
 - bases/lib.projectsveltos.io_sets.yaml
 - bases/lib.projectsveltos.io_sveltosclusters.yaml
 - bases/lib.projectsveltos.io_techsupports.yaml
+- bases/lib.projectsveltos.io_configurationbundles.yaml
+- bases/lib.projectsveltos.io_configurationgroups.yaml
 
 patches:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
