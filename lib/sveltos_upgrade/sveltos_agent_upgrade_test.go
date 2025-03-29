@@ -19,17 +19,19 @@ package sveltos_upgrade_test
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2/textlogger"
-
-	"github.com/projectsveltos/libsveltos/lib/sveltos_upgrade"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
+	"github.com/projectsveltos/libsveltos/lib/sveltos_upgrade"
 )
 
 const (
@@ -37,15 +39,35 @@ const (
 )
 
 var _ = Describe("SveltosAgent compatibility checks", func() {
+	var logger logr.Logger
+
+	BeforeEach(func() {
+		logger = textlogger.NewLogger(textlogger.NewConfig())
+	})
+
 	It("Create ConfigMap with Sveltos-agent version", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
 
-		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, version)).To(Succeed())
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeSveltos
+
+		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, version, clusterNamespace,
+			clusterName, clusterType, false, logger)).To(Succeed())
 
 		cm := &corev1.ConfigMap{}
 		Expect(c.Get(context.TODO(),
 			types.NamespacedName{Namespace: sveltos_upgrade.ConfigMapNamespace, Name: sveltos_upgrade.SveltosAgentConfigMapName},
 			cm)).To(Succeed())
+		Expect(cm.Data).ToNot(BeNil())
+		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+
+		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, version, clusterNamespace,
+			clusterName, clusterType, true, logger)).To(Succeed())
+
+		name := sveltos_upgrade.GenerateName(sveltos_upgrade.SveltosAgentType, clusterName, clusterType)
+		Expect(c.Get(context.TODO(),
+			types.NamespacedName{Namespace: clusterNamespace, Name: name}, cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
 	})
@@ -62,7 +84,12 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 		}
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
 
-		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, version)).To(Succeed())
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeSveltos
+
+		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, version, clusterNamespace, clusterName,
+			clusterType, false, logger)).To(Succeed())
 
 		Expect(c.Get(context.TODO(),
 			types.NamespacedName{
@@ -71,9 +98,21 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 			cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+
+		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, version, clusterNamespace, clusterName,
+			clusterType, true, logger)).To(Succeed())
+		name := sveltos_upgrade.GenerateName(sveltos_upgrade.SveltosAgentType, clusterName, clusterType)
+
+		Expect(c.Get(context.TODO(),
+			types.NamespacedName{
+				Namespace: clusterNamespace,
+				Name:      name},
+			cm)).To(Succeed())
+		Expect(cm.Data).ToNot(BeNil())
+		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
 	})
 
-	It("IsSveltosAgentVersionCompatible returns true Sveltos-agent version is compatible", func() {
+	It("IsSveltosAgentVersionCompatible returns true Sveltos-agent version is compatible (agent in managed cluster)", func() {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: sveltos_upgrade.ConfigMapNamespace,
@@ -87,15 +126,54 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 			cm,
 		}
 
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeSveltos
+
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
-		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, version, logger)).To(BeTrue())
-		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, randomString(), logger)).To(BeFalse())
+		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, version, clusterNamespace, clusterName,
+			clusterType, false, logger)).To(BeTrue())
+		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, randomString(), clusterNamespace, clusterName,
+			clusterType, false, logger)).To(BeFalse())
+	})
+
+	It("IsSveltosAgentVersionCompatible returns true Sveltos-agent version is compatible (agent in manageent cluster)", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeSveltos
+
+		name := sveltos_upgrade.GenerateName(sveltos_upgrade.SveltosAgentType, clusterName, clusterType)
+		cm := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      name,
+			},
+			Data: map[string]string{
+				sveltos_upgrade.ConfigMapKey: version,
+			},
+		}
+		initObjects := []client.Object{
+			cm,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, version, clusterNamespace, clusterName,
+			clusterType, true, logger)).To(BeTrue())
+		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, randomString(), clusterNamespace, clusterName,
+			clusterType, true, logger)).To(BeFalse())
 	})
 })
 
 var _ = Describe("DriftDetection compatibility checks", func() {
-	It("IsDriftDetectionVersionCompatible returns true when drift-detection version is compatible", func() {
+	var logger logr.Logger
+
+	BeforeEach(func() {
+		logger = textlogger.NewLogger(textlogger.NewConfig())
+	})
+
+	It("IsDriftDetectionVersionCompatible returns true when drift-detection version is compatible (agent in managed cluster)", func() {
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: sveltos_upgrade.ConfigMapNamespace,
@@ -111,19 +189,62 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
-		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, version, logger)).To(BeTrue())
-		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, randomString(), logger)).To(BeFalse())
+		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, version, randomString(), randomString(),
+			libsveltosv1beta1.ClusterTypeCapi, false, logger)).To(BeTrue())
+		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, randomString(), randomString(), randomString(),
+			libsveltosv1beta1.ClusterTypeCapi, false, logger)).To(BeFalse())
+	})
+
+	It("IsDriftDetectionVersionCompatible returns true when drift-detection version is compatible (agent in management cluster)", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeCapi
+
+		name := sveltos_upgrade.GenerateName(sveltos_upgrade.DriftDetectionType, clusterName, clusterType)
+		cm := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      name,
+			},
+			Data: map[string]string{
+				sveltos_upgrade.ConfigMapKey: version,
+			},
+		}
+		initObjects := []client.Object{
+			cm,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, version, clusterNamespace, clusterName,
+			clusterType, true, logger)).To(BeTrue())
+		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, randomString(), clusterNamespace, clusterName,
+			clusterType, true, logger)).To(BeFalse())
 	})
 
 	It("Create ConfigMap with drift-detection-manager version", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
 
-		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, version)).To(Succeed())
+		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, version, randomString(), randomString(),
+			libsveltosv1beta1.ClusterTypeCapi, false, logger)).To(Succeed())
 
 		cm := &corev1.ConfigMap{}
 		Expect(c.Get(context.TODO(),
 			types.NamespacedName{Namespace: sveltos_upgrade.ConfigMapNamespace, Name: sveltos_upgrade.DriftDetectionConfigMapName},
 			cm)).To(Succeed())
+		Expect(cm.Data).ToNot(BeNil())
+		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeCapi
+
+		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, version, clusterNamespace, clusterName,
+			clusterType, true, logger)).To(Succeed())
+
+		name := sveltos_upgrade.GenerateName(sveltos_upgrade.DriftDetectionType, clusterName, clusterType)
+		Expect(c.Get(context.TODO(),
+			types.NamespacedName{Namespace: clusterNamespace, Name: name}, cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
 	})
@@ -140,12 +261,29 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 		}
 		c := fake.NewClientBuilder().WithScheme(scheme).Build()
 
-		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, version)).To(Succeed())
+		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, version, randomString(), randomString(),
+			libsveltosv1beta1.ClusterTypeCapi, false, logger)).To(Succeed())
 
 		Expect(c.Get(context.TODO(),
 			types.NamespacedName{
 				Namespace: sveltos_upgrade.ConfigMapNamespace,
 				Name:      sveltos_upgrade.DriftDetectionConfigMapName},
+			cm)).To(Succeed())
+		Expect(cm.Data).ToNot(BeNil())
+		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeSveltos
+
+		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, version, clusterNamespace, clusterName,
+			clusterType, true, logger)).To(Succeed())
+
+		name := sveltos_upgrade.GenerateName(sveltos_upgrade.DriftDetectionType, clusterName, clusterType)
+		Expect(c.Get(context.TODO(),
+			types.NamespacedName{
+				Namespace: clusterNamespace,
+				Name:      name},
 			cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
