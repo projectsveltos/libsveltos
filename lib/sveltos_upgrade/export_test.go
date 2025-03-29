@@ -21,4 +21,10 @@ const (
 	SveltosAgentConfigMapName   = sveltosAgentConfigMapName
 	DriftDetectionConfigMapName = driftDetectionConfigMapName
 	ConfigMapKey                = configMapKey
+	SveltosAgentType            = sveltosAgentType
+	DriftDetectionType          = driftDetectionType
+)
+
+var (
+	GenerateName = generateName
 )
