@@ -112,42 +112,17 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
 	})
 
-	It("IsSveltosAgentVersionCompatible returns true Sveltos-agent version is compatible (agent in managed cluster)", func() {
-		cm := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: sveltos_upgrade.ConfigMapNamespace,
-				Name:      sveltos_upgrade.SveltosAgentConfigMapName,
-			},
-			Data: map[string]string{
-				sveltos_upgrade.ConfigMapKey: version,
-			},
-		}
-		initObjects := []client.Object{
-			cm,
-		}
-
+	It("IsSveltosAgentVersionCompatible returns true Sveltos-agent version is compatible (agent in management cluster)", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
-		clusterType := libsveltosv1beta1.ClusterTypeSveltos
+		clusterType := libsveltosv1beta1.ClusterTypeCapi
 
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
-		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, version, clusterNamespace, clusterName,
-			clusterType, false, logger)).To(BeTrue())
-		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, randomString(), clusterNamespace, clusterName,
-			clusterType, false, logger)).To(BeFalse())
-	})
+		cmInfo := sveltos_upgrade.GetSveltosAgentConfigMapInfo(clusterNamespace, clusterName, clusterType, true)
 
-	It("IsSveltosAgentVersionCompatible returns true Sveltos-agent version is compatible (agent in manageent cluster)", func() {
-		clusterNamespace := randomString()
-		clusterName := randomString()
-		clusterType := libsveltosv1beta1.ClusterTypeSveltos
-
-		name := sveltos_upgrade.GenerateName(sveltos_upgrade.SveltosAgentType, clusterName, clusterType)
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: clusterNamespace,
-				Name:      name,
+				Namespace: cmInfo.Namespace,
+				Name:      cmInfo.Name,
 			},
 			Data: map[string]string{
 				sveltos_upgrade.ConfigMapKey: version,
@@ -173,38 +148,17 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 		logger = textlogger.NewLogger(textlogger.NewConfig())
 	})
 
-	It("IsDriftDetectionVersionCompatible returns true when drift-detection version is compatible (agent in managed cluster)", func() {
-		cm := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: sveltos_upgrade.ConfigMapNamespace,
-				Name:      sveltos_upgrade.DriftDetectionConfigMapName,
-			},
-			Data: map[string]string{
-				sveltos_upgrade.ConfigMapKey: version,
-			},
-		}
-		initObjects := []client.Object{
-			cm,
-		}
-
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
-		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, version, randomString(), randomString(),
-			libsveltosv1beta1.ClusterTypeCapi, false, logger)).To(BeTrue())
-		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, randomString(), randomString(), randomString(),
-			libsveltosv1beta1.ClusterTypeCapi, false, logger)).To(BeFalse())
-	})
-
 	It("IsDriftDetectionVersionCompatible returns true when drift-detection version is compatible (agent in management cluster)", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()
-		clusterType := libsveltosv1beta1.ClusterTypeCapi
+		clusterType := libsveltosv1beta1.ClusterTypeSveltos
 
-		name := sveltos_upgrade.GenerateName(sveltos_upgrade.DriftDetectionType, clusterName, clusterType)
+		cmInfo := sveltos_upgrade.GetDriftDetectionConfigMapInfo(clusterNamespace, clusterName, clusterType, true)
+
 		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: clusterNamespace,
-				Name:      name,
+				Namespace: cmInfo.Namespace,
+				Name:      cmInfo.Name,
 			},
 			Data: map[string]string{
 				sveltos_upgrade.ConfigMapKey: version,
@@ -218,7 +172,7 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
 		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, version, clusterNamespace, clusterName,
 			clusterType, true, logger)).To(BeTrue())
-		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, randomString(), clusterNamespace, clusterName,
+		Expect(sveltos_upgrade.IsDriftDetectionVersionCompatible(context.TODO(), c, randomString(), randomString(), randomString(),
 			clusterType, true, logger)).To(BeFalse())
 	})
 
