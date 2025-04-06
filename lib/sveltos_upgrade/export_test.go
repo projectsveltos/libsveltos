@@ -26,5 +26,7 @@ const (
 )
 
 var (
-	GenerateName = generateName
+	GenerateName                   = generateName
+	GetSveltosAgentConfigMapInfo   = getSveltosAgentConfigMapInfo
+	GetDriftDetectionConfigMapInfo = getDriftDetectionConfigMapInfo
 )
