@@ -21,7 +21,7 @@ var TechsupportCRD = []byte(`apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.17.2
+    controller-gen.kubebuilder.io/version: v0.17.3
   name: techsupports.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io

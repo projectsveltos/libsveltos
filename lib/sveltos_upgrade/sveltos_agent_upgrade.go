@@ -31,6 +31,7 @@ import (
 	"github.com/go-logr/logr"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
+	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
@@ -75,7 +76,7 @@ const (
 
 // It takes three arguments:
 //   - ctx (context.Context): Context for the function call
-//   - c (client.Client): Kubernetes client used to interact with the API server
+//   - c (client.Client): Kubernetes client used to interact with the API server of the management cluster
 // 	 - clusterNamespace, clusterName, clusterType identify the managed cluster
 //   - version (string): Version to compare against the sveltos-agent version
 //   - isAgentInMgmtMode indicates whether agents are in the management cluster (true) or managed clusters (false)
@@ -84,7 +85,22 @@ func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, versi
 	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) bool {
 
 	cmInfo := getSveltosAgentConfigMapInfo(clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
-	cm, err := getConfigMap(ctx, c, cmInfo, logger)
+
+	// ConfigMap is stored in either the management cluster or the managed cluster.
+	// If agents are in the management cluster, the ConfigMap is in the management cluster.
+	// Otherwise the ConfigMap in in the managed cluster
+	configMapClient := c
+	if !isAgentInMgmtMode {
+		var err error
+		configMapClient, err = clusterproxy.GetKubernetesClient(ctx, c, clusterNamespace, clusterName, "", "",
+			clusterType, logger)
+		if err != nil {
+			logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get managed cluster client: %v", err))
+			return false
+		}
+	}
+
+	cm, err := getConfigMap(ctx, configMapClient, cmInfo, logger)
 	if err != nil {
 		return false
 	}
@@ -108,7 +124,7 @@ func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, versi
 
 // It takes three arguments:
 //   - ctx (context.Context): Context for the function call
-//   - c (client.Client): Kubernetes client used to interact with the API server
+//   - c (client.Client): Kubernetes client used to interact with the API server of the management cluster
 // 	 - clusterNamespace, clusterName, clusterType identify the managed cluster
 //   - version (string): Version to compare against the sveltos-agent version
 //   - isAgentInMgmtMode indicates whether agents are in the management cluster (true) or managed clusters (false)
@@ -117,7 +133,22 @@ func IsDriftDetectionVersionCompatible(ctx context.Context, c client.Client, ver
 	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) bool {
 
 	cmInfo := getDriftDetectionConfigMapInfo(clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
-	cm, err := getConfigMap(ctx, c, cmInfo, logger)
+
+	// ConfigMap is stored in either the management cluster or the managed cluster.
+	// If agents are in the management cluster, the ConfigMap is in the management cluster.
+	// Otherwise the ConfigMap in in the managed cluster
+	configMapClient := c
+	if !isAgentInMgmtMode {
+		var err error
+		configMapClient, err = clusterproxy.GetKubernetesClient(ctx, c, clusterNamespace, clusterName, "", "",
+			clusterType, logger)
+		if err != nil {
+			logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get managed cluster client: %v", err))
+			return false
+		}
+	}
+
+	cm, err := getConfigMap(ctx, configMapClient, cmInfo, logger)
 	if err != nil {
 		return false
 	}

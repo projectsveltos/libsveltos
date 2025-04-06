@@ -59,15 +59,15 @@ func IsReloaderEntry(k string) bool {
 // GetKeyForEventSource generates a key for an EventSource resource by prepending
 // the `eventSourcePrefix` to the provided `eventSourceName`. This key is typically
 // used when storing or retrieving EventSource information in ConfigMaps.
-func GetKeyForEventSource(eventSourceName string) string {
-	return eventSourcePrefix + eventSourceName
+func GetKeyForEventSource(eventTriggerName, eventSourceName string) string {
+	return eventSourcePrefix + eventTriggerName + "-" + eventSourceName
 }
 
 // GetKeyForHealthCheck generates a key for a HealthCheck resource by prepending
 // the `healthCheckPrefix` to the provided `eventSourceName`. This key is typically
 // used when storing or retrieving HealthCheck information in ConfigMaps.
-func GetKeyForHealthCheck(healthcheckName string) string {
-	return healthCheckPrefix + healthcheckName
+func GetKeyForHealthCheck(clusterHealthCheckName, healthcheckName string) string {
+	return healthCheckPrefix + clusterHealthCheckName + "-" + healthcheckName
 }
 
 // GetKeyForReloader generates a key for a Reloader resource by prepending

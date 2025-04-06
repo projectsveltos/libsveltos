@@ -34,14 +34,14 @@ var _ = Describe("Mgmtagent", func() {
 		)
 
 		It("should correctly identify EventSource keys", func() {
-			eventSourceKey := mgmtagent.GetKeyForEventSource(testEventSourceName)
+			eventSourceKey := mgmtagent.GetKeyForEventSource(randomString(), testEventSourceName)
 			Expect(strings.HasPrefix(eventSourceKey, "eventsource-")).Should(BeTrue())
 			Expect(mgmtagent.IsEventSourceEntry(eventSourceKey)).Should(BeTrue())
 			Expect(mgmtagent.IsEventSourceEntry("other-" + testEventSourceName)).Should(BeFalse())
 		})
 
 		It("should correctly identify HealthCheck keys", func() {
-			healthCheckKey := mgmtagent.GetKeyForHealthCheck(testHealthCheckName)
+			healthCheckKey := mgmtagent.GetKeyForHealthCheck(randomString(), testHealthCheckName)
 			Expect(strings.HasPrefix(healthCheckKey, "healthcheck-")).Should(BeTrue())
 			Expect(mgmtagent.IsHealthCheckEntry(healthCheckKey)).Should(BeTrue())
 			Expect(mgmtagent.IsHealthCheckEntry("other-" + testHealthCheckName)).Should(BeFalse())
@@ -55,14 +55,16 @@ var _ = Describe("Mgmtagent", func() {
 		})
 
 		It("should generate the correct key for EventSource", func() {
-			expectedKey := "eventsource-" + testEventSourceName
-			actualKey := mgmtagent.GetKeyForEventSource(testEventSourceName)
+			eventTriggerName := randomString()
+			expectedKey := "eventsource-" + eventTriggerName + "-" + testEventSourceName
+			actualKey := mgmtagent.GetKeyForEventSource(eventTriggerName, testEventSourceName)
 			Expect(actualKey).To(Equal(expectedKey))
 		})
 
 		It("should generate the correct key for HealthCheck", func() {
-			expectedKey := "healthcheck-" + testHealthCheckName
-			actualKey := mgmtagent.GetKeyForHealthCheck(testHealthCheckName)
+			clusterHealthCheckName := randomString()
+			expectedKey := "healthcheck-" + clusterHealthCheckName + "-" + testHealthCheckName
+			actualKey := mgmtagent.GetKeyForHealthCheck(clusterHealthCheckName, testHealthCheckName)
 			Expect(actualKey).To(Equal(expectedKey))
 		})
 
