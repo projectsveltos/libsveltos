@@ -44,10 +44,20 @@ func IsEventSourceEntry(k string) bool {
 	return strings.HasPrefix(k, eventSourcePrefix)
 }
 
+// IsEventSourceEntryForEventTrigger checks if a given string `k` was created because of a given EventTrigger
+func IsEventSourceEntryForEventTrigger(k, eventTriggerName string) bool {
+	return strings.HasPrefix(k, eventSourcePrefix+eventTriggerName)
+}
+
 // IsHealthCheckEntry checks if a given string `k` starts with the `healthCheckPrefix`.
 // This is used to identify entries in ConfigMaps that refer to HealthCheck resources.
 func IsHealthCheckEntry(k string) bool {
 	return strings.HasPrefix(k, healthCheckPrefix)
+}
+
+// IsHealthCheckEntryForClusterHealthCheck checks if a given string `k` was created because of a given ClusterHealthCheck
+func IsHealthCheckEntryForClusterHealthCheck(k, clusterHealthCheckName string) bool {
+	return strings.HasPrefix(k, healthCheckPrefix+clusterHealthCheckName)
 }
 
 // IsReloaderEntry checks if a given string `k` starts with the `reloaderPrefix`.
