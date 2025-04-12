@@ -33,45 +33,59 @@ var _ = Describe("Mgmtagent", func() {
 			testReloaderName    = "my-reloader"
 		)
 
-		It("should correctly identify EventSource keys", func() {
+		It("correctly identify EventSource keys", func() {
 			eventSourceKey := mgmtagent.GetKeyForEventSource(randomString(), testEventSourceName)
 			Expect(strings.HasPrefix(eventSourceKey, "eventsource-")).Should(BeTrue())
 			Expect(mgmtagent.IsEventSourceEntry(eventSourceKey)).Should(BeTrue())
 			Expect(mgmtagent.IsEventSourceEntry("other-" + testEventSourceName)).Should(BeFalse())
 		})
 
-		It("should correctly identify HealthCheck keys", func() {
+		It("correctly identify HealthCheck keys", func() {
 			healthCheckKey := mgmtagent.GetKeyForHealthCheck(randomString(), testHealthCheckName)
 			Expect(strings.HasPrefix(healthCheckKey, "healthcheck-")).Should(BeTrue())
 			Expect(mgmtagent.IsHealthCheckEntry(healthCheckKey)).Should(BeTrue())
 			Expect(mgmtagent.IsHealthCheckEntry("other-" + testHealthCheckName)).Should(BeFalse())
 		})
 
-		It("should correctly identify Reloader keys", func() {
+		It("correctly identify Reloader keys", func() {
 			reloaderKey := mgmtagent.GetKeyForReloader(testReloaderName)
 			Expect(strings.HasPrefix(reloaderKey, "reloader-")).Should(BeTrue())
 			Expect(mgmtagent.IsReloaderEntry(reloaderKey)).Should(BeTrue())
 			Expect(mgmtagent.IsReloaderEntry("other-" + testReloaderName)).Should(BeFalse())
 		})
 
-		It("should generate the correct key for EventSource", func() {
+		It("generate the correct key for EventSource", func() {
 			eventTriggerName := randomString()
 			expectedKey := "eventsource-" + eventTriggerName + "-" + testEventSourceName
 			actualKey := mgmtagent.GetKeyForEventSource(eventTriggerName, testEventSourceName)
 			Expect(actualKey).To(Equal(expectedKey))
 		})
 
-		It("should generate the correct key for HealthCheck", func() {
+		It("generate the correct key for HealthCheck", func() {
 			clusterHealthCheckName := randomString()
 			expectedKey := "healthcheck-" + clusterHealthCheckName + "-" + testHealthCheckName
 			actualKey := mgmtagent.GetKeyForHealthCheck(clusterHealthCheckName, testHealthCheckName)
 			Expect(actualKey).To(Equal(expectedKey))
 		})
 
-		It("should generate the correct key for Reloader", func() {
+		It("generate the correct key for Reloader", func() {
 			expectedKey := "reloader-" + testReloaderName
 			actualKey := mgmtagent.GetKeyForReloader(testReloaderName)
 			Expect(actualKey).To(Equal(expectedKey))
+		})
+
+		It("correctly identify if an Entry is created because of an EventTrigger", func() {
+			eventTriggerName := randomString()
+			eventSourceKey := mgmtagent.GetKeyForEventSource(eventTriggerName, randomString())
+			Expect(mgmtagent.IsEventSourceEntryForEventTrigger(eventSourceKey, eventTriggerName)).To(BeTrue())
+			Expect(mgmtagent.IsEventSourceEntryForEventTrigger(eventSourceKey, randomString())).To(BeFalse())
+		})
+
+		It("correctly identify if an Entry is created because of an ClusterHealthCheck", func() {
+			clusterHealthCheckName := randomString()
+			healthCheckKey := mgmtagent.GetKeyForHealthCheck(clusterHealthCheckName, randomString())
+			Expect(mgmtagent.IsHealthCheckEntryForClusterHealthCheck(healthCheckKey, clusterHealthCheckName)).To(BeTrue())
+			Expect(mgmtagent.IsEventSourceEntryForEventTrigger(healthCheckKey, randomString())).To(BeFalse())
 		})
 	})
 })
