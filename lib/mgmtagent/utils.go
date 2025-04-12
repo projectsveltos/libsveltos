@@ -29,7 +29,7 @@ import (
 // The naming convention for this ConfigMap is consistent across Sveltos
 // components running in the management cluster.
 func GetConfigMapName(clusterName string, clusterType libsveltosv1beta1.ClusterType) string {
-	return fmt.Sprintf("%s-%s", clusterName, clusterType)
+	return fmt.Sprintf("%s-%s", clusterName, strings.ToLower(string(clusterType)))
 }
 
 const (
