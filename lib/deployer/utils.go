@@ -47,13 +47,21 @@ const (
 	// containing the policy.
 	ReferenceNamespaceLabel = "projectsveltos.io/reference-namespace"
 
-	// PolicyHash is the annotation set on a policy when deployed in a CAPI
+	// PolicyHash is the annotation set on a policy when deployed in a managed
 	// cluster.
 	PolicyHash = "projectsveltos.io/hash"
 
 	// OwnerTier is the annotation set on a policy when deployed in a managed
 	// cluster. Contains the tier of the profile instance that deployed it.
 	OwnerTier = "projectsveltos.io/owner-tier"
+
+	// OwnerName is the annotation set on a policy when deployed in a managed
+	// cluster. Contains the name of the profile instance that deployed it.
+	OwnerName = "projectsveltos.io/owner-name"
+
+	// OwnerKind is the annotation set on a policy when deployed in a managed
+	// cluster. Contains the Kind of the profile instance that deployed it.
+	OwnerKind = "projectsveltos.io/owner-kind"
 )
 
 type ConflictError struct {
@@ -175,11 +183,19 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 						addOwnerMessage(currentObject))}
 			}
 		}
-		if k8s_utils.HasSveltosResourcesAsOwnerReference(currentObject) && !k8s_utils.IsOwnerReference(currentObject, profile) {
-			return resourceInfo, &ConflictError{
-				message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-					object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-					addOwnerMessage(currentObject))}
+
+		if nameOk {
+			if name != referenceName {
+				return resourceInfo, &ConflictError{
+					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
+						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
+						addOwnerMessage(currentObject))}
+			}
+		}
+
+		err := validateSveltosOwner(object, currentObject, profile, kind, namespace, name)
+		if err != nil {
+			return resourceInfo, &ConflictError{message: err.Error()}
 		}
 	}
 
@@ -189,6 +205,33 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 	}
 
 	return resourceInfo, nil
+}
+
+func validateSveltosOwner(object, currentObject *unstructured.Unstructured, profile client.Object,
+	kind, namespace, name string) error {
+
+	var ownerName, ownerKind string
+	// If currently set, get the Tier of current owner
+	if annotations := currentObject.GetAnnotations(); annotations != nil {
+		ownerName = annotations[OwnerName]
+		ownerKind = annotations[OwnerKind]
+	}
+
+	if ownerName != "" {
+		if ownerName != profile.GetName() || ownerKind != profile.GetObjectKind().GroupVersionKind().Kind {
+			currentOwner := fmt.Sprintf("%s:%s", ownerKind, ownerName)
+			return &ConflictError{
+				message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
+					object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name, currentOwner)}
+		}
+	} else if k8s_utils.HasSveltosResourcesAsOwnerReference(currentObject) && !k8s_utils.IsOwnerReference(currentObject, profile) {
+		return &ConflictError{
+			message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
+				object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
+				addOwnerMessage(currentObject))}
+	}
+
+	return nil
 }
 
 // GetOwnerMessage returns a message listing why this object is deployed. The message lists:
@@ -224,6 +267,17 @@ func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
 
 func addOwnerMessage(u *unstructured.Unstructured) string {
 	message := " Sveltos instance currently deploying this resource: "
+
+	// First, if available, use annotation
+	annotations := u.GetAnnotations()
+	if annotations != nil && annotations[OwnerKind] != "" {
+		message += fmt.Sprintf("%s %s;", annotations[OwnerKind], annotations[OwnerName])
+		message += "\n"
+		return message
+	}
+
+	// Resort to OwnerReference only if annotations are not set
+	// This was old way, till release v0.52.0
 	ownerRefs := u.GetOwnerReferences()
 	for i := range ownerRefs {
 		or := &ownerRefs[i]
