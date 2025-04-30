@@ -126,7 +126,7 @@ type ClusterInfo struct {
 }
 
 // Operation specifies
-// +kubebuilder:validation:Enum:=Equal;Different
+// +kubebuilder:validation:Enum:=Equal;Different;Has;DoesNotHave
 type Operation string
 
 const (
@@ -135,6 +135,12 @@ const (
 
 	// OperationDifferent will verify difference. Corresponds to !=
 	OperationDifferent = Operation("Different")
+
+	// OperationHas will verify key is present
+	OperationHas = Operation("Has")
+
+	// OperationDoesNotHave will verify key is not present
+	OperationDoesNotHave = Operation("DoesNotHave")
 )
 
 type LabelFilter struct {
@@ -145,7 +151,8 @@ type LabelFilter struct {
 	Operation Operation `json:"operation"`
 
 	// Value is the label value
-	Value string `json:"value"`
+	// +optional
+	Value string `json:"value,omitempty"`
 }
 
 // ResourceSelector defines what resources are a match

@@ -167,6 +167,8 @@ spec:
                                   enum:
                                   - Equal
                                   - Different
+                                  - Has
+                                  - DoesNotHave
                                   type: string
                                 value:
                                   description: Value is the label value
@@ -174,7 +176,6 @@ spec:
                               required:
                               - key
                               - operation
-                              - value
                               type: object
                             type: array
                           name:
@@ -261,6 +262,8 @@ spec:
                                   enum:
                                   - Equal
                                   - Different
+                                  - Has
+                                  - DoesNotHave
                                   type: string
                                 value:
                                   description: Value is the label value
@@ -268,7 +271,6 @@ spec:
                               required:
                               - key
                               - operation
-                              - value
                               type: object
                             type: array
                           name:
