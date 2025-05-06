@@ -18,62 +18,84 @@ package template
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
+
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
-// GetReferenceResourceNamespace returns the namespace to use for a referenced resource.
-// If namespace is set on referencedResource, that namespace will be used.
-// If namespace is not set, cluster namespace will be used
-func GetReferenceResourceNamespace(clusterNamespace, referencedResourceNamespace string) string {
-	if referencedResourceNamespace != "" {
-		return referencedResourceNamespace
+// GetReferenceResourceNamespace determines the namespace for a referenced resource.
+// If no namespace is provided, the cluster's namespace is used by default.
+// If a namespace is provided, it may be a Go template string that can reference any field of the cluster object.
+func GetReferenceResourceNamespace(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, referencedResourceNamespace string, clusterType libsveltosv1beta1.ClusterType,
+) (string, error) {
+
+	if referencedResourceNamespace == "" {
+		return clusterNamespace, nil
 	}
 
-	return clusterNamespace
+	return renderClusterTemplate(ctx, c, clusterNamespace, clusterName, referencedResourceNamespace, clusterType)
 }
 
-// Resources referenced can have their name expressed in function of cluster information:
-// clusterNamespace => .Cluster.metadata.namespace
-// clusterName => .Cluster.metadata.name
-// clusterType => .Cluster.kind
-//
-// referencedResourceName can be expressed as a template using above cluster info
-func GetReferenceResourceName(clusterNamespace, clusterName, clusterKind, referencedResourceName string) (string, error) {
-	// Accept name that are templates
-	templateName := getTemplateName(clusterNamespace, clusterName, clusterKind)
+// `referencedResourceName` supports templating and can dynamically reference fields from the target cluster object.
+// This allows the name of the referenced resource to be constructed based on any attribute of the cluster,
+// including its namespace, name, and other metadata.
+func GetReferenceResourceName(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, referencedResourceName string, clusterType libsveltosv1beta1.ClusterType,
+) (string, error) {
 
-	tmpl, err := template.New(templateName).Option("missingkey=error").Funcs(ExtraFuncMap()).Parse(referencedResourceName)
+	return renderClusterTemplate(ctx, c, clusterNamespace, clusterName, referencedResourceName, clusterType)
+}
+
+func getTemplateName(clusterNamespace, clusterName, requestorName string) string {
+	return fmt.Sprintf("%s-%s-%s", clusterNamespace, clusterName, requestorName)
+}
+
+func renderClusterTemplate(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, rawTemplate string, clusterType libsveltosv1beta1.ClusterType,
+) (string, error) {
+
+	if rawTemplate == "" {
+		return clusterNamespace, nil
+	}
+
+	cluster, err := clusterproxy.GetCluster(ctx, c, clusterNamespace, clusterName, clusterType)
+	if err != nil {
+		return "", err
+	}
+
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cluster)
+	if err != nil {
+		return "", err
+	}
+
+	templateName := getTemplateName(clusterNamespace, clusterName, string(clusterType))
+
+	tmpl, err := template.New(templateName).Option("missingkey=error").Funcs(ExtraFuncMap()).Parse(rawTemplate)
 	if err != nil {
 		return "", err
 	}
 
 	var buffer bytes.Buffer
-
-	// Cluster namespace and name can be used to instantiate the name of the resource that
-	// needs to be fetched from the management cluster. Defined an unstructured with namespace and name set
-	u := &unstructured.Unstructured{}
-	u.SetNamespace(clusterNamespace)
-	u.SetName(clusterName)
-	u.SetKind(clusterKind)
-
-	if err := tmpl.Execute(&buffer,
-		struct {
-			Cluster map[string]interface{}
-			// deprecated. This used to be original format which was different than rest of templating
-			ClusterNamespace, ClusterName string
-		}{
-			Cluster:          u.UnstructuredContent(),
-			ClusterNamespace: clusterNamespace,
-			ClusterName:      clusterName}); err != nil {
+	err = tmpl.Execute(&buffer, struct {
+		Cluster                       map[string]interface{}
+		ClusterNamespace, ClusterName string
+	}{
+		Cluster:          u,
+		ClusterNamespace: clusterNamespace,
+		ClusterName:      clusterName,
+	})
+	if err != nil {
 		return "", errors.Wrapf(err, "error executing template")
 	}
-	return buffer.String(), nil
-}
 
-func getTemplateName(clusterNamespace, clusterName, requestorName string) string {
-	return fmt.Sprintf("%s-%s-%s", clusterNamespace, clusterName, requestorName)
+	return buffer.String(), nil
 }
