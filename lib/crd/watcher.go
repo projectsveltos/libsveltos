@@ -41,6 +41,7 @@ type handler func(gvk *schema.GroupVersionKind)
 // Called must have RBAC to watch CustomResourceDefinition
 func WatchCustomResourceDefinition(ctx context.Context, config *rest.Config,
 	h handler, logger logr.Logger) {
+
 	gvk := schema.GroupVersionKind{
 		Group:   "apiextensions.k8s.io",
 		Version: "v1",
@@ -50,7 +51,7 @@ func WatchCustomResourceDefinition(ctx context.Context, config *rest.Config,
 	dcinformer, err := getDynamicInformer(&gvk, config)
 	if err != nil {
 		logger.Error(err, "Failed to get informer")
-		panic(1)
+		return
 	}
 
 	runCRDInformer(ctx.Done(), dcinformer.Informer(), h, logger)
