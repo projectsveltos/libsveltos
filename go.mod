@@ -5,8 +5,8 @@ go 1.24.1
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/go-logr/logr v1.4.2
-	github.com/mocktools/go-smtp-mock/v2 v2.4.0
+	github.com/go-logr/logr v1.4.3
+	github.com/mocktools/go-smtp-mock/v2 v2.5.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
 	github.com/pkg/errors v0.9.1
