@@ -27,13 +27,18 @@ const (
 	ResourceSummaryKind = "ResourceSummary"
 
 	// ClusterSummaryNameLabel is added to all ResourceSummary instances
+	// Deprecated: Use ClusterSummaryNameAnnotation
 	ClusterSummaryNameLabel = "projectsveltos.io/cluster-summary-name"
 
 	// ClusterSummaryNamespaceLabel is added to all ResourceSummary instances
+	// Deprecated: Use ClusterSummaryNamespaceAnnotation
 	ClusterSummaryNamespaceLabel = "projectsveltos.io/cluster-summary-namespace"
 
-	// ClusterSummaryTypeLabel is added to all ResourceSummary instances
-	ClusterSummaryTypeLabel = "projectsveltos.io/cluster-summary-type"
+	// ClusterSummaryNameLabel is added to all ResourceSummary instances
+	ClusterSummaryNameAnnotation = "projectsveltos.io/cluster-summary-name"
+
+	// ClusterSummaryNamespaceLabel is added to all ResourceSummary instances
+	ClusterSummaryNamespaceAnnotation = "projectsveltos.io/cluster-summary-namespace"
 )
 
 type Resource struct {
