@@ -155,6 +155,16 @@ type LabelFilter struct {
 	Value string `json:"value,omitempty"`
 }
 
+// CELRule defines a named CEL rule used in EvaluateCEL.
+type CELRule struct {
+	// Name is a human-readable identifier for the rule.
+	Name string `json:"name"`
+
+	// Rule is the CEL (Common Expression Language) expression to evaluate.
+	// It must return a struct with fields "matching" (bool) and "message" (string, optional).
+	Rule string `json:"rule"`
+}
+
 // ResourceSelector defines what resources are a match
 type ResourceSelector struct {
 	// Group of the resource deployed in the Cluster.
@@ -188,6 +198,16 @@ type ResourceSelector struct {
 	// object is a match and an optional "message" field.
 	// +optional
 	Evaluate string `json:"evaluate,omitempty"`
+
+	// EvaluateCEL contains a list of named CEL (Common Expression Language) rules.
+	// Each rule will be evaluated in order against each object selected based on
+	// the criteria defined above. Each rule's expression must return a boolean value
+	// indicating whether the object is a match.
+	//
+	// Evaluation stops at the first rule that returns true; subsequent
+	// rules will not be evaluated.
+	// +optional
+	EvaluateCEL []CELRule `json:"evaluateCEL,omitempty"`
 }
 
 type PatchSelector struct {
