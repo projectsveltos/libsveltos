@@ -24,7 +24,6 @@ import (
 	"github.com/google/cel-go/common/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/logsettings"
@@ -38,10 +37,11 @@ func EvaluateRules(gvk schema.GroupVersionKind, resource *unstructured.Unstructu
 	// Evaluate each match rule
 	for i := range rules {
 		rule := &rules[i]
-		logger.V(logsettings.LogDebug).Info("evaluate match rule %s", rule.Name)
+		logger.V(logsettings.LogDebug).Info(fmt.Sprintf("evaluate match rule %s", rule.Name))
 		matched, err = evaluateRule(rule.Rule, resource, logger)
 		if err != nil {
-			klog.Warningf("Failed to evaluate rule %s for %s: %v", rule.Name, gvk.String(), err)
+			logger.V(logsettings.LogInfo).Info("Failed to evaluate rule %s for %s: %v",
+				rule.Name, gvk.String(), err)
 			continue
 		}
 
