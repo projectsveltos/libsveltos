@@ -80,14 +80,14 @@ func GetRequestorName(configurationGroup *libsveltosv1beta1.ConfigurationGroup) 
 		return "", fmt.Errorf("nil ConfigurationGroup")
 	}
 
-	if configurationGroup.Labels == nil {
-		return "", fmt.Errorf("ConfigurationGroup has no labels")
+	if configurationGroup.Annotations == nil {
+		return "", fmt.Errorf("ConfigurationGroup has no annotations")
 	}
 
-	name, ok := configurationGroup.Labels[requestorNameLabelKey]
+	name, ok := configurationGroup.Annotations[requestorNameAnnotationKey]
 	if !ok {
 		return "", fmt.Errorf("ConfigurationGroup reuestor Kind (%s missing)",
-			requestorNameLabelKey)
+			requestorNameAnnotationKey)
 	}
 
 	return name, nil
@@ -294,8 +294,8 @@ func GetResourceDeploymentStatus(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
 	logger logr.Logger) (*libsveltosv1beta1.ConfigurationGroupStatus, error) {
 
-	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorName, requestorFeature)
-	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, labels)
+	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return nil, err
@@ -318,8 +318,8 @@ func GetResourceRemoveStatus(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
 	logger logr.Logger) (*libsveltosv1beta1.ConfigurationGroupStatus, error) {
 
-	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorName, requestorFeature)
-	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, labels)
+	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return nil, err

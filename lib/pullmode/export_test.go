@@ -22,16 +22,20 @@ var (
 	ReconcileConfigurationBundle    = reconcileConfigurationBundle
 	GetStagedConfigurationBundles   = getStagedConfigurationBundles
 	DeleteStaleConfigurationBundles = deleteStaleConfigurationBundles
+	GetConfigurationBundles         = getConfigurationBundles
 
 	GetConfigurationGroupLabels = getConfigurationGroupLabels
 	CreateConfigurationGroup    = createConfigurationGroup
 	UpdateConfigurationGroup    = updateConfigurationGroup
 	ReconcileConfigurationGroup = reconcileConfigurationGroup
+	GetConfigurationGroups      = getConfigurationGroups
 )
 
 const (
 	StagedLabelKey   = stagedLabelKey
 	StagedLabelValue = stagedLabelValue
+
+	RequestorNameAnnotationKey = requestorNameAnnotationKey
 )
 
 type (

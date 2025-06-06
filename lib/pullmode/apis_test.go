@@ -51,13 +51,16 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		requestorName := randomString()
 		requestorFeature := randomString()
 
-		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorName, requestorFeature)
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 
 		configGroup := &libsveltosv1beta1.ConfigurationGroup{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: clusterNamespace,
 				Name:      randomString(),
 				Labels:    labels,
+				Annotations: map[string]string{
+					pullmode.RequestorNameAnnotationKey: requestorName,
+				},
 			},
 		}
 
@@ -88,15 +91,15 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		Expect(pullmode.RecordResourcesForDeployment(context.TODO(), k8sClient, clusterNamespace, clusterName,
 			requestorKind, requestorName, requestorFeature, resources, logger, setters...)).To(Succeed())
 
-		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorName, requestorFeature)
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 		listOptions := []client.ListOption{
 			client.InNamespace(clusterNamespace),
 			labels,
 		}
 
 		Eventually(func() bool {
-			configurationGroups := &libsveltosv1beta1.ConfigurationGroupList{}
-			err := k8sClient.List(context.TODO(), configurationGroups, listOptions...)
+			configurationGroups, err := pullmode.GetConfigurationGroups(context.TODO(), k8sClient,
+				clusterNamespace, requestorName, labels)
 			if err != nil {
 				return false
 			}
@@ -169,7 +172,7 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 
 		createNamespace(clusterNamespace)
 
-		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorName, requestorFeature)
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 
 		deploymentStatus := libsveltosv1beta1.FeatureStatusProvisioning
 		failureMessage := randomString()
@@ -180,6 +183,9 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 				Namespace: clusterNamespace,
 				Name:      randomString(),
 				Labels:    labels,
+				Annotations: map[string]string{
+					pullmode.RequestorNameAnnotationKey: requestorName,
+				},
 			},
 		}
 
@@ -232,7 +238,7 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		createNamespace(clusterNamespace)
 
 		stagedBundles := 3
-		for i := 0; i < stagedBundles; i++ {
+		for range stagedBundles {
 			requestorIndex := randomString()
 			resources := make(map[string][]unstructured.Unstructured, 0)
 			resources[requestorIndex] = getResources()
@@ -240,16 +246,12 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 				requestorKind, requestorName, requestorFeature, resources, false, logger)).To(Succeed())
 		}
 
-		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorName, requestorFeature)
-		listOptions := []client.ListOption{
-			client.InNamespace(clusterNamespace),
-			labels,
-		}
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 
 		// wait for cache to sync
 		Eventually(func() bool {
-			currentConfigurationBundles := &libsveltosv1beta1.ConfigurationBundleList{}
-			err := k8sClient.List(context.TODO(), currentConfigurationBundles, listOptions...)
+			currentConfigurationBundles, err := pullmode.GetConfigurationBundles(context.TODO(), k8sClient,
+				clusterNamespace, requestorName, labels)
 			if err != nil {
 				return false
 			}
@@ -259,22 +261,19 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		Expect(pullmode.CommitStagedResourcesForDeployment(context.TODO(), k8sClient, clusterNamespace, clusterName,
 			requestorKind, requestorName, requestorFeature, logger)).To(Succeed())
 
-		labels = pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorName, requestorFeature)
-		listOptions = []client.ListOption{
-			client.InNamespace(clusterNamespace),
-			labels,
-		}
+		labels = pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 		Eventually(func() bool {
-			currentConfigurationGroups := &libsveltosv1beta1.ConfigurationGroupList{}
-			err := k8sClient.List(context.TODO(), currentConfigurationGroups, listOptions...)
+			currentConfigurationGroups, err := pullmode.GetConfigurationGroups(context.TODO(), k8sClient,
+				clusterNamespace, requestorName, labels)
 			if err != nil {
 				return false
 			}
 			return len(currentConfigurationGroups.Items) == 1
 		}, time.Minute, time.Second).Should(BeTrue())
 
-		currentConfigurationGroups := &libsveltosv1beta1.ConfigurationGroupList{}
-		Expect(k8sClient.List(context.TODO(), currentConfigurationGroups, listOptions...)).To(Succeed())
+		currentConfigurationGroups, err := pullmode.GetConfigurationGroups(context.TODO(), k8sClient, clusterNamespace,
+			requestorName, labels)
+		Expect(err).To(BeNil())
 		Expect(len(currentConfigurationGroups.Items)).To(Equal(1))
 		Expect(len(currentConfigurationGroups.Items[0].Spec.ConfigurationItems)).To(Equal(stagedBundles))
 	})
@@ -296,13 +295,16 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 			bundleNames = append(bundleNames, bundleName)
 		}
 
-		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorName, requestorFeature)
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 
 		configurationGroup := &libsveltosv1beta1.ConfigurationGroup{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: clusterNamespace,
 				Name:      randomString(),
 				Labels:    labels,
+				Annotations: map[string]string{
+					pullmode.RequestorNameAnnotationKey: requestorName,
+				},
 			},
 		}
 
@@ -377,13 +379,16 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 
 		createNamespace(clusterNamespace)
 
-		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorName, requestorFeature)
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 
 		configurationGroup := &libsveltosv1beta1.ConfigurationGroup{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: clusterNamespace,
 				Name:      randomString(),
 				Labels:    labels,
+				Annotations: map[string]string{
+					pullmode.RequestorNameAnnotationKey: requestorName,
+				},
 			},
 		}
 
