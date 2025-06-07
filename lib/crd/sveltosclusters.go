@@ -167,7 +167,34 @@ spec:
                                 rule:
                                   description: |-
                                     Rule is the CEL (Common Expression Language) expression to evaluate.
-                                    It must return a struct with fields "matching" (bool) and "message" (string, optional).
+                                    It must return a bool
+                                  type: string
+                              required:
+                              - name
+                              - rule
+                              type: object
+                            type: array
+                          evaluateCUE:
+                            description: |-
+                              EvaluateCUE contains a list of named CUE rules.
+                              Each rule will be evaluated in order against each object selected based on
+                              the criteria defined above. Each rule's expression must return a boolean value
+                              indicating whether the object is a match.
+
+                              Evaluation stops at the first rule that returns true; subsequent
+                              rules will not be evaluated.
+                            items:
+                              description: CUERule defines a named CUE rule used in
+                                EvaluateCUE.
+                              properties:
+                                name:
+                                  description: Name is a human-readable identifier
+                                    for the rule.
+                                  type: string
+                                rule:
+                                  description: |-
+                                    Rule is the CUE expression to evaluate.
+                                    It must return a bool
                                   type: string
                               required:
                               - name
@@ -289,7 +316,34 @@ spec:
                                 rule:
                                   description: |-
                                     Rule is the CEL (Common Expression Language) expression to evaluate.
-                                    It must return a struct with fields "matching" (bool) and "message" (string, optional).
+                                    It must return a bool
+                                  type: string
+                              required:
+                              - name
+                              - rule
+                              type: object
+                            type: array
+                          evaluateCUE:
+                            description: |-
+                              EvaluateCUE contains a list of named CUE rules.
+                              Each rule will be evaluated in order against each object selected based on
+                              the criteria defined above. Each rule's expression must return a boolean value
+                              indicating whether the object is a match.
+
+                              Evaluation stops at the first rule that returns true; subsequent
+                              rules will not be evaluated.
+                            items:
+                              description: CUERule defines a named CUE rule used in
+                                EvaluateCUE.
+                              properties:
+                                name:
+                                  description: Name is a human-readable identifier
+                                    for the rule.
+                                  type: string
+                                rule:
+                                  description: |-
+                                    Rule is the CUE expression to evaluate.
+                                    It must return a bool
                                   type: string
                               required:
                               - name
