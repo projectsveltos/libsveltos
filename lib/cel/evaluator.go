@@ -23,15 +23,14 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
-// EvaluateRules evaluates all rules for a specific GVK against an unstructured object
-// Returns true if any rule matches, along with the name of the matching rule
-func EvaluateRules(gvk schema.GroupVersionKind, resource *unstructured.Unstructured,
+// EvaluateRules evaluates all rules against an unstructured object
+// Returns true if any rule matches
+func EvaluateRules(resource *unstructured.Unstructured,
 	rules []libsveltosv1beta1.CELRule, logger logr.Logger) (matched bool, err error) {
 
 	// Evaluate each match rule
@@ -40,8 +39,8 @@ func EvaluateRules(gvk schema.GroupVersionKind, resource *unstructured.Unstructu
 		logger.V(logsettings.LogDebug).Info(fmt.Sprintf("evaluate match rule %s", rule.Name))
 		matched, err = evaluateRule(rule.Rule, resource, logger)
 		if err != nil {
-			logger.V(logsettings.LogInfo).Info("Failed to evaluate rule %s for %s: %v",
-				rule.Name, gvk.String(), err)
+			logger.V(logsettings.LogInfo).Info("Failed to evaluate rule %s %s/%s for %s: %v",
+				rule.Name, resource.GetKind(), resource.GetNamespace(), resource.GetName(), err)
 			continue
 		}
 

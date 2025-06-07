@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cel_test
+package cue_test
 
 import (
 	. "github.com/onsi/ginkgo/v2"
@@ -26,7 +26,7 @@ import (
 	"k8s.io/klog/v2/textlogger"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	"github.com/projectsveltos/libsveltos/lib/cel"
+	"github.com/projectsveltos/libsveltos/lib/cue"
 )
 
 var _ = Describe("utils ", func() {
@@ -36,7 +36,7 @@ var _ = Describe("utils ", func() {
 		logger = textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
 	})
 
-	It("CEL Rule marks object as a match", func() {
+	It("CUE Rule marks object as a match", func() {
 		obj := &unstructured.Unstructured{}
 		obj.SetGroupVersionKind(schema.GroupVersionKind{
 			Group:   "apps",
@@ -50,26 +50,26 @@ var _ = Describe("utils ", func() {
 		})
 
 		// Rule that should match (label "env" == "prod")
-		matchRule := libsveltosv1beta1.CELRule{
+		matchRule := libsveltosv1beta1.CUERule{
 			Name: "match-env-prod",
-			Rule: `resource.metadata.labels.env == "prod"`,
+			Rule: `resource: metadata: labels: env: "prod"`,
 		}
 
-		matched, err := cel.EvaluateRules(obj, []libsveltosv1beta1.CELRule{matchRule}, logger)
+		matched, err := cue.EvaluateRules(obj, []libsveltosv1beta1.CUERule{matchRule}, logger)
 		Expect(err).To(BeNil())
 		Expect(matched).To(BeTrue())
 
-		noMatchRule := libsveltosv1beta1.CELRule{
+		noMatchRule := libsveltosv1beta1.CUERule{
 			Name: "no-match-env-staging",
-			Rule: `resource.metadata.labels.env == "staging"`,
+			Rule: `resource: metadata: labels: env: "staging"`,
 		}
 
-		matched, err = cel.EvaluateRules(obj, []libsveltosv1beta1.CELRule{noMatchRule}, logger)
+		matched, err = cue.EvaluateRules(obj, []libsveltosv1beta1.CUERule{noMatchRule}, logger)
 		Expect(err).To(BeNil())
 		Expect(matched).To(BeFalse())
 	})
 
-	It("CEL Rule marks object as a match when object matches at least one rule", func() {
+	It("CUE Rule marks object as a match when object matches at least one rule", func() {
 		obj := &unstructured.Unstructured{}
 		obj.SetGroupVersionKind(schema.GroupVersionKind{
 			Group:   "",
@@ -86,25 +86,67 @@ var _ = Describe("utils ", func() {
 		})
 
 		// Rule 1: Wrong label value — should not match
-		rule1 := libsveltosv1beta1.CELRule{
+		rule1 := libsveltosv1beta1.CUERule{
 			Name: "wrong-owner",
-			Rule: `resource.metadata.labels.owner == "user"`,
+			Rule: `resource: metadata: labels: owner: "user"`,
 		}
 
 		// Rule 2: Wrong namespace — should not match
-		rule2 := libsveltosv1beta1.CELRule{
+		rule2 := libsveltosv1beta1.CUERule{
 			Name: "wrong-namespace",
-			Rule: `resource.metadata.namespace == "default"`,
+			Rule: `resource: metadata: namespace: "default"`,
 		}
 
 		// Rule 3: Correct label value — should match
-		rule3 := libsveltosv1beta1.CELRule{
+		rule3 := libsveltosv1beta1.CUERule{
 			Name: "correct-owner",
-			Rule: `resource.metadata.labels.owner == "admin"`,
+			Rule: `resource: metadata: labels: owner: "admin"`,
 		}
 
-		matched, err := cel.EvaluateRules(obj,
-			[]libsveltosv1beta1.CELRule{rule1, rule2, rule3}, logger)
+		matched, err := cue.EvaluateRules(obj,
+			[]libsveltosv1beta1.CUERule{rule1, rule2, rule3}, logger)
+		Expect(err).To(BeNil())
+		Expect(matched).To(BeTrue())
+	})
+
+	It("CUE Rule verify deployment active replicas match expected replicas", func() {
+		obj := &unstructured.Unstructured{}
+		obj.SetGroupVersionKind(schema.GroupVersionKind{
+			Group:   "apps",
+			Version: "v1",
+			Kind:    "Deployment",
+		})
+		obj.SetName("test-deployment")
+		obj.SetNamespace("default")
+		obj.SetLabels(map[string]string{
+			"env": "prod",
+		})
+
+		// Set spec.replicas
+		Expect(unstructured.SetNestedField(obj.Object, int64(3), "spec", "replicas")).To(Succeed())
+
+		// Set status.activeReplicas
+		Expect(unstructured.SetNestedField(obj.Object, int64(1), "status", "activeReplicas")).To(Succeed())
+
+		// Rule that should match (label "env" == "prod")
+		matchRule := libsveltosv1beta1.CUERule{
+			Name: "match-env-prod",
+			Rule: `resource: {
+    spec: replicas: int
+    status: activeReplicas: spec.replicas
+}`,
+		}
+
+		matched, err := cue.EvaluateRules(obj,
+			[]libsveltosv1beta1.CUERule{matchRule}, logger)
+		Expect(err).To(BeNil())
+		Expect(matched).To(BeFalse())
+
+		// Set status.activeReplicas
+		Expect(unstructured.SetNestedField(obj.Object, int64(3), "status", "activeReplicas")).To(Succeed())
+
+		matched, err = cue.EvaluateRules(obj,
+			[]libsveltosv1beta1.CUERule{matchRule}, logger)
 		Expect(err).To(BeNil())
 		Expect(matched).To(BeTrue())
 	})
