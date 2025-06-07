@@ -69,6 +69,16 @@ type TokenRequestRenewalOption struct {
 	// RenewTokenRequestInterval is the interval at which to renew the TokenRequest
 	RenewTokenRequestInterval metav1.Duration `json:"renewTokenRequestInterval"`
 
+	// TokenDuration is the duration the requested token will be valid for.
+	// If not specified, the value of RenewTokenRequestInterval will be used.
+	// This allows the token to remain valid beyond the renewal interval,
+	// providing a buffer in case of connectivity loss.
+	// Example: renew every hour, token lasts 3 hours (buffer for disconnection)
+	//   renewTokenRequestInterval: 1h
+	//   tokenDuration: 3h
+	// +optional
+	TokenDuration metav1.Duration `json:"tokenDuration,omitempty"`
+
 	// SANamespace is the namespace of the ServiceAccount to renew the token for.
 	// If specified, ServiceAccount must exist in the managed cluster.
 	// If not specified, sveltos will try to deduce it from current kubeconfig
