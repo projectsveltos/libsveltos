@@ -39,8 +39,8 @@ func EvaluateRules(resource *unstructured.Unstructured,
 		logger.V(logsettings.LogDebug).Info(fmt.Sprintf("evaluate match rule %s", rule.Name))
 		matched, err = evaluateRule(rule.Rule, resource, logger)
 		if err != nil {
-			logger.V(logsettings.LogInfo).Info("Failed to evaluate rule %s %s/%s for %s: %v",
-				rule.Name, resource.GetKind(), resource.GetNamespace(), resource.GetName(), err)
+			logger.V(logsettings.LogInfo).Info(fmt.Sprintf("Failed to evaluate rule %s %s/%s for %s: %v",
+				rule.Name, resource.GetKind(), resource.GetNamespace(), resource.GetName(), err))
 			continue
 		}
 
