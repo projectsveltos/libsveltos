@@ -140,6 +140,14 @@ type SveltosClusterSpec struct {
 	// is healthy
 	// +optional
 	LivenessChecks []ClusterCheck `json:"livenessChecks,omitempty"`
+
+	// PullMode indicates whether the cluster is in pull mode.
+	// If true, the agent in the managed cluster will fetch the configuration.
+	// If false (default), the management cluster will push the configuration.
+	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
+	// +kubebuilder:default:=false
+	// +optional
+	PullMode bool `json:"pullMode,omitempty"`
 }
 
 // SveltosClusterStatus defines the status of SveltosCluster

@@ -195,4 +195,24 @@ var _ = Describe("CRD", func() {
 
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
+
+	It("Gets the ConfigurationBundle CustomResourceDefinition", func() {
+		yaml := crd.GetConfigurationBundleCRDYAML()
+
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_configurationbundles.lib.projectsveltos.io.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the ConfigurationGroup CustomResourceDefinition", func() {
+		yaml := crd.GetConfigurationGroupCRDYAML()
+
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_configurationgroups.lib.projectsveltos.io.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
 })

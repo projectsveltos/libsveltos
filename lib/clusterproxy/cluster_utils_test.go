@@ -24,6 +24,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2/textlogger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -588,5 +589,46 @@ var _ = Describe("Cluster utils", func() {
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: matchingCapiCluster.Namespace, Name: matchingCapiCluster.Name,
 				Kind: clusterv1.ClusterKind, APIVersion: clusterv1.GroupVersion.String()}))
+	})
+
+	It("isSveltosClusterInPullMode returns SveltosCluster.Spec.PullMode", func() {
+		sveltosCluster.Spec.PullMode = true
+		initObjects := []client.Object{
+			sveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		pullMode, err := clusterproxy.IsSveltosClusterInPullMode(context.TODO(), c, sveltosCluster.Namespace,
+			sveltosCluster.Name, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(pullMode).To(Equal(true))
+
+		currentSveltosCluster := &libsveltosv1beta1.SveltosCluster{}
+		err = c.Get(context.TODO(),
+			types.NamespacedName{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name},
+			currentSveltosCluster)
+		Expect(err).To(BeNil())
+		currentSveltosCluster.Spec.PullMode = false
+		Expect(c.Update(context.Background(), currentSveltosCluster)).To(Succeed())
+
+		pullMode, err = clusterproxy.IsSveltosClusterInPullMode(context.TODO(), c, sveltosCluster.Namespace,
+			sveltosCluster.Name, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(pullMode).To(Equal(false))
+	})
+
+	It("GetKubernetesClient returns nil for a SveltosCluster in pull mode", func() {
+		sveltosCluster.Spec.PullMode = true
+		initObjects := []client.Object{
+			sveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		remoteClient, err := clusterproxy.GetKubernetesClient(context.TODO(), c, sveltosCluster.Namespace, sveltosCluster.Name,
+			"", "", libsveltosv1beta1.ClusterTypeSveltos, textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(remoteClient).To(BeNil())
 	})
 })

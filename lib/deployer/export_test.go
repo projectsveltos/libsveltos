@@ -25,6 +25,9 @@ var (
 	StoreResult      = storeResult
 	GetRequestStatus = getRequestStatus
 	ProcessRequests  = processRequests
+
+	HandleResourceDelete = handleResourceDelete
+	CanDelete            = canDelete
 )
 
 func (d *deployer) SetInProgress(inProgress []string) {

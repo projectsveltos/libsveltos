@@ -41,7 +41,7 @@ const (
 	ClusterSummaryNamespaceAnnotation = "projectsveltos.io/cluster-summary-namespace"
 )
 
-type Resource struct {
+type ResourceSummaryResource struct {
 	// Name of the resource deployed in the Cluster.
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
@@ -82,7 +82,7 @@ type HelmResources struct {
 
 	// Resources deployed by ClusterSummary because of helm charts
 	// +optional
-	Resources []Resource `json:"group,omitempty"`
+	Resources []ResourceSummaryResource `json:"group,omitempty"`
 }
 
 type ResourceHash struct {

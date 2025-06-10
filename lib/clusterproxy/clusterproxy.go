@@ -116,6 +116,15 @@ func GetCAPISecretData(ctx context.Context, logger logr.Logger, c client.Client,
 func GetSveltosKubernetesRestConfig(ctx context.Context, logger logr.Logger, c client.Client,
 	clusterNamespace, clusterName string) (*rest.Config, error) {
 
+	pullMode, err := isSveltosClusterInPullMode(ctx, c, clusterNamespace, clusterName, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	if pullMode {
+		return nil, nil
+	}
+
 	kubeconfigContent, err := GetSveltosSecretData(ctx, logger, c, clusterNamespace, clusterName)
 	if err != nil {
 		return nil, err
@@ -247,6 +256,25 @@ func UpdateSveltosSecretData(ctx context.Context, logger logr.Logger, c client.C
 	secret.Data[kubeconfigKey] = []byte(kubeconfig)
 
 	return c.Update(ctx, secret)
+}
+
+// IsClusterInPullMode returns true if cluster is in pull mode
+func IsClusterInPullMode(ctx context.Context, c client.Client, clusterNamespace, clusterName string,
+	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (bool, error) {
+
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
+		sveltosCluster := &libsveltosv1beta1.SveltosCluster{}
+		err := c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: clusterName}, sveltosCluster)
+		if err != nil {
+			logger.Info(fmt.Sprintf("Failed to get SveltosCluster %v", err))
+			return false, err
+		}
+
+		return sveltosCluster.Spec.PullMode, nil
+	}
+
+	// Only SveltosCluster can be in pull mode
+	return false, nil
 }
 
 // IsClusterReadyToBeConfigured returns true if cluster is ready to be configured
