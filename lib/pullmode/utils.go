@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -620,9 +621,27 @@ func getHash(resources []unstructured.Unstructured) ([]byte, error) {
 func removeStagedLabel(ctx context.Context, c client.Client,
 	configurationBundle *libsveltosv1beta1.ConfigurationBundle) error {
 
-	labels := configurationBundle.Labels
-	delete(labels, stagedLabelKey)
-	configurationBundle.Labels = labels
+	// ConfigurationBundles are created and then status is updated with hash.
+	// If committing staged configurationBundles happen fast, this might fail
+	// the cached version used to remove the label might not be the latest one (after status update)
 
-	return c.Update(ctx, configurationBundle)
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentConfigurationBundle := &libsveltosv1beta1.ConfigurationBundle{}
+		configurationBundleName := types.NamespacedName{
+			Namespace: configurationBundle.Namespace,
+			Name:      configurationBundle.Name,
+		}
+
+		err := c.Get(ctx, configurationBundleName, currentConfigurationBundle)
+		if err != nil {
+			return err
+		}
+
+		labels := currentConfigurationBundle.Labels
+		delete(labels, stagedLabelKey)
+		currentConfigurationBundle.Labels = labels
+
+		return c.Update(ctx, currentConfigurationBundle)
+	})
+	return err
 }
