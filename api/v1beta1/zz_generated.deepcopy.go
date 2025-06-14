@@ -2611,6 +2611,10 @@ func (in *SveltosClusterStatus) DeepCopyInto(out *SveltosClusterStatus) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.AgentLastReportTime != nil {
+		in, out := &in.AgentLastReportTime, &out.AgentLastReportTime
+		*out = (*in).DeepCopy()
+	}
 	if in.NextUnpause != nil {
 		in, out := &in.NextUnpause, &out.NextUnpause
 		*out = (*in).DeepCopy()
