@@ -175,6 +175,13 @@ type SveltosClusterStatus struct {
 	// +optional
 	LastReconciledTokenRequestAt string `json:"lastReconciledTokenRequestAt,omitempty"`
 
+	// AgentLastReportTime indicates the last time the Sveltos agent in the managed cluster
+	// successfully reported its status to the management cluster's API server.
+	// This field is updated exclusively when Sveltos operates in pull mode,
+	// serving as a heartbeat from the agent's perspective.
+	// +optional
+	AgentLastReportTime *metav1.Time `json:"agentLastReportTime,omitempty"`
+
 	// Information when next unpause cluster is scheduled
 	// +optional
 	NextUnpause *metav1.Time `json:"nextUnpause,omitempty"`

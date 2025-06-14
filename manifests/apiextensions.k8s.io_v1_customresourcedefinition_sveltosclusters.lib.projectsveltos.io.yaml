@@ -379,6 +379,14 @@ spec:
           status:
             description: SveltosClusterStatus defines the status of SveltosCluster
             properties:
+              agentLastReportTime:
+                description: |-
+                  AgentLastReportTime indicates the last time the Sveltos agent in the managed cluster
+                  successfully reported its status to the management cluster's API server.
+                  This field is updated exclusively when Sveltos operates in pull mode,
+                  serving as a heartbeat from the agent's perspective.
+                format: date-time
+                type: string
               connectionFailures:
                 default: 0
                 description: |-
