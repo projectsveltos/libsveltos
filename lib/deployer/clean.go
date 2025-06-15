@@ -120,6 +120,13 @@ func handleResourceDelete(ctx context.Context, c client.Client, policy client.Ob
 		delete(l, ReferenceNameLabel)
 		delete(l, ReferenceNamespaceLabel)
 		policy.SetLabels(l)
+
+		annotations := policy.GetAnnotations()
+		delete(annotations, OwnerKind)
+		delete(annotations, OwnerName)
+		delete(annotations, OwnerTier)
+		policy.SetAnnotations(annotations)
+
 		return c.Update(ctx, policy)
 	}
 
