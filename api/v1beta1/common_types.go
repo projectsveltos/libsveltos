@@ -392,13 +392,6 @@ type Resource struct {
 	// +kubebuilder:validation:MinLength=1
 	Version string `json:"version"`
 
-	// LastAppliedTime identifies when this resource was last applied to the cluster.
-	// +optional
-	LastAppliedTime *metav1.Time `json:"lastAppliedTime,omitempty"`
-
-	// Owner is the list of ConfigMap/Secret containing this resource.
-	Owner corev1.ObjectReference `json:"owner"`
-
 	// IgnoreForConfigurationDrift indicates to not track resource
 	// for configuration drift detection.
 	// This field has a meaning only when mode is ContinuousWithDriftDetection

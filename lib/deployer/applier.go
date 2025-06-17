@@ -223,16 +223,11 @@ func GetResource(policy *unstructured.Unstructured, ignoreForConfigurationDrift 
 	logger logr.Logger) (resource *libsveltosv1beta1.Resource, policyHash string) {
 
 	resource = &libsveltosv1beta1.Resource{
-		Name:      policy.GetName(),
-		Namespace: policy.GetNamespace(),
-		Kind:      policy.GetKind(),
-		Group:     policy.GetObjectKind().GroupVersionKind().Group,
-		Version:   policy.GetObjectKind().GroupVersionKind().Version,
-		Owner: corev1.ObjectReference{
-			Namespace: referencedObject.Namespace,
-			Name:      referencedObject.Name,
-			Kind:      referencedObject.Kind,
-		},
+		Name:                        policy.GetName(),
+		Namespace:                   policy.GetNamespace(),
+		Kind:                        policy.GetKind(),
+		Group:                       policy.GetObjectKind().GroupVersionKind().Group,
+		Version:                     policy.GetObjectKind().GroupVersionKind().Version,
 		IgnoreForConfigurationDrift: ignoreForConfigurationDrift,
 	}
 

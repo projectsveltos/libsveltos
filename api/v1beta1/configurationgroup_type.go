@@ -167,6 +167,13 @@ type ConfigurationGroupStatus struct {
 	// LastAppliedTime is the time feature was last reconciled
 	// +optional
 	LastAppliedTime *metav1.Time `json:"lastAppliedTime,omitempty"`
+
+	// ObservedGeneration reflects the generation of the most recently observed ConfigurationGroup.
+	// When this value matches the ConfigurationGroup's metadata.generation, it indicates that the
+	// status reflects the latest desired specification. If observedGeneration is less than generation,
+	// it means the controller has not yet processed the latest changes to the specification.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 //+kubebuilder:object:root=true
