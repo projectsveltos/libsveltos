@@ -294,16 +294,17 @@ func reconcileConfigurationGroup(ctx context.Context, c client.Client,
 		return errors.New(msgError)
 	}
 
+	l := logger.WithValues("configurationgropup", fmt.Sprintf("%s/%s", clusterNamespace, name))
 	action := libsveltosv1beta1.ActionDeploy
 	if currentCG == nil {
-		l := logger.WithValues("configurationgropup",
-			fmt.Sprintf("%s/%s", clusterNamespace, name))
-		l.V(logsettings.LogDebug).Info(fmt.Sprintf("creating configurationGroup for requestor %s",
-			requestorName))
+		l.V(logsettings.LogDebug).Info(fmt.Sprintf("creating configurationGroup for requestor %s (bundles %d)",
+			requestorName, len(bundles)))
 		return createConfigurationGroup(ctx, c, clusterNamespace, name, requestorName,
 			bundles, labels, action, setters...)
 	}
 
+	l.V(logsettings.LogDebug).Info(fmt.Sprintf("creating configurationGroup for requestor %s (bundles %d)",
+		requestorName, len(bundles)))
 	return updateConfigurationGroup(ctx, c, clusterNamespace, name, requestorName,
 		bundles, action, logger, setters...)
 }
