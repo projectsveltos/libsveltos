@@ -296,6 +296,10 @@ func reconcileConfigurationGroup(ctx context.Context, c client.Client,
 
 	action := libsveltosv1beta1.ActionDeploy
 	if currentCG == nil {
+		l := logger.WithValues("configurationgropup",
+			fmt.Sprintf("%s/%s", clusterNamespace, name))
+		l.V(logsettings.LogDebug).Info(fmt.Sprintf("creating configurationGroup for requestor %s",
+			requestorName))
 		return createConfigurationGroup(ctx, c, clusterNamespace, name, requestorName,
 			bundles, labels, action, setters...)
 	}
@@ -343,7 +347,8 @@ func deleteConfigurationGroup(ctx context.Context, c client.Client,
 
 	l := logger.WithValues("configurationgropup",
 		fmt.Sprintf("%s/%s", currentConfigurationGroup.GetNamespace(), currentConfigurationGroup.GetName()))
-	l.V(logsettings.LogDebug).Info("deleting configurationGroup")
+	l.V(logsettings.LogDebug).Info(fmt.Sprintf("deleting configurationGroup for requestor %s",
+		requestorName))
 	return c.Delete(ctx, currentConfigurationGroup)
 }
 
