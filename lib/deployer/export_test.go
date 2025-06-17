@@ -28,6 +28,8 @@ var (
 
 	HandleResourceDelete = handleResourceDelete
 	CanDelete            = canDelete
+
+	DeployResourceSummaryInstance = deployResourceSummaryInstance
 )
 
 func (d *deployer) SetInProgress(inProgress []string) {
