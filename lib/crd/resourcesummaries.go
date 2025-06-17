@@ -139,6 +139,11 @@ spec:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
                       type: string
+                    lastAppliedTime:
+                      description: LastAppliedTime identifies when this resource was
+                        last applied to the cluster.
+                      format: date-time
+                      type: string
                     name:
                       description: Name of the resource deployed in the Cluster.
                       minLength: 1
@@ -241,6 +246,11 @@ spec:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
                       type: string
+                    lastAppliedTime:
+                      description: LastAppliedTime identifies when this resource was
+                        last applied to the cluster.
+                      format: date-time
+                      type: string
                     name:
                       description: Name of the resource deployed in the Cluster.
                       minLength: 1
@@ -285,6 +295,11 @@ spec:
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
+                      type: string
+                    lastAppliedTime:
+                      description: LastAppliedTime identifies when this resource was
+                        last applied to the cluster.
+                      format: date-time
                       type: string
                     name:
                       description: Name of the resource deployed in the Cluster.
@@ -331,6 +346,11 @@ spec:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
                       type: string
+                    lastAppliedTime:
+                      description: LastAppliedTime identifies when this resource was
+                        last applied to the cluster.
+                      format: date-time
+                      type: string
                     name:
                       description: Name of the resource deployed in the Cluster.
                       minLength: 1
@@ -374,6 +394,11 @@ spec:
                     kind:
                       description: Kind of the resource deployed in the Cluster.
                       minLength: 1
+                      type: string
+                    lastAppliedTime:
+                      description: LastAppliedTime identifies when this resource was
+                        last applied to the cluster.
+                      format: date-time
                       type: string
                     name:
                       description: Name of the resource deployed in the Cluster.

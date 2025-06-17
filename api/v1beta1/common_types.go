@@ -398,6 +398,10 @@ type Resource struct {
 	// +kubebuilder:default:=false
 	// +optional
 	IgnoreForConfigurationDrift bool `json:"ignoreForConfigurationDrift,omitempty"`
+
+	// LastAppliedTime identifies when this resource was last applied to the cluster.
+	// +optional
+	LastAppliedTime *metav1.Time `json:"lastAppliedTime,omitempty"`
 }
 
 type ResourceReport struct {
