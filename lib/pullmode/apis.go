@@ -18,6 +18,7 @@ package pullmode
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -301,15 +302,24 @@ func GetResourceDeploymentStatus(ctx context.Context, c client.Client,
 		return nil, err
 	}
 
-	currentConfigurationGroup := &libsveltosv1beta1.ConfigurationGroup{}
+	currentCG := &libsveltosv1beta1.ConfigurationGroup{}
 	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name},
-		currentConfigurationGroup)
+		currentCG)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
 		return nil, err
 	}
 
-	return &currentConfigurationGroup.Status, nil
+	if currentCG.Status.ObservedGeneration != 0 {
+		if currentCG.Status.ObservedGeneration != currentCG.Generation {
+			msg := fmt.Sprintf("Status.ObservedGeneration (%d) does not match Generation (%d)",
+				currentCG.Status.ObservedGeneration, currentCG.Generation)
+			logger.V(logsettings.LogInfo).Info(msg)
+			return nil, errors.New(msg)
+		}
+	}
+
+	return &currentCG.Status, nil
 }
 
 // For SveltosClusters operating in pull mode, this method is invoked by components
