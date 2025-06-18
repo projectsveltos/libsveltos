@@ -85,14 +85,15 @@ type bundleData struct {
 
 func reconcileConfigurationBundle(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature, index string,
-	resources []unstructured.Unstructured, skipTracking, isStaged bool, logger logr.Logger) (string, error) {
+	resources []unstructured.Unstructured, skipTracking, isStaged bool, logger logr.Logger,
+) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
 	labels := getConfigurationBundleLabels(clusterName, requestorKind, requestorFeature, index)
 
 	name, currentBundle, err := getConfigurationBundleName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationBundle name: %v", err))
-		return "", err
+		return nil, err
 	}
 
 	// If ConfigurationBundle is still present but marked for deletion, return an error
@@ -100,15 +101,15 @@ func reconcileConfigurationBundle(ctx context.Context, c client.Client,
 	if currentBundle != nil && !currentBundle.GetDeletionTimestamp().IsZero() {
 		msgError := "ConfigurationBundle is currently existing but marked for deletion"
 		logger.V(logsettings.LogInfo).Info(msgError)
-		return "", errors.New(msgError)
+		return nil, errors.New(msgError)
 	}
 
 	if currentBundle == nil {
-		return name, createConfigurationBundle(ctx, c, clusterNamespace, name, requestorName,
+		return createConfigurationBundle(ctx, c, clusterNamespace, name, requestorName,
 			resources, labels, skipTracking, isStaged, logger)
 	}
 
-	return name, updateConfigurationBundle(ctx, c, clusterNamespace, name, requestorName,
+	return updateConfigurationBundle(ctx, c, clusterNamespace, name, requestorName,
 		resources, skipTracking, isStaged, logger)
 }
 
@@ -140,12 +141,12 @@ func prepareConfigurationBundle(namespace, name string, resources []unstructured
 
 func createConfigurationBundle(ctx context.Context, c client.Client, namespace, name, requestorName string,
 	resources []unstructured.Unstructured, labels client.MatchingLabels, skipTracking, isStaged bool,
-	logger logr.Logger) error {
+	logger logr.Logger) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
 	bundle, err := prepareConfigurationBundle(namespace, name, resources)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to prepare configurationBundle: %v", err))
-		return err
+		return nil, err
 	}
 
 	if labels == nil {
@@ -163,7 +164,7 @@ func createConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 
 	err = c.Create(ctx, bundle)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// For staged ConfigurationBundle also stores current hash
@@ -172,23 +173,25 @@ func createConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to evaluate hash: %v", err))
 	}
 	bundle.Status.Hash = hash
-	return c.Status().Update(ctx, bundle)
+	err = c.Status().Update(ctx, bundle)
+	return bundle, err
 }
 
 func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, name, requestorName string,
-	resources []unstructured.Unstructured, skipTracking, isStaged bool, logger logr.Logger) error {
+	resources []unstructured.Unstructured, skipTracking, isStaged bool, logger logr.Logger,
+) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
 	bundle, err := prepareConfigurationBundle(namespace, name, resources)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to prepare configurationBundle: %v", err))
-		return err
+		return nil, err
 	}
 
 	currentBundle := &libsveltosv1beta1.ConfigurationBundle{}
 	err = c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, currentBundle)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get configurationBundle: %v", err))
-		return err
+		return nil, err
 	}
 
 	if currentBundle.Labels == nil {
@@ -206,7 +209,7 @@ func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 	currentBundle.Spec.NotTracked = skipTracking
 	err = c.Update(ctx, currentBundle)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// For staged ConfigurationBundle also stores current hash
@@ -215,7 +218,8 @@ func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to evaluate hash: %v", err))
 	}
 	currentBundle.Status.Hash = hash
-	return c.Status().Update(ctx, currentBundle)
+	err = c.Status().Update(ctx, currentBundle)
+	return currentBundle, err
 }
 
 func getConfigurationBundles(ctx context.Context, c client.Client, namespace, requestorName string,
@@ -494,27 +498,17 @@ func getReferencedConfigurationBundles(ctx context.Context, c client.Client,
 // Staged ConfigurationBundles are bundles created for a given ConfigurationGroup which are currently
 // not referenced
 func getStagedConfigurationBundles(ctx context.Context, c client.Client,
-	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
-	logger logr.Logger) ([]bundleData, error) {
-
-	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
-	labels[stagedLabelKey] = stagedLabelValue
-
-	currentBundles, err := getConfigurationBundles(ctx, c, clusterNamespace, requestorName, labels)
-	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to list staged configurationBundles: %v", err))
-		return nil, err
-	}
+	currentStagedBundles []libsveltosv1beta1.ConfigurationBundle, logger logr.Logger) ([]bundleData, error) {
 
 	stagedBundles := make([]libsveltosv1beta1.ConfigurationBundle, 0)
 	// Remove staged label
-	for i := range currentBundles.Items {
-		ccb := &currentBundles.Items[i]
+	for i := range currentStagedBundles {
+		ccb := &currentStagedBundles[i]
 		if err := removeStagedLabel(ctx, c, ccb); err != nil {
 			logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to remove staged label from configurationBundles: %v", err))
 			return nil, err
 		}
-		stagedBundles = append(stagedBundles, currentBundles.Items[i])
+		stagedBundles = append(stagedBundles, currentStagedBundles[i])
 	}
 
 	sort.Slice(stagedBundles, func(i, j int) bool {

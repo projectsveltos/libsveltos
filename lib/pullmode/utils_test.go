@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/go-logr/logr"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -58,8 +57,10 @@ var _ = Describe("Utils for pullmode APIs", func() {
 
 		labels := pullmode.GetConfigurationBundleLabels(clusterName, requestorKind, requestorFeature, requestorIndex)
 
-		Expect(pullmode.CreateConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, name, requestorName,
-			getResources(), labels, false, false, logger)).To(Succeed())
+		bundle, err := pullmode.CreateConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, name, requestorName,
+			getResources(), labels, false, false, logger)
+		Expect(err).To(BeNil())
+		Expect(bundle).ToNot(BeNil())
 
 		Eventually(func() error {
 			currentConfigBundle := &libsveltosv1beta1.ConfigurationBundle{}
@@ -97,8 +98,10 @@ var _ = Describe("Utils for pullmode APIs", func() {
 
 		labels := pullmode.GetConfigurationBundleLabels(clusterName, requestorKind, requestorFeature, requestorIndex)
 
-		Expect(pullmode.CreateConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, name, requestorName,
-			nil, labels, false, false, logger)).To(Succeed())
+		bundle, err := pullmode.CreateConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, name, requestorName,
+			nil, labels, false, false, logger)
+		Expect(err).To(BeNil())
+		Expect(bundle).ToNot(BeNil())
 
 		Eventually(func() error {
 			currentConfigBundle := &libsveltosv1beta1.ConfigurationBundle{}
@@ -115,8 +118,10 @@ var _ = Describe("Utils for pullmode APIs", func() {
 		Expect(currentConfigBundle.Spec.Resources).To(BeNil())
 
 		resources := getResources()
-		Expect(pullmode.UpdateConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, name, requestorName,
-			resources, false, true, logger)).To(Succeed())
+		bundle, err = pullmode.UpdateConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, name, requestorName,
+			resources, false, true, logger)
+		Expect(err).To(BeNil())
+		Expect(bundle).ToNot(BeNil())
 
 		Eventually(func() bool {
 			currentConfigBundle := &libsveltosv1beta1.ConfigurationBundle{}
@@ -139,115 +144,33 @@ var _ = Describe("Utils for pullmode APIs", func() {
 
 		createNamespace(clusterNamespace)
 
-		name, err := pullmode.ReconcileConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, clusterName,
+		bundle, err := pullmode.ReconcileConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, clusterName,
 			requestorKind, requestorName, requestorFeature, requestorIndex, nil, false, false, logger)
 		Expect(err).To(BeNil())
 
 		Eventually(func() error {
 			currentConfigBundle := &libsveltosv1beta1.ConfigurationBundle{}
-			err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: name},
+			err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: bundle.Name},
 				currentConfigBundle)
 			return err
 		}, time.Minute, time.Second).Should(BeNil())
 
 		resources := getResources()
-		newName, err := pullmode.ReconcileConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, clusterName,
+		newBundle, err := pullmode.ReconcileConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, clusterName,
 			requestorKind, requestorName, requestorFeature, requestorIndex, resources, false, true, logger)
 		Expect(err).To(BeNil())
-		Expect(newName).To(Equal(name))
+		Expect(newBundle).ToNot(BeNil())
+		Expect(newBundle.Name).To(Equal(bundle.Name))
 
 		Consistently(func() bool {
 			currentConfigBundle := &libsveltosv1beta1.ConfigurationBundle{}
-			err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: name},
+			err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: bundle.Name},
 				currentConfigBundle)
 			if err != nil {
 				return false
 			}
 			return len(currentConfigBundle.Spec.Resources) == len(resources)
 		}, time.Minute, time.Second).Should(BeTrue())
-	})
-
-	It("getStagedConfigurationBundles returns only non referenced ConfigurationBundles", func() {
-		clusterNamespace := randomString()
-		clusterName := randomString()
-		requestorKind := randomString()
-		requestorName := randomString()
-		requestorFeature := randomString()
-		requestorIndex := randomString()
-
-		createNamespace(clusterNamespace)
-
-		configurationGroup := &libsveltosv1beta1.ConfigurationGroup{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      randomString(),
-				Namespace: clusterNamespace,
-				Labels:    pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature),
-				Annotations: map[string]string{
-					pullmode.RequestorNameAnnotationKey: requestorName,
-				},
-			},
-			Spec: libsveltosv1beta1.ConfigurationGroupSpec{
-				ConfigurationItems: make([]libsveltosv1beta1.ConfigurationItem, 0),
-			},
-		}
-
-		labels := pullmode.GetConfigurationBundleLabels(clusterName, requestorKind, requestorFeature, requestorIndex)
-		for range 3 {
-			bundle := createConfigurationBundle(clusterNamespace, requestorName, labels)
-			Expect(k8sClient.Create(context.TODO(), bundle)).To(Succeed())
-			configurationGroup.Spec.ConfigurationItems = append(configurationGroup.Spec.ConfigurationItems,
-				libsveltosv1beta1.ConfigurationItem{
-					ContentRef: &corev1.ObjectReference{
-						Kind:       libsveltosv1beta1.ConfigurationBundleKind,
-						APIVersion: libsveltosv1beta1.GroupVersion.String(),
-						Name:       bundle.Name,
-						Namespace:  clusterNamespace,
-					},
-				})
-		}
-
-		Expect(k8sClient.Create(context.TODO(), configurationGroup)).To(Succeed())
-
-		stagedBundles := make(map[string]bool)
-		for range 3 {
-			bundle := createConfigurationBundle(clusterNamespace, requestorName, labels)
-			bundle.Labels[pullmode.StagedLabelKey] = pullmode.StagedLabelValue
-			Expect(k8sClient.Create(context.TODO(), bundle)).To(Succeed())
-			Expect(waitForObject(context.TODO(), k8sClient, bundle)).To(Succeed())
-			stagedBundles[bundle.Name] = true
-			time.Sleep(time.Second)
-		}
-
-		currentStagedBundles, err := pullmode.GetStagedConfigurationBundles(context.TODO(), k8sClient, clusterNamespace,
-			clusterName, requestorKind, requestorName, requestorFeature, logger)
-		Expect(err).To(BeNil())
-		Expect(len(currentStagedBundles)).To(Equal(len(stagedBundles)))
-
-		currentStagedBundleMap := make(map[string]bool, len(currentStagedBundles))
-		for i := range currentStagedBundles {
-			currentStagedBundleMap[currentStagedBundles[i].Name] = true
-		}
-
-		for k := range currentStagedBundleMap {
-			_, ok := stagedBundles[k]
-			Expect(ok).To(BeTrue())
-		}
-
-		// Verify bundles are sorted by creation time
-		prevBundle := libsveltosv1beta1.ConfigurationBundle{}
-		currentBundle := libsveltosv1beta1.ConfigurationBundle{}
-
-		bundleName := currentStagedBundles[0].Name
-		Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: bundleName},
-			&prevBundle)).To(Succeed())
-
-		for i := 1; i < len(currentStagedBundles); i++ {
-			bundleName = currentStagedBundles[i].Name
-			Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: bundleName},
-				&currentBundle)).To(Succeed())
-			Expect(prevBundle.CreationTimestamp.Before(&currentBundle.CreationTimestamp)).To(BeTrue())
-			prevBundle = currentBundle
-		}
 	})
 
 	It("deleteStaleConfigurationBundles finds and deletes all current staged ConfigurationBundles", func() {

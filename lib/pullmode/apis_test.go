@@ -311,10 +311,10 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 
 		bundleNames := make([]string, 0)
 		for i := 0; i < 3; i++ {
-			bundleName, err := pullmode.ReconcileConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, clusterName,
+			bundle, err := pullmode.ReconcileConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, clusterName,
 				requestorKind, requestorName, requestorFeature, randomString(), nil, false, false, logger)
 			Expect(err).To(BeNil())
-			bundleNames = append(bundleNames, bundleName)
+			bundleNames = append(bundleNames, bundle.Name)
 		}
 
 		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
