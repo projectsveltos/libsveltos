@@ -111,7 +111,7 @@ func RecordResourcesForDeployment(ctx context.Context, c client.Client,
 	// policyRef section or a different helm chart in the helmChart section.
 	i := 0
 	for k := range resources {
-		bundleName, err := reconcileConfigurationBundle(ctx, c, clusterNamespace, clusterName,
+		bundle, err := reconcileConfigurationBundle(ctx, c, clusterNamespace, clusterName,
 			requestorKind, requestorName, requestorFeature, k, resources[k], false, false, logger)
 		if err != nil {
 			return err
@@ -121,7 +121,7 @@ func RecordResourcesForDeployment(ctx context.Context, c client.Client,
 			logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to evaluate hash: %v", err))
 		}
 
-		bundles[i] = bundleData{Name: bundleName, Hash: hash}
+		bundles[i] = bundleData{Name: bundle.Name, Hash: hash}
 		i++
 	}
 
@@ -160,15 +160,22 @@ func StageResourcesForDeployment(ctx context.Context, c client.Client,
 		return err
 	}
 
+	manager := getStagedResourcesManager()
+
+	logger.V(logsettings.LogDebug).Info(fmt.Sprintf("staging %d resources for deployment",
+		len(resources)))
+
 	// Create all ConfigurationBundles. There one configurationBundle per key.
 	// If Requestor is ClusterSummary each key represents a different ConfigMap/Secret referenced in
 	// policyRef section or a different helm chart in the helmChart section.
 	for k := range resources {
-		_, err := reconcileConfigurationBundle(ctx, c, clusterNamespace, clusterName,
+		bundle, err := reconcileConfigurationBundle(ctx, c, clusterNamespace, clusterName,
 			requestorKind, requestorName, requestorFeature, k, resources[k], skipTracking, true, logger)
 		if err != nil {
 			return err
 		}
+
+		manager.storeBundle(clusterNamespace, clusterName, requestorName, requestorFeature, bundle)
 	}
 
 	return nil
@@ -186,6 +193,8 @@ func DiscardStagedResourcesForDeployment(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
 	logger logr.Logger) error {
 
+	logger.V(logsettings.LogDebug).Info("discarding staged resources")
+
 	// Get current referenced configurationBundles. All ConfigurationBundles currently not referenced
 	// by ConfigurationGroup will be discarded
 	currentBundles, err := getReferencedConfigurationBundles(ctx, c, clusterNamespace, clusterName,
@@ -193,6 +202,9 @@ func DiscardStagedResourcesForDeployment(ctx context.Context, c client.Client,
 	if err != nil {
 		return err
 	}
+
+	manager := getStagedResourcesManager()
+	manager.clearBundles(clusterNamespace, clusterName, requestorName, requestorFeature)
 
 	return deleteStaleConfigurationBundles(ctx, c, clusterNamespace, clusterName, requestorKind,
 		requestorName, requestorFeature, currentBundles, logger)
@@ -211,8 +223,10 @@ func CommitStagedResourcesForDeployment(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
 	logger logr.Logger, setters ...Option) error {
 
-	bundles, err := getStagedConfigurationBundles(ctx, c, clusterNamespace, clusterName, requestorKind,
-		requestorName, requestorFeature, logger)
+	manager := getStagedResourcesManager()
+	stagedBundles := manager.getBundles(clusterNamespace, clusterName, requestorName, requestorFeature)
+
+	bundles, err := getStagedConfigurationBundles(ctx, c, stagedBundles, logger)
 	if err != nil {
 		return err
 	}
