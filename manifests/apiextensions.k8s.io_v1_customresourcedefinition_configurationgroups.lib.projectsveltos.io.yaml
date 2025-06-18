@@ -282,6 +282,18 @@ spec:
                 format: int32
                 minimum: 1
                 type: integer
+              updatePhase:
+                default: Ready
+                description: |-
+                  UpdatePhase indicates the current phase of configuration updates. When set to "Preparing",
+                  it signals that a new version of this ConfigurationGroup is being prepared, forcing
+                  metadata.generation to advance. This allows detection of differences between
+                  status.observedGeneration and metadata.generation when agents process an older version,
+                  enabling tracking of update propagation across managed clusters.
+                enum:
+                - Ready
+                - Preparing
+                type: string
               validateHealths:
                 description: |-
                   ValidateHealths is a slice of Lua functions to run against

@@ -275,6 +275,26 @@ func getConfigurationBundleName(ctx context.Context, c client.Client, namespace,
 	return getInstantiatedObjectName(objects)
 }
 
+func markConfigurationGroupAsPreparing(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
+	logger logr.Logger) error {
+
+	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+	_, currentCG, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
+	if err != nil {
+		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		return err
+	}
+
+	if currentCG != nil {
+		cg := currentCG.(*libsveltosv1beta1.ConfigurationGroup)
+		cg.Spec.UpdatePhase = libsveltosv1beta1.UpdatePhasePreparing
+		return c.Update(ctx, cg)
+	}
+
+	return nil
+}
+
 func reconcileConfigurationGroup(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
 	bundles []bundleData, logger logr.Logger, setters ...Option) error {
@@ -364,6 +384,7 @@ func prepareConfigurationGroup(namespace, name string, bundles []bundleData,
 	}
 
 	confGroup.Spec = libsveltosv1beta1.ConfigurationGroupSpec{}
+	confGroup.Spec.UpdatePhase = libsveltosv1beta1.UpdatePhaseReady
 	confGroup.Spec.ConfigurationItems = make([]libsveltosv1beta1.ConfigurationItem, len(bundles))
 	for i := range bundles {
 		confGroup.Spec.ConfigurationItems[i] = libsveltosv1beta1.ConfigurationItem{

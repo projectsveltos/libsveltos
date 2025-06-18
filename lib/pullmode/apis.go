@@ -154,6 +154,12 @@ func StageResourcesForDeployment(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
 	resources map[string][]unstructured.Unstructured, skipTracking bool, logger logr.Logger) error {
 
+	err := markConfigurationGroupAsPreparing(ctx, c, clusterNamespace, clusterName, requestorKind,
+		requestorName, requestorFeature, logger)
+	if err != nil {
+		return err
+	}
+
 	// Create all ConfigurationBundles. There one configurationBundle per key.
 	// If Requestor is ClusterSummary each key represents a different ConfigMap/Secret referenced in
 	// policyRef section or a different helm chart in the helmChart section.

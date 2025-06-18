@@ -276,6 +276,28 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		Expect(err).To(BeNil())
 		Expect(len(currentConfigurationGroups.Items)).To(Equal(1))
 		Expect(len(currentConfigurationGroups.Items[0].Spec.ConfigurationItems)).To(Equal(stagedBundles))
+
+		Expect(currentConfigurationGroups.Items[0].Spec.UpdatePhase).To(Equal(libsveltosv1beta1.UpdatePhaseReady))
+
+		// Calling StageResourcesForDeployment set UpdatePhase to Preparing
+		requestorIndex := randomString()
+		resources := make(map[string][]unstructured.Unstructured, 0)
+		resources[requestorIndex] = getResources()
+		Expect(pullmode.StageResourcesForDeployment(context.TODO(), k8sClient, clusterNamespace, clusterName,
+			requestorKind, requestorName, requestorFeature, resources, false, logger)).To(Succeed())
+
+		Eventually(func() bool {
+			currentConfigurationGroups, err := pullmode.GetConfigurationGroups(context.TODO(), k8sClient,
+				clusterNamespace, requestorName, labels)
+			if err != nil {
+				return false
+			}
+			if len(currentConfigurationGroups.Items) != 1 {
+				return false
+			}
+
+			return currentConfigurationGroups.Items[0].Spec.UpdatePhase == libsveltosv1beta1.UpdatePhasePreparing
+		}, time.Minute, time.Second).Should(BeTrue())
 	})
 
 	It("RemoveResourcesFromDeployment marks a ConfigurationGroup for removal and removes all associated ConfigurationBundles", func() {
