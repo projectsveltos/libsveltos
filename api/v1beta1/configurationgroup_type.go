@@ -48,6 +48,17 @@ const (
 	ActionRemove = Action("Remove")
 )
 
+// +kubebuilder:validation:Enum:=Ready;Preparing
+type UpdatePhase string
+
+const (
+	// UpdatePhaseReady indicates the ConfigurationGroup is ready for deployment
+	UpdatePhaseReady = UpdatePhase("Ready")
+
+	// UpdatePhasePreparing indicates a new version of the ConfigurationGroup is being prepared
+	UpdatePhasePreparing = UpdatePhase("Preparing")
+)
+
 type ConfigurationGroupSpec struct {
 	// +kubebuilder:default:=Deploy
 	Action Action `json:"action,omitempty"`
@@ -147,6 +158,15 @@ type ConfigurationGroupSpec struct {
 	// Each element has format kind.version.group
 	// +optional
 	DeployedGroupVersionKind []string `json:"deployedGroupVersionKind,omitempty"`
+
+	// UpdatePhase indicates the current phase of configuration updates. When set to "Preparing",
+	// it signals that a new version of this ConfigurationGroup is being prepared, forcing
+	// metadata.generation to advance. This allows detection of differences between
+	// status.observedGeneration and metadata.generation when agents process an older version,
+	// enabling tracking of update propagation across managed clusters.
+	// +kubebuilder:default:=Ready
+	// +optional
+	UpdatePhase UpdatePhase `json:"updatePhase,omitempty"`
 }
 
 type ConfigurationGroupStatus struct {
