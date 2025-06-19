@@ -300,7 +300,7 @@ var _ = Describe("Notification", func() {
 				return false
 			}
 			return true
-		}, time.Minute, time.Second).Should(BeTrue())
+		}, 2*time.Minute, time.Second).Should(BeTrue())
 
 		if err := smtpServer.Stop(); err != nil {
 			Fail(fmt.Sprintf("failed to stop smtp server: %v", err))

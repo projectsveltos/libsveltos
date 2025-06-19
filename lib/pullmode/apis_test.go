@@ -215,7 +215,7 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		}, time.Minute, time.Second).Should(BeTrue())
 
 		// Verify APIs returns the correct status
-		status, err := pullmode.GetResourceDeploymentStatus(context.TODO(), k8sClient, clusterNamespace, clusterName,
+		status, err := pullmode.GetDeploymentStatus(context.TODO(), k8sClient, clusterNamespace, clusterName,
 			requestorKind, requestorName, requestorFeature, logger)
 		Expect(err).To(BeNil())
 
@@ -276,7 +276,6 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		Expect(err).To(BeNil())
 		Expect(len(currentConfigurationGroups.Items)).To(Equal(1))
 		Expect(len(currentConfigurationGroups.Items[0].Spec.ConfigurationItems)).To(Equal(stagedBundles))
-
 		Expect(currentConfigurationGroups.Items[0].Spec.UpdatePhase).To(Equal(libsveltosv1beta1.UpdatePhaseReady))
 
 		// Calling StageResourcesForDeployment set UpdatePhase to Preparing
@@ -384,12 +383,12 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 			requestorFeature := randomString()
 
 			createNamespace(clusterNamespace)
-			status, err := pullmode.GetResourceRemoveStatus(context.TODO(), k8sClient, clusterNamespace, clusterName,
+
+			status, err := pullmode.GetRemoveStatus(context.TODO(), k8sClient, clusterNamespace, clusterName,
 				requestorKind, requestorName, requestorFeature, logger)
-			Expect(err).To(BeNil())
-			Expect(status).ToNot(BeNil())
-			Expect(status.DeploymentStatus).ToNot(BeNil())
-			Expect(*status.DeploymentStatus).To(Equal(libsveltosv1beta1.FeatureStatusRemoved))
+			Expect(err).ToNot(BeNil())
+			Expect(apierrors.IsNotFound(err)).To(BeTrue())
+			Expect(status).To(BeNil())
 		})
 
 	It("TerminateDeploymentTracking deletes ConfigurationGroup", func() {
@@ -430,6 +429,159 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 			}
 			return apierrors.IsNotFound(err) || !currentConfigurationGroups.DeletionTimestamp.IsZero()
 		}, time.Minute, time.Second).Should(BeTrue())
+	})
 
+	It("IsBeingProvisioned returns true when content is being/has been deployed", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		requestorKind := randomString()
+		requestorName := randomString()
+		requestorFeature := randomString()
+
+		createNamespace(clusterNamespace)
+
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+
+		requestorHash := []byte(randomString())
+		configurationGroup := &libsveltosv1beta1.ConfigurationGroup{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      randomString(),
+				Labels:    labels,
+				Annotations: map[string]string{
+					pullmode.RequestorNameAnnotationKey: requestorName,
+				},
+			},
+			Spec: libsveltosv1beta1.ConfigurationGroupSpec{
+				Action:        libsveltosv1beta1.ActionDeploy,
+				RequestorHash: requestorHash,
+				UpdatePhase:   libsveltosv1beta1.UpdatePhaseReady,
+			},
+		}
+
+		Expect(k8sClient.Create(context.TODO(), configurationGroup)).To(Succeed())
+		Expect(waitForObject(context.TODO(), k8sClient, configurationGroup)).To(Succeed())
+
+		currentConfigurationGroup := &libsveltosv1beta1.ConfigurationGroup{}
+		Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: configurationGroup.Name},
+			currentConfigurationGroup)).To(Succeed())
+
+		deploymentStatus := libsveltosv1beta1.FeatureStatusFailed
+		failureMessage := randomString()
+		lastAppliedTime := metav1.Time{Time: time.Now()}
+
+		currentConfigurationGroup.Status = libsveltosv1beta1.ConfigurationGroupStatus{
+			DeploymentStatus:      &deploymentStatus,
+			FailureMessage:        &failureMessage,
+			LastAppliedTime:       &lastAppliedTime,
+			ObservedRequestorHash: requestorHash,
+			ObservedGeneration:    currentConfigurationGroup.Generation,
+		}
+		Expect(k8sClient.Status().Update(context.TODO(), currentConfigurationGroup)).To(Succeed())
+
+		// wait for cache to sync verifying status is actually set
+		Eventually(func() bool {
+			currentConfigurationGroup := &libsveltosv1beta1.ConfigurationGroup{}
+			err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: configurationGroup.Name},
+				currentConfigurationGroup)
+			if err != nil {
+				return false
+			}
+			return currentConfigurationGroup.Status.DeploymentStatus != nil
+		}, time.Minute, time.Second).Should(BeTrue())
+
+		// Verify APIs returns the correct status
+		isBeingProvisioned := pullmode.IsBeingProvisioned(context.TODO(), k8sClient, clusterNamespace, clusterName,
+			requestorKind, requestorName, requestorFeature, logger)
+		Expect(isBeingProvisioned).To(BeFalse())
+
+		Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: configurationGroup.Name},
+			currentConfigurationGroup)).To(Succeed())
+
+		deploymentStatus = libsveltosv1beta1.FeatureStatusProvisioning
+		currentConfigurationGroup.Status = libsveltosv1beta1.ConfigurationGroupStatus{
+			DeploymentStatus:      &deploymentStatus,
+			FailureMessage:        nil,
+			LastAppliedTime:       &lastAppliedTime,
+			ObservedRequestorHash: requestorHash,
+			ObservedGeneration:    currentConfigurationGroup.Generation,
+		}
+		Expect(k8sClient.Status().Update(context.TODO(), currentConfigurationGroup)).To(Succeed())
+
+		// wait for cache to sync verifying status is actually set
+		Eventually(func() bool {
+			currentConfigurationGroup := &libsveltosv1beta1.ConfigurationGroup{}
+			err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: configurationGroup.Name},
+				currentConfigurationGroup)
+			if err != nil {
+				return false
+			}
+			return currentConfigurationGroup.Status.DeploymentStatus != nil &&
+				*currentConfigurationGroup.Status.DeploymentStatus == deploymentStatus
+		}, time.Minute, time.Second).Should(BeTrue())
+
+		isBeingProvisioned = pullmode.IsBeingProvisioned(context.TODO(), k8sClient, clusterNamespace, clusterName,
+			requestorKind, requestorName, requestorFeature, logger)
+		Expect(isBeingProvisioned).To(BeTrue())
+	})
+
+	It("IsBeingRemoved returns true when applier is proceeding withdrawing deployed resources", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		requestorKind := randomString()
+		requestorName := randomString()
+		requestorFeature := randomString()
+
+		createNamespace(clusterNamespace)
+
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+
+		requestorHash := []byte(randomString())
+		configurationGroup := &libsveltosv1beta1.ConfigurationGroup{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      randomString(),
+				Labels:    labels,
+				Annotations: map[string]string{
+					pullmode.RequestorNameAnnotationKey: requestorName,
+				},
+			},
+			Spec: libsveltosv1beta1.ConfigurationGroupSpec{
+				Action:        libsveltosv1beta1.ActionRemove,
+				RequestorHash: requestorHash,
+				UpdatePhase:   libsveltosv1beta1.UpdatePhaseReady,
+			},
+		}
+
+		Expect(k8sClient.Create(context.TODO(), configurationGroup)).To(Succeed())
+		Expect(waitForObject(context.TODO(), k8sClient, configurationGroup)).To(Succeed())
+
+		currentConfigurationGroup := &libsveltosv1beta1.ConfigurationGroup{}
+		Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: configurationGroup.Name},
+			currentConfigurationGroup)).To(Succeed())
+
+		// Verify APIs returns the correct status
+		isBeingRemoved := pullmode.IsBeingRemoved(context.TODO(), k8sClient, clusterNamespace, clusterName,
+			requestorKind, requestorName, requestorFeature, logger)
+		Expect(isBeingRemoved).To(BeTrue())
+
+		Expect(k8sClient.Update(context.TODO(), configurationGroup)).To(Succeed())
+		configurationGroup.Spec.Action = libsveltosv1beta1.ActionDeploy
+		Expect(k8sClient.Update(context.TODO(), configurationGroup)).To(Succeed())
+
+		// wait for cache to sync verifying status is actually set
+		Eventually(func() bool {
+			currentConfigurationGroup := &libsveltosv1beta1.ConfigurationGroup{}
+			err := k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: configurationGroup.Name},
+				currentConfigurationGroup)
+			if err != nil {
+				return false
+			}
+			return currentConfigurationGroup.Spec.Action == libsveltosv1beta1.ActionDeploy
+		}, time.Minute, time.Second).Should(BeTrue())
+
+		isBeingRemoved = pullmode.IsBeingRemoved(context.TODO(), k8sClient, clusterNamespace, clusterName,
+			requestorKind, requestorName, requestorFeature, logger)
+		Expect(isBeingRemoved).To(BeFalse())
 	})
 })

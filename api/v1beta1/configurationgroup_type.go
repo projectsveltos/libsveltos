@@ -167,6 +167,12 @@ type ConfigurationGroupSpec struct {
 	// +kubebuilder:default:=Ready
 	// +optional
 	UpdatePhase UpdatePhase `json:"updatePhase,omitempty"`
+
+	// RequestorHash represents a hash of the state of the requestor that created this ConfigurationGroup.
+	// This field is optional and can be used to determine when the creating resource's state has
+	// changed and the ConfigurationGroup needs to be updated accordingly.
+	// +optional
+	RequestorHash []byte `json:"requestorHash,omitempty"`
 }
 
 type ConfigurationGroupStatus struct {
@@ -194,6 +200,13 @@ type ConfigurationGroupStatus struct {
 	// it means the controller has not yet processed the latest changes to the specification.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// ObservedRequestorHash reflects the requestor hash that was last processed by the controller.
+	// When this value matches the spec.requestorHash, it indicates that the controller has
+	// processed the latest state of the creating resource. If observedRequestorHash differs
+	// from spec.requestorHash, it means the requestor has changed and reconciliation is needed.
+	// +optional
+	ObservedRequestorHash []byte `json:"observedRequestorHash,omitempty"`
 }
 
 //+kubebuilder:object:root=true

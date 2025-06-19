@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,6 +31,29 @@ import (
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/logsettings"
 )
+
+// ProcessingMismatchError represents an error when the resource has not been fully processed,
+// either due to generation mismatch or requestor hash mismatch, indicating reconciliation is needed.
+type ProcessingMismatchError struct {
+	Message string
+}
+
+func (e *ProcessingMismatchError) Error() string {
+	return e.Message
+}
+
+// NewProcessingMismatchError creates a new ProcessingMismatchError
+func NewProcessingMismatchError(msg string) *ProcessingMismatchError {
+	return &ProcessingMismatchError{
+		Message: msg,
+	}
+}
+
+// IsProcessingMismatch checks if an error is a ProcessingMismatchError
+func IsProcessingMismatch(err error) bool {
+	var genErr *ProcessingMismatchError
+	return errors.As(err, &genErr)
+}
 
 // GetClusterLabels returns a map of labels used to filter ConfigurationGroups for a specific cluster.
 // It takes the cluster namespace and cluster name as input.
@@ -311,7 +335,7 @@ func TerminateDeploymentTracking(ctx context.Context, c client.Client,
 
 // For SveltosClusters operating in pull mode, this method is invoked by components
 // on the management cluster to retrieve the deployment status of managed resources.
-func GetResourceDeploymentStatus(ctx context.Context, c client.Client,
+func GetDeploymentStatus(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
 	logger logr.Logger) (*libsveltosv1beta1.ConfigurationGroupStatus, error) {
 
@@ -330,13 +354,23 @@ func GetResourceDeploymentStatus(ctx context.Context, c client.Client,
 		return nil, err
 	}
 
+	if currentCG.Spec.UpdatePhase != libsveltosv1beta1.UpdatePhaseReady {
+		return &currentCG.Status, fmt.Errorf("updatePhase not ready")
+	}
+
 	if currentCG.Status.ObservedGeneration != 0 {
 		if currentCG.Status.ObservedGeneration != currentCG.Generation {
 			msg := fmt.Sprintf("Status.ObservedGeneration (%d) does not match Generation (%d)",
 				currentCG.Status.ObservedGeneration, currentCG.Generation)
 			logger.V(logsettings.LogInfo).Info(msg)
-			return nil, errors.New(msg)
+			return &currentCG.Status, NewProcessingMismatchError(msg)
 		}
+	}
+
+	if !reflect.DeepEqual(currentCG.Status.ObservedRequestorHash, currentCG.Spec.RequestorHash) {
+		msg := "Status.ObservedRequestorHash does not match Spec.RequestorHash"
+		logger.V(logsettings.LogInfo).Info(msg)
+		return &currentCG.Status, NewProcessingMismatchError(msg)
 	}
 
 	return &currentCG.Status, nil
@@ -344,7 +378,7 @@ func GetResourceDeploymentStatus(ctx context.Context, c client.Client,
 
 // For SveltosClusters operating in pull mode, this method is invoked by components
 // on the management cluster to retrieve the withdrawal status of managed resources.
-func GetResourceRemoveStatus(ctx context.Context, c client.Client,
+func GetRemoveStatus(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
 	logger logr.Logger) (*libsveltosv1beta1.ConfigurationGroupStatus, error) {
 
@@ -359,15 +393,114 @@ func GetResourceRemoveStatus(ctx context.Context, c client.Client,
 	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name},
 		currentConfigurationGroup)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			status := libsveltosv1beta1.FeatureStatusRemoved
-			return &libsveltosv1beta1.ConfigurationGroupStatus{
-				DeploymentStatus: &status,
-			}, nil
-		}
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
 		return nil, err
 	}
 
 	return &currentConfigurationGroup.Status, nil
+}
+
+// IsBeingProvisioned returns true if content is currently being or has been deployed.
+// A ConfigurationGroup is considered "being provisioned" when it's ready for processing
+// and the requestor hashes match, regardless of whether deployment is complete.
+func IsBeingProvisioned(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
+	logger logr.Logger) bool {
+
+	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
+	if err != nil {
+		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		return false
+	}
+
+	currentCG := &libsveltosv1beta1.ConfigurationGroup{}
+	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name},
+		currentCG)
+	if err != nil {
+		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
+		return false
+	}
+
+	if currentCG.Spec.UpdatePhase != libsveltosv1beta1.UpdatePhaseReady {
+		return false
+	}
+
+	if currentCG.Spec.Action != libsveltosv1beta1.ActionDeploy {
+		return false
+	}
+
+	// Verify this is for the current requestor state
+	if !reflect.DeepEqual(currentCG.Status.ObservedRequestorHash, currentCG.Spec.RequestorHash) {
+		logger.V(logsettings.LogInfo).Info("requestor hash mismatch - latest changes not yet processed")
+		return false
+	}
+
+	if currentCG.Status.DeploymentStatus != nil &&
+		*currentCG.Status.DeploymentStatus == libsveltosv1beta1.FeatureStatusFailed {
+
+		return false
+	}
+
+	return true
+}
+
+// IsBeingRemoved returns true if the ConfigurationGroup is currently being removed
+// or has already been removed. This includes cases where the resource no longer exists
+// or when it's ready for removal processing.
+func IsBeingRemoved(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
+	logger logr.Logger) bool {
+
+	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
+	if err != nil {
+		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		return false
+	}
+
+	currentCG := &libsveltosv1beta1.ConfigurationGroup{}
+	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name}, currentCG)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// ConfigurationGroup has been removed
+			return true
+		}
+		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
+		return false
+	}
+
+	if currentCG.Spec.UpdatePhase != libsveltosv1beta1.UpdatePhaseReady {
+		return false
+	}
+
+	if currentCG.Spec.Action != libsveltosv1beta1.ActionRemove {
+		return false
+	}
+
+	return true
+}
+
+// GetRequestorHash returns the hash of the requestor at last time configuration for sveltos-applier
+// was created
+func GetRequestorHash(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
+	logger logr.Logger) ([]byte, error) {
+
+	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
+	if err != nil {
+		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		return nil, err
+	}
+
+	currentCG := &libsveltosv1beta1.ConfigurationGroup{}
+	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name},
+		currentCG)
+	if err != nil {
+		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
+		return nil, err
+	}
+
+	return currentCG.Spec.RequestorHash, nil
 }

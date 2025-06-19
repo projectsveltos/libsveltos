@@ -77,7 +77,7 @@ type DeployerInterface interface {
 	) error
 
 	// Deploy creates a request to deploy/cleanup a feature in a given
-	// CAPI cluster (identified by clusterNamespace, clusterName).
+	// cluster (identified by clusterNamespace, clusterName).
 	// cleanup indicates whether request is for feature to be provisioned
 	// or removed.
 	// When worker is available to fulfill such request, RequestHandler

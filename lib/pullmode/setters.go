@@ -36,9 +36,16 @@ type Options struct {
 	ValidateHealths        []libsveltosv1beta1.ValidateHealth
 	DeployedGVKs           []string
 	Annotations            map[string]string
+	RequestorHash          []byte
 }
 
 type Option func(*Options)
+
+func WithRequestorHash(hash []byte) Option {
+	return func(args *Options) {
+		args.RequestorHash = hash
+	}
+}
 
 func WithLeavePolicies() Option {
 	return func(args *Options) {
@@ -156,6 +163,8 @@ func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Op
 	confGroup.Spec.ContinueOnError = c.ContinueOnError
 	confGroup.Spec.ContinueOnConflict = c.ContinueOnConflict
 	confGroup.Spec.MaxConsecutiveFailures = c.MaxConsecutiveFailures
+
+	confGroup.Spec.RequestorHash = c.RequestorHash
 
 	return confGroup
 }

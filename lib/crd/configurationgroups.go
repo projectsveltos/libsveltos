@@ -240,6 +240,13 @@ spec:
                   When set to true, when any mounted ConfigMap/Secret is modified, Sveltos automatically
                   starts a rolling upgrade for Deployment/StatefulSet/DaemonSet instances mounting it.
                 type: boolean
+              requestorHash:
+                description: |-
+                  RequestorHash represents a hash of the state of the requestor that created this ConfigurationGroup.
+                  This field is optional and can be used to determine when the creating resource's state has
+                  changed and the ConfigurationGroup needs to be updated accordingly.
+                format: byte
+                type: string
               sourceRef:
                 description: |-
                   SourceRef is the user facing Sveltos resource that caused this ConfigurationGroup to be
@@ -419,6 +426,14 @@ spec:
                   it means the controller has not yet processed the latest changes to the specification.
                 format: int64
                 type: integer
+              observedRequestorHash:
+                description: |-
+                  ObservedRequestorHash reflects the requestor hash that was last processed by the controller.
+                  When this value matches the spec.requestorHash, it indicates that the controller has
+                  processed the latest state of the creating resource. If observedRequestorHash differs
+                  from spec.requestorHash, it means the requestor has changed and reconciliation is needed.
+                format: byte
+                type: string
               status:
                 description: Status represents the state of the feature in the workload
                   cluster
@@ -429,6 +444,7 @@ spec:
                 - FailedNonRetriable
                 - Removing
                 - Removed
+                - AgentRemoving
                 type: string
             type: object
         type: object
