@@ -332,7 +332,7 @@ type ValidateHealth struct {
 	Script string `json:"script,omitempty"`
 }
 
-// +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;FailedNonRetriable;Removing;Removed
+// +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;FailedNonRetriable;Removing;Removed;AgentRemoving
 type FeatureStatus string
 
 const (
@@ -355,6 +355,10 @@ const (
 	// FeatureStatusRemoving indicates that feature is being
 	// removed
 	FeatureStatusRemoving = FeatureStatus("Removing")
+
+	// FeatureStatusAgentRemoving indicates that feature is being
+	// removed by agent when in pull mode
+	FeatureStatusAgentRemoving = FeatureStatus("AgentRemoving")
 
 	// FeatureStatusRemoved indicates that feature is removed
 	FeatureStatusRemoved = FeatureStatus("Removed")

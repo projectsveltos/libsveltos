@@ -89,7 +89,7 @@ func (d *deployer) RegisterFeatureID(
 }
 
 type Options struct {
-	HandlerOptions map[string]string
+	HandlerOptions map[string]any
 }
 
 func (d *deployer) Deploy(
@@ -115,6 +115,8 @@ func (d *deployer) Deploy(
 	for i := range d.dirty {
 		if d.dirty[i] == key {
 			d.log.V(logs.LogVerbose).Info("request is already present in dirty")
+			// Update JobQueue has options might have changed
+			d.updateJobQueue(key, f, m, o)
 			return nil
 		}
 	}
@@ -139,6 +141,17 @@ func (d *deployer) Deploy(
 	d.jobQueue = append(d.jobQueue, req)
 
 	return nil
+}
+
+func (d *deployer) updateJobQueue(key string, f RequestHandler,
+	m MetricHandler, o Options) {
+
+	req := requestParams{key: key, handler: f, metric: m, handlerOptions: o}
+	for i := range d.jobQueue {
+		if d.jobQueue[i].key == key {
+			d.jobQueue[i] = req
+		}
+	}
 }
 
 func (d *deployer) GetResult(

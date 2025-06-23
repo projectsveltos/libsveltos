@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
@@ -419,14 +420,24 @@ func UpdateResource(ctx context.Context, dr dynamic.ResourceInterface, isDriftDe
 		return nil, err
 	}
 
-	updatedObject, err := dr.Patch(ctx, object.GetName(), types.ApplyPatchType, data, options)
-	if err != nil {
-		if isDryRun && apierrors.IsNotFound(err) {
-			// In DryRun mode, if resource is namespaced and namespace is not present,
-			// patch will fail with namespace not found. Treat this error as resoruce
-			// would be created
-			return object, nil
+	var updatedObject *unstructured.Unstructured
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		var retryErr error
+		updatedObject, retryErr = dr.Patch(ctx, object.GetName(), types.ApplyPatchType, data, options)
+		if err != nil {
+			if isDryRun && apierrors.IsNotFound(err) {
+				// In DryRun mode, if resource is namespaced and namespace is not present,
+				// patch will fail with namespace not found. Treat this error as resoruce
+				// would be created
+				updatedObject = object
+				return nil
+			}
+			return retryErr
 		}
+		return nil
+	})
+
+	if err != nil {
 		return nil, err
 	}
 

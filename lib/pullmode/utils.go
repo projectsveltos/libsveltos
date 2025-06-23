@@ -327,10 +327,9 @@ func reconcileConfigurationGroup(ctx context.Context, c client.Client,
 			bundles, labels, action, setters...)
 	}
 
-	l.V(logsettings.LogDebug).Info(fmt.Sprintf("creating configurationGroup for requestor %s (bundles %d)",
+	l.V(logsettings.LogDebug).Info(fmt.Sprintf("updating configurationGroup for requestor %s (bundles %d)",
 		requestorName, len(bundles)))
-	return updateConfigurationGroup(ctx, c, clusterNamespace, name, requestorName,
-		bundles, action, logger, setters...)
+	return updateConfigurationGroup(ctx, c, clusterNamespace, name, bundles, action, logger, setters...)
 }
 
 func markConfigurationGroupForRemoval(ctx context.Context, c client.Client,
@@ -350,8 +349,7 @@ func markConfigurationGroupForRemoval(ctx context.Context, c client.Client,
 			nil, labels, action, setters...)
 	}
 
-	return updateConfigurationGroup(ctx, c, clusterNamespace, name, requestorName,
-		nil, action, logger, setters...)
+	return updateConfigurationGroup(ctx, c, clusterNamespace, name, nil, action, logger, setters...)
 }
 
 func deleteConfigurationGroup(ctx context.Context, c client.Client,
@@ -421,7 +419,7 @@ func createConfigurationGroup(ctx context.Context, c client.Client, namespace, n
 	return c.Create(ctx, group)
 }
 
-func updateConfigurationGroup(ctx context.Context, c client.Client, namespace, name, requestorName string,
+func updateConfigurationGroup(ctx context.Context, c client.Client, namespace, name string,
 	bundles []bundleData, action libsveltosv1beta1.Action, logger logr.Logger, setters ...Option) error {
 
 	group := prepareConfigurationGroup(namespace, name, bundles, action, setters...)

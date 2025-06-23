@@ -310,7 +310,7 @@ var _ = Describe("Utils for pullmode APIs", func() {
 
 		bundles = getBundles()
 		Expect(pullmode.UpdateConfigurationGroup(context.TODO(), k8sClient, clusterNamespace, name,
-			requestorName, bundles, action, logger)).To(Succeed())
+			bundles, action, logger)).To(Succeed())
 
 		currentConfigGroup := &libsveltosv1beta1.ConfigurationGroup{}
 		Expect(k8sClient.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: name},
