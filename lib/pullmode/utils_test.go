@@ -55,10 +55,10 @@ var _ = Describe("Utils for pullmode APIs", func() {
 
 		name := randomString()
 
-		labels := pullmode.GetConfigurationBundleLabels(clusterName, requestorKind, requestorFeature, requestorIndex)
+		labels := pullmode.GetConfigurationBundleLabels(clusterName, requestorKind, requestorFeature)
 
 		bundle, err := pullmode.CreateConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, name, requestorName,
-			getResources(), labels, false, false, logger)
+			requestorIndex, getResources(), labels, false, false, logger)
 		Expect(err).To(BeNil())
 		Expect(bundle).ToNot(BeNil())
 
@@ -96,10 +96,10 @@ var _ = Describe("Utils for pullmode APIs", func() {
 
 		name := randomString()
 
-		labels := pullmode.GetConfigurationBundleLabels(clusterName, requestorKind, requestorFeature, requestorIndex)
+		labels := pullmode.GetConfigurationBundleLabels(clusterName, requestorKind, requestorFeature)
 
 		bundle, err := pullmode.CreateConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, name, requestorName,
-			nil, labels, false, false, logger)
+			requestorIndex, nil, labels, false, false, logger)
 		Expect(err).To(BeNil())
 		Expect(bundle).ToNot(BeNil())
 
@@ -119,7 +119,7 @@ var _ = Describe("Utils for pullmode APIs", func() {
 
 		resources := getResources()
 		bundle, err = pullmode.UpdateConfigurationBundle(context.TODO(), k8sClient, clusterNamespace, name, requestorName,
-			resources, false, true, logger)
+			requestorIndex, resources, false, true, logger)
 		Expect(err).To(BeNil())
 		Expect(bundle).ToNot(BeNil())
 
@@ -179,13 +179,12 @@ var _ = Describe("Utils for pullmode APIs", func() {
 		requestorKind := randomString()
 		requestorName := randomString()
 		requestorFeature := randomString()
-		requestorIndex := randomString()
 
 		createNamespace(clusterNamespace)
 
 		referencedBundles := make([]pullmode.BundleData, 0)
 
-		labels := pullmode.GetConfigurationBundleLabels(clusterName, requestorKind, requestorFeature, requestorIndex)
+		labels := pullmode.GetConfigurationBundleLabels(clusterName, requestorKind, requestorFeature)
 		nonStagedNum := 5
 		for range nonStagedNum {
 			bundle := createConfigurationBundle(clusterNamespace, requestorName, labels)
@@ -215,7 +214,7 @@ var _ = Describe("Utils for pullmode APIs", func() {
 		// Verify all staged ConfigurationBundles are deleted
 		Eventually(func() bool {
 			currentBundles, err := pullmode.GetConfigurationBundles(context.TODO(), k8sClient, clusterNamespace,
-				requestorName, labels)
+				requestorName, "", labels)
 			if err != nil {
 				return false
 			}

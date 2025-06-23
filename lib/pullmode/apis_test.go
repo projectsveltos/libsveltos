@@ -251,7 +251,7 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		// wait for cache to sync
 		Eventually(func() bool {
 			currentConfigurationBundles, err := pullmode.GetConfigurationBundles(context.TODO(), k8sClient,
-				clusterNamespace, requestorName, labels)
+				clusterNamespace, requestorName, "", labels)
 			if err != nil {
 				return false
 			}
