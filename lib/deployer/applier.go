@@ -185,34 +185,53 @@ func CustomSplit(text string) ([]string, error) {
 		return nil, nil
 	}
 
-	if !strings.Contains(text, "---") {
-		return []string{text}, nil
-	}
-
 	result := []string{}
 
-	dec := yaml.NewDecoder(bytes.NewReader([]byte(text)))
+	// First split by document separators if they exist
+	var documents []string
+	if strings.Contains(text, "---") {
+		dec := yaml.NewDecoder(bytes.NewReader([]byte(text)))
+		for {
+			var value interface{}
+			err := dec.Decode(&value)
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			if err != nil {
+				return nil, err
+			}
+			if value == nil {
+				continue
+			}
+			valueBytes, err := yaml.Marshal(value)
+			if err != nil {
+				return nil, err
+			}
+			if valueBytes != nil {
+				documents = append(documents, string(valueBytes))
+			}
+		}
+	} else {
+		documents = []string{text}
+	}
 
-	for {
-		var value interface{}
-		err := dec.Decode(&value)
-		if errors.Is(err, io.EOF) {
-			break
+	// Process each document - check if it's a YAML array
+	for _, doc := range documents {
+		trimmedDoc := strings.TrimSpace(doc)
+		if strings.HasPrefix(trimmedDoc, "-") {
+			// Try to parse as YAML array
+			var resources []string
+			err := yaml.Unmarshal([]byte(doc), &resources)
+			if err == nil && len(resources) > 0 {
+				result = append(result, resources...)
+			} else {
+				// If array parsing fails, treat as single document
+				result = append(result, doc)
+			}
+		} else {
+			// Single document
+			result = append(result, doc)
 		}
-		if err != nil {
-			return nil, err
-		}
-		if value == nil {
-			continue
-		}
-		valueBytes, err := yaml.Marshal(value)
-		if err != nil {
-			return nil, err
-		}
-		if valueBytes == nil {
-			continue
-		}
-		result = append(result, string(valueBytes))
 	}
 
 	return result, nil

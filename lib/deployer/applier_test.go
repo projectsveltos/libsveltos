@@ -47,7 +47,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: 'NetworkAttachmentDefinition is a CRD schema specified by the Network Plumbing Working Group
-			to express the intent for attaching pods to one or more logical or physical networks. 
+			to express the intent for attaching pods to one or more logical or physical networks.
 			More information available at: https://github.com/k8snetworkplumbingwg/multi-net-spec'
         type: object
         properties:
@@ -58,7 +58,7 @@ spec:
             type: string
           kind:
             description: 'Kind is a string value representing the REST resource this object represents. Servers
-			may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. 
+			may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase.
 			More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
@@ -387,38 +387,76 @@ var _ = Describe("Applier utils", func() {
 		Expect(err).To(BeNil())
 		Expect(len(sections)).To(Equal(3))
 
-		multipleResources := `  
-apiVersion: v1  
-kind: Service  
-metadata:    
-labels:      
-  app: nats      
-  tailscale.com/proxy-class: default    
-annotations:      
-  tailscale.com/tailnet-fqdn: nats-cluster-1    
-name: nats-cluster-1  
-spec:    
-externalName: placeholder    
+		multipleResources := `
+apiVersion: v1
+kind: Service
+metadata:
+labels:
+  app: nats
+  tailscale.com/proxy-class: default
+annotations:
+  tailscale.com/tailnet-fqdn: nats-cluster-1
+name: nats-cluster-1
+spec:
+externalName: placeholder
 type: ExternalName
 ---
 
-apiVersion: v1  
-kind: Service  
-metadata:    
-labels:      
-  app: nats      
-  tailscale.com/proxy-class: default    
-annotations:      
-  tailscale.com/tailnet-fqdn: nats-cluster-2    
-name: nats-cluster-2  
-spec:    
-externalName: placeholder    
+apiVersion: v1
+kind: Service
+metadata:
+labels:
+  app: nats
+  tailscale.com/proxy-class: default
+annotations:
+  tailscale.com/tailnet-fqdn: nats-cluster-2
+name: nats-cluster-2
+spec:
+externalName: placeholder
 type: ExternalName
 ---
 `
 		sections, err = deployer.CustomSplit(multipleResources)
 		Expect(err).To(BeNil())
 		Expect(len(sections)).To(Equal(2))
+	})
+
+	It("customSplit with array", func() {
+		data := `  - |
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: fv-grfiheiz9d
+  - |
+    apiVersion: v1
+    kind: Namespace1
+    metadata:
+      name: nginx
+  - |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: nginx-deployment
+      namespace: fv-grfiheiz9d
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: nginx
+      template:
+        metadata:
+          labels:
+            app: nginx
+        spec:
+          containers:
+          - image: nginx:latest
+            name: nginx
+            ports:
+            - containerPort: 80`
+
+		sections, err := deployer.CustomSplit(data)
+		Expect(err).To(BeNil())
+		Expect(len(sections)).To(Equal(3))
 	})
 
 	It("transformDriftExclusionsToPatches transforms DriftExclusions to Patches", func() {
