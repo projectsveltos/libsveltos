@@ -424,8 +424,8 @@ func UpdateResource(ctx context.Context, dr dynamic.ResourceInterface, isDriftDe
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		var retryErr error
 		updatedObject, retryErr = dr.Patch(ctx, object.GetName(), types.ApplyPatchType, data, options)
-		if err != nil {
-			if isDryRun && apierrors.IsNotFound(err) {
+		if retryErr != nil {
+			if isDryRun && apierrors.IsNotFound(retryErr) {
 				// In DryRun mode, if resource is namespaced and namespace is not present,
 				// patch will fail with namespace not found. Treat this error as resoruce
 				// would be created
