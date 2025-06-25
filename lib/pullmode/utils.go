@@ -45,9 +45,9 @@ const (
 
 	requestorNameAnnotationKey = "pullmode.projectsveltos.io/requestorname"
 
-	indexLabelKey    = "pullmode.projectsveltos.io/index"
-	stagedLabelKey   = "pullmode.projectsveltos.io/staged"
-	stagedLabelValue = "staged"
+	indexAnnotationKey = "pullmode.projectsveltos.io/index"
+	stagedLabelKey     = "pullmode.projectsveltos.io/staged"
+	stagedLabelValue   = "staged"
 )
 
 type bundleData struct {
@@ -88,9 +88,9 @@ func reconcileConfigurationBundle(ctx context.Context, c client.Client,
 	resources []unstructured.Unstructured, skipTracking, isStaged bool, logger logr.Logger,
 ) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
-	labels := getConfigurationBundleLabels(clusterName, requestorKind, requestorFeature, index)
+	labels := getConfigurationBundleLabels(clusterName, requestorKind, requestorFeature)
 
-	name, currentBundle, err := getConfigurationBundleName(ctx, c, clusterNamespace, requestorName, labels)
+	name, currentBundle, err := getConfigurationBundleName(ctx, c, clusterNamespace, requestorName, index, labels)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationBundle name: %v", err))
 		return nil, err
@@ -105,11 +105,11 @@ func reconcileConfigurationBundle(ctx context.Context, c client.Client,
 	}
 
 	if currentBundle == nil {
-		return createConfigurationBundle(ctx, c, clusterNamespace, name, requestorName,
+		return createConfigurationBundle(ctx, c, clusterNamespace, name, requestorName, index,
 			resources, labels, skipTracking, isStaged, logger)
 	}
 
-	return updateConfigurationBundle(ctx, c, clusterNamespace, name, requestorName,
+	return updateConfigurationBundle(ctx, c, clusterNamespace, name, requestorName, index,
 		resources, skipTracking, isStaged, logger)
 }
 
@@ -139,7 +139,7 @@ func prepareConfigurationBundle(namespace, name string, resources []unstructured
 	return confBundle, nil
 }
 
-func createConfigurationBundle(ctx context.Context, c client.Client, namespace, name, requestorName string,
+func createConfigurationBundle(ctx context.Context, c client.Client, namespace, name, requestorName, index string,
 	resources []unstructured.Unstructured, labels client.MatchingLabels, skipTracking, isStaged bool,
 	logger logr.Logger) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
@@ -158,6 +158,7 @@ func createConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 
 	bundle.Annotations = map[string]string{
 		requestorNameAnnotationKey: requestorName,
+		indexAnnotationKey:         index,
 	}
 	bundle.Labels = labels
 	bundle.Spec.NotTracked = skipTracking
@@ -177,7 +178,7 @@ func createConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 	return bundle, err
 }
 
-func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, name, requestorName string,
+func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, name, requestorName, index string,
 	resources []unstructured.Unstructured, skipTracking, isStaged bool, logger logr.Logger,
 ) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
@@ -203,6 +204,7 @@ func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 
 	currentBundle.Annotations = map[string]string{
 		requestorNameAnnotationKey: requestorName,
+		indexAnnotationKey:         index,
 	}
 
 	currentBundle.Spec = bundle.Spec
@@ -222,7 +224,7 @@ func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 	return currentBundle, err
 }
 
-func getConfigurationBundles(ctx context.Context, c client.Client, namespace, requestorName string,
+func getConfigurationBundles(ctx context.Context, c client.Client, namespace, requestorName, index string,
 	labels client.MatchingLabels) (*libsveltosv1beta1.ConfigurationBundleList, error) {
 
 	listOptions := []client.ListOption{
@@ -241,9 +243,16 @@ func getConfigurationBundles(ctx context.Context, c client.Client, namespace, re
 		bundle := &configurationBundles.Items[i]
 		if bundle.Annotations != nil {
 			annotationValue, exists := bundle.Annotations[requestorNameAnnotationKey]
-			if exists && annotationValue == requestorName {
-				filtered = append(filtered, *bundle)
+			if !exists || annotationValue != requestorName {
+				continue
 			}
+			if index != "" {
+				value, exists := bundle.Annotations[indexAnnotationKey]
+				if !exists || value != index {
+					continue
+				}
+			}
+			filtered = append(filtered, *bundle)
 		}
 	}
 
@@ -253,10 +262,10 @@ func getConfigurationBundles(ctx context.Context, c client.Client, namespace, re
 }
 
 // getConfigurationBundleName returns ConfigurationBundle name.
-func getConfigurationBundleName(ctx context.Context, c client.Client, namespace, requestorName string,
+func getConfigurationBundleName(ctx context.Context, c client.Client, namespace, requestorName, index string,
 	labels client.MatchingLabels) (name string, currentCG client.Object, err error) {
 
-	configurationBundles, err := getConfigurationBundles(ctx, c, namespace, requestorName, labels)
+	configurationBundles, err := getConfigurationBundles(ctx, c, namespace, requestorName, index, labels)
 	if err != nil {
 		return "", nil, err
 	}
@@ -441,7 +450,7 @@ func deleteStaleConfigurationBundles(ctx context.Context, c client.Client,
 
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 
-	currentBundles, err := getConfigurationBundles(ctx, c, clusterNamespace, requestorName, labels)
+	currentBundles, err := getConfigurationBundles(ctx, c, clusterNamespace, requestorName, "", labels)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to list configurationBundles: %v", err))
 		return err
@@ -601,12 +610,11 @@ func getInstantiatedObjectName(objects []client.Object) (name string, currentObj
 	return name, currentObject, err
 }
 
-func getConfigurationBundleLabels(clusterName, requestorKind, requestorFeature, index string) client.MatchingLabels {
+func getConfigurationBundleLabels(clusterName, requestorKind, requestorFeature string) client.MatchingLabels {
 	return client.MatchingLabels{
 		clusterNameLabelKey:      clusterName,
 		requestorKindLabelKey:    requestorKind,
 		requestorFeatureLabelKey: requestorFeature,
-		indexLabelKey:            index,
 	}
 }
 
