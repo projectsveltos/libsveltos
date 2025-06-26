@@ -20,7 +20,6 @@ var (
 	CreateConfigurationBundle       = createConfigurationBundle
 	UpdateConfigurationBundle       = updateConfigurationBundle
 	ReconcileConfigurationBundle    = reconcileConfigurationBundle
-	GetStagedConfigurationBundles   = getStagedConfigurationBundles
 	DeleteStaleConfigurationBundles = deleteStaleConfigurationBundles
 	GetConfigurationBundles         = getConfigurationBundles
 
