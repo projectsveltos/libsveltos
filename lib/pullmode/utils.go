@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -500,35 +499,6 @@ func getReferencedConfigurationBundles(ctx context.Context, c client.Client,
 	}
 
 	return currentBundles, nil
-}
-
-// Staged ConfigurationBundles are bundles created for a given ConfigurationGroup which are currently
-// not referenced
-func getStagedConfigurationBundles(ctx context.Context, c client.Client,
-	currentStagedBundles []libsveltosv1beta1.ConfigurationBundle, logger logr.Logger) ([]bundleData, error) {
-
-	stagedBundles := make([]libsveltosv1beta1.ConfigurationBundle, 0)
-	// Remove staged label
-	for i := range currentStagedBundles {
-		ccb := &currentStagedBundles[i]
-		if err := removeStagedLabel(ctx, c, ccb); err != nil {
-			logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to remove staged label from configurationBundles: %v", err))
-			return nil, err
-		}
-		stagedBundles = append(stagedBundles, currentStagedBundles[i])
-	}
-
-	sort.Slice(stagedBundles, func(i, j int) bool {
-		return stagedBundles[i].CreationTimestamp.Before(&stagedBundles[j].CreationTimestamp)
-	})
-
-	bundles := make([]bundleData, len(stagedBundles))
-	for i := range stagedBundles {
-		b := &stagedBundles[i]
-		bundles[i] = bundleData{Name: b.Name, Hash: b.Status.Hash}
-	}
-
-	return bundles, nil
 }
 
 func getConfigurationGroups(ctx context.Context, c client.Client, namespace, requestorName string,

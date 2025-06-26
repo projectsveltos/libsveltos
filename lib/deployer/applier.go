@@ -31,10 +31,12 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
@@ -434,33 +436,81 @@ func UpdateResource(ctx context.Context, dr dynamic.ResourceInterface, isDriftDe
 		object = patchedObjects[0]
 	}
 
-	data, err := runtime.Encode(unstructured.UnstructuredJSONScheme, object)
-	if err != nil {
-		return nil, err
-	}
-
 	var updatedObject *unstructured.Unstructured
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		var retryErr error
-		updatedObject, retryErr = dr.Patch(ctx, object.GetName(), types.ApplyPatchType, data, options)
-		if retryErr != nil {
-			if isDryRun && apierrors.IsNotFound(retryErr) {
-				// In DryRun mode, if resource is namespaced and namespace is not present,
-				// patch will fail with namespace not found. Treat this error as resoruce
-				// would be created
-				updatedObject = object
-				return nil
-			}
-			return retryErr
+	if isCustomResourceDefinition(object) {
+		updatedObject, err = updateCRD(ctx, dr, isDryRun, object)
+	} else {
+		var data []byte
+		data, err = runtime.Encode(unstructured.UnstructuredJSONScheme, object)
+		if err != nil {
+			return nil, err
 		}
-		return nil
-	})
-
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			var retryErr error
+			updatedObject, retryErr = dr.Patch(ctx, object.GetName(), types.ApplyPatchType, data, options)
+			if retryErr != nil {
+				if isDryRun && apierrors.IsNotFound(retryErr) {
+					// In DryRun mode, if resource is namespaced and namespace is not present,
+					// patch will fail with namespace not found. Treat this error as resoruce
+					// would be created
+					updatedObject = object
+					return nil
+				}
+				return retryErr
+			}
+			return nil
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
 
 	return updatedObject, applySubresources(ctx, dr, object, subresources, &options)
+}
+
+func isCustomResourceDefinition(u *unstructured.Unstructured) bool {
+	gvk := schema.FromAPIVersionAndKind(u.GetAPIVersion(), u.GetKind())
+
+	if u.GetKind() == "CustomResourceDefinition" && gvk.Group == apiextensions.GroupName {
+		return true
+	}
+
+	return false
+}
+
+func updateCRD(ctx context.Context, dr dynamic.ResourceInterface, isDryRun bool, u *unstructured.Unstructured,
+) (*unstructured.Unstructured, error) {
+
+	createOptions := metav1.CreateOptions{}
+	if isDryRun {
+		// Set dryRun option. Still proceed further so diff can be properly evaluated
+		createOptions.DryRun = []string{metav1.DryRunAll}
+	}
+
+	var updatedObject *unstructured.Unstructured
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		var retryErr error
+		updatedObject, retryErr = dr.Get(ctx, u.GetName(), metav1.GetOptions{})
+		if retryErr != nil {
+			if apierrors.IsNotFound(retryErr) {
+				updatedObject, retryErr = dr.Create(ctx, u, createOptions)
+				return retryErr
+			}
+			return retryErr
+		}
+
+		updateOptions := metav1.UpdateOptions{}
+		if isDryRun {
+			// Set dryRun option. Still proceed further so diff can be properly evaluated
+			updateOptions.DryRun = []string{metav1.DryRunAll}
+		}
+
+		u.SetResourceVersion(updatedObject.GetResourceVersion())
+		updatedObject, retryErr = dr.Update(ctx, u, updateOptions)
+		return retryErr
+	})
+
+	return updatedObject, err
 }
 
 // transformDriftExclusionPathsToPatches transforms a DriftExclusion instance to a Patch instance.

@@ -20,12 +20,16 @@ import (
 	"fmt"
 	"sync"
 
+	corev1 "k8s.io/api/core/v1"
+
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
+	libsveltosset "github.com/projectsveltos/libsveltos/lib/set"
 )
 
 type stagedManager struct {
-	mu            sync.RWMutex
-	stagedBundles map[string][]libsveltosv1beta1.ConfigurationBundle
+	mu             sync.RWMutex
+	stagedBundles  map[string]*libsveltosset.Set
+	currentBundles map[corev1.ObjectReference]*libsveltosv1beta1.ConfigurationBundle
 }
 
 var (
@@ -36,7 +40,8 @@ var (
 func getStagedResourcesManager() *stagedManager {
 	once.Do(func() {
 		instance = &stagedManager{
-			stagedBundles: make(map[string][]libsveltosv1beta1.ConfigurationBundle),
+			stagedBundles:  make(map[string]*libsveltosset.Set),
+			currentBundles: make(map[corev1.ObjectReference]*libsveltosv1beta1.ConfigurationBundle),
 		}
 	})
 	return instance
@@ -52,7 +57,11 @@ func (s *stagedManager) storeBundle(clusterNamespace, clusterName, requestorName
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	key := s.geKey(clusterNamespace, clusterName, requestorName, requestorFeature)
-	s.stagedBundles[key] = append(s.stagedBundles[key], *bundle)
+	if _, ok := s.stagedBundles[key]; !ok {
+		s.stagedBundles[key] = &libsveltosset.Set{}
+	}
+	s.stagedBundles[key].Insert(&corev1.ObjectReference{Namespace: bundle.Namespace, Name: bundle.Name})
+	s.currentBundles[corev1.ObjectReference{Namespace: bundle.Namespace, Name: bundle.Name}] = bundle
 }
 
 func (s *stagedManager) getBundles(clusterNamespace, clusterName, requestorName, requestorFeature string,
@@ -61,12 +70,36 @@ func (s *stagedManager) getBundles(clusterNamespace, clusterName, requestorName,
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	key := s.geKey(clusterNamespace, clusterName, requestorName, requestorFeature)
-	return s.stagedBundles[key]
+
+	v, ok := s.stagedBundles[key]
+	if !ok {
+		return []libsveltosv1beta1.ConfigurationBundle{}
+	}
+
+	items := v.Items()
+	bundles := make([]libsveltosv1beta1.ConfigurationBundle, v.Len())
+	for i := range items {
+		ref := corev1.ObjectReference{Namespace: items[i].Namespace, Name: items[i].Name}
+		bundles[i] = *s.currentBundles[ref]
+	}
+
+	return bundles
 }
 
 func (s *stagedManager) clearBundles(clusterNamespace, clusterName, requestorName, requestorFeature string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	key := s.geKey(clusterNamespace, clusterName, requestorName, requestorFeature)
+
+	bundles, ok := s.stagedBundles[key]
+	if !ok {
+		return
+	}
+	items := bundles.Items()
+	for i := range items {
+		ref := corev1.ObjectReference{Namespace: items[i].Namespace, Name: items[i].Name}
+		delete(s.currentBundles, ref)
+	}
+
 	delete(s.stagedBundles, key)
 }
