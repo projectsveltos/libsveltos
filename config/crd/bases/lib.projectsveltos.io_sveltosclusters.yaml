@@ -23,6 +23,10 @@ spec:
       jsonPath: .status.version
       name: Version
       type: string
+    - description: Time duration since creation of SveltosCluster
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1beta1
     schema:
       openAPIV3Schema:
