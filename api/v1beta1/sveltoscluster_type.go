@@ -202,6 +202,7 @@ type SveltosClusterStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready",description="Indicates whether cluster is ready to be managed by sveltos"
 //+kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Kubernetes version associated with this Cluster"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of SveltosCluster"
 //+kubebuilder:storageversion
 
 // SveltosCluster is the Schema for the SveltosCluster API
