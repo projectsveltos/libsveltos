@@ -129,6 +129,7 @@ func prepareConfigurationBundle(namespace, name string, resources []unstructured
 		resources[i].SetManagedFields(nil)
 		// Reset resourceVersion
 		resources[i].SetResourceVersion("")
+		resources[i].SetUID("")
 		data, err := yaml.Marshal(resources[i].UnstructuredContent())
 		if err != nil {
 			return nil, err
