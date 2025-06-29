@@ -125,6 +125,8 @@ func prepareConfigurationBundle(namespace, name string, resources []unstructured
 	content := make([]string, len(resources))
 
 	for i := range resources {
+		// Reset managed fields
+		resources[i].SetManagedFields(nil)
 		data, err := yaml.Marshal(resources[i].UnstructuredContent())
 		if err != nil {
 			return nil, err
