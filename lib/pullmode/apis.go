@@ -369,6 +369,10 @@ func GetDeploymentStatus(ctx context.Context, c client.Client,
 		return nil, err
 	}
 
+	if currentCG.Spec.Action != libsveltosv1beta1.ActionDeploy {
+		return &currentCG.Status, fmt.Errorf("action not deploy")
+	}
+
 	if currentCG.Spec.UpdatePhase != libsveltosv1beta1.UpdatePhaseReady {
 		return &currentCG.Status, fmt.Errorf("updatePhase not ready")
 	}
@@ -404,15 +408,19 @@ func GetRemoveStatus(ctx context.Context, c client.Client,
 		return nil, err
 	}
 
-	currentConfigurationGroup := &libsveltosv1beta1.ConfigurationGroup{}
+	currentCG := &libsveltosv1beta1.ConfigurationGroup{}
 	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name},
-		currentConfigurationGroup)
+		currentCG)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
 		return nil, err
 	}
 
-	return &currentConfigurationGroup.Status, nil
+	if currentCG.Spec.Action != libsveltosv1beta1.ActionRemove {
+		return &currentCG.Status, fmt.Errorf("action not remove")
+	}
+
+	return &currentCG.Status, nil
 }
 
 // IsBeingProvisioned returns true if content is currently being or has been deployed.
