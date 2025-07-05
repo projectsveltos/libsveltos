@@ -75,7 +75,7 @@ spec:
     - ct`
 )
 
-func handler(gvk *schema.GroupVersionKind) {
+func handler(gvk *schema.GroupVersionKind, _ crd.ChangeType) {
 	handlerCalled = true
 }
 

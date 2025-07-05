@@ -34,7 +34,15 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-type handler func(gvk *schema.GroupVersionKind)
+type ChangeType string
+
+const (
+	Add    ChangeType = "add"
+	Delete ChangeType = "delete"
+	Modify ChangeType = "modify"
+)
+
+type handler func(gvk *schema.GroupVersionKind, action ChangeType)
 
 // WatchCustomResourceDefinition starts a watcher for CustomResourceDefinition.
 // When new CRD is added/deleted/modified, invokes the passed handler
@@ -111,7 +119,7 @@ func runCRDInformer(stopCh <-chan struct{}, s cache.SharedIndexInformer, h handl
 					Version: crd.Spec.Versions[i].Name,
 					Kind:    crd.Spec.Names.Kind,
 				}
-				h(gvk)
+				h(gvk, Add)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -128,7 +136,7 @@ func runCRDInformer(stopCh <-chan struct{}, s cache.SharedIndexInformer, h handl
 					Version: crd.Spec.Versions[i].Name,
 					Kind:    crd.Spec.Names.Kind,
 				}
-				h(gvk)
+				h(gvk, Delete)
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
@@ -145,7 +153,7 @@ func runCRDInformer(stopCh <-chan struct{}, s cache.SharedIndexInformer, h handl
 					Version: crd.Spec.Versions[i].Name,
 					Kind:    crd.Spec.Names.Kind,
 				}
-				h(gvk)
+				h(gvk, Modify)
 			}
 		},
 	}
