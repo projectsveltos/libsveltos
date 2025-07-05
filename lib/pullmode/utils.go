@@ -85,7 +85,7 @@ type bundleData struct {
 func reconcileConfigurationBundle(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature, index string,
 	resources []unstructured.Unstructured, skipTracking, isStaged bool, logger logr.Logger,
-) (*libsveltosv1beta1.ConfigurationBundle, error) {
+	setters ...BundleOption) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
 	labels := getConfigurationBundleLabels(clusterName, requestorKind, requestorFeature)
 
@@ -105,15 +105,15 @@ func reconcileConfigurationBundle(ctx context.Context, c client.Client,
 
 	if currentBundle == nil {
 		return createConfigurationBundle(ctx, c, clusterNamespace, name, requestorName, index,
-			resources, labels, skipTracking, isStaged, logger)
+			resources, labels, skipTracking, isStaged, logger, setters...)
 	}
 
 	return updateConfigurationBundle(ctx, c, clusterNamespace, name, requestorName, index,
-		resources, skipTracking, isStaged, logger)
+		resources, skipTracking, isStaged, logger, setters...)
 }
 
 func prepareConfigurationBundle(namespace, name string, resources []unstructured.Unstructured,
-) (*libsveltosv1beta1.ConfigurationBundle, error) {
+	setters ...BundleOption) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
 	confBundle := &libsveltosv1beta1.ConfigurationBundle{
 		ObjectMeta: metav1.ObjectMeta{
@@ -139,15 +139,15 @@ func prepareConfigurationBundle(namespace, name string, resources []unstructured
 	}
 
 	confBundle.Spec.Resources = content
-
+	confBundle = applyBundleSetters(confBundle, setters...)
 	return confBundle, nil
 }
 
 func createConfigurationBundle(ctx context.Context, c client.Client, namespace, name, requestorName, index string,
 	resources []unstructured.Unstructured, labels client.MatchingLabels, skipTracking, isStaged bool,
-	logger logr.Logger) (*libsveltosv1beta1.ConfigurationBundle, error) {
+	logger logr.Logger, setters ...BundleOption) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
-	bundle, err := prepareConfigurationBundle(namespace, name, resources)
+	bundle, err := prepareConfigurationBundle(namespace, name, resources, setters...)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to prepare configurationBundle: %v", err))
 		return nil, err
@@ -184,9 +184,9 @@ func createConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 
 func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, name, requestorName, index string,
 	resources []unstructured.Unstructured, skipTracking, isStaged bool, logger logr.Logger,
-) (*libsveltosv1beta1.ConfigurationBundle, error) {
+	setters ...BundleOption) (*libsveltosv1beta1.ConfigurationBundle, error) {
 
-	bundle, err := prepareConfigurationBundle(namespace, name, resources)
+	bundle, err := prepareConfigurationBundle(namespace, name, resources, setters...)
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to prepare configurationBundle: %v", err))
 		return nil, err

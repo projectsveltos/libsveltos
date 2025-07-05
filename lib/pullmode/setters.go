@@ -18,6 +18,7 @@ package pullmode
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
@@ -167,4 +168,51 @@ func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Op
 	confGroup.Spec.RequestorHash = c.RequestorHash
 
 	return confGroup
+}
+
+type BundleOptions struct {
+	Timeout                 *metav1.Duration
+	ReleaseNamespace        string
+	ReleaseName             string
+	UninstallRealease       bool
+	IsLastHelmReleaseBundle bool
+}
+
+type BundleOption func(*BundleOptions)
+
+func WithTimeout(timeout *metav1.Duration) BundleOption {
+	return func(args *BundleOptions) {
+		args.Timeout = timeout
+	}
+}
+
+func WithReleaseInfo(namespace, name string, uninstall, isLast bool) BundleOption {
+	return func(args *BundleOptions) {
+		args.ReleaseNamespace = namespace
+		args.ReleaseName = name
+		args.UninstallRealease = uninstall
+		args.IsLastHelmReleaseBundle = isLast
+	}
+}
+
+func applyBundleSetters(confBundle *libsveltosv1beta1.ConfigurationBundle, setters ...BundleOption,
+) *libsveltosv1beta1.ConfigurationBundle {
+
+	if len(setters) == 0 {
+		// No options were passed
+		return confBundle
+	}
+
+	c := &BundleOptions{}
+	for _, setter := range setters {
+		setter(c)
+	}
+
+	confBundle.Spec.Timeout = c.Timeout
+	confBundle.Spec.HelmReleaseNamespace = c.ReleaseNamespace
+	confBundle.Spec.HelmReleaseName = c.ReleaseName
+	confBundle.Spec.HelmReleaseUninstall = c.UninstallRealease
+	confBundle.Spec.IsLastHelmReleaseBundle = c.IsLastHelmReleaseBundle
+
+	return confBundle
 }

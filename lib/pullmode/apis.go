@@ -177,7 +177,8 @@ func RecordResourcesForDeployment(ctx context.Context, c client.Client,
 // - clusterNamespace/clusterName identify the target SveltosCluster.
 func StageResourcesForDeployment(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
-	resources map[string][]unstructured.Unstructured, skipTracking bool, logger logr.Logger) error {
+	resources map[string][]unstructured.Unstructured, skipTracking bool, logger logr.Logger,
+	setters ...BundleOption) error {
 
 	err := markConfigurationGroupAsPreparing(ctx, c, clusterNamespace, clusterName, requestorKind,
 		requestorName, requestorFeature, logger)
@@ -194,8 +195,8 @@ func StageResourcesForDeployment(ctx context.Context, c client.Client,
 	// If Requestor is ClusterSummary each key represents a different ConfigMap/Secret referenced in
 	// policyRef section or a different helm chart in the helmChart section.
 	for k := range resources {
-		bundle, err := reconcileConfigurationBundle(ctx, c, clusterNamespace, clusterName,
-			requestorKind, requestorName, requestorFeature, k, resources[k], skipTracking, true, logger)
+		bundle, err := reconcileConfigurationBundle(ctx, c, clusterNamespace, clusterName, requestorKind,
+			requestorName, requestorFeature, k, resources[k], skipTracking, true, logger, setters...)
 		if err != nil {
 			return err
 		}
@@ -454,7 +455,9 @@ func IsBeingProvisioned(ctx context.Context, c client.Client,
 	}
 
 	// Verify this is for the current requestor state
-	if !reflect.DeepEqual(currentCG.Status.ObservedRequestorHash, currentCG.Spec.RequestorHash) {
+	if currentCG.Status.ObservedRequestorHash != nil &&
+		!reflect.DeepEqual(currentCG.Status.ObservedRequestorHash, currentCG.Spec.RequestorHash) {
+
 		logger.V(logsettings.LogInfo).Info("requestor hash mismatch - latest changes not yet processed")
 		return false
 	}
