@@ -37,6 +37,35 @@ type ConfigurationBundleSpec struct {
 	// ConfigurationGroup is deleted. This is intended for resources like
 	// Sveltos CRDs or the agents Sveltos deploys in the managed clusters.
 	NotTracked bool `json:"notTracked,omitempty"`
+
+	// time to wait for Kubernetes operation (like Jobs for hooks)
+	// +optional
+	Timeout *metav1.Duration `json:"timeout,omitempty"`
+
+	// HelmReleaseNamespace indicates the namespace of the Helm release
+	// these resources belong to, if any
+	// +optional
+	HelmReleaseNamespace string `json:"helmReleaseNamespace,omitempty"`
+
+	// HelmReleaseName indicates the name of the Helm release
+	// these resources belong to, if any
+	// +optional
+	HelmReleaseName string `json:"helmReleaseName,omitempty"`
+
+	// HelmReleaseUninstall, when true, indicates that these resources are
+	// part of a Helm release uninstallation process.
+	// This can be used to trigger specific cleanup or post-uninstall hooks.
+	// +kubebuilder:default:=false
+	// +optional
+	HelmReleaseUninstall bool `json:"helmReleaseUninstall,omitempty"`
+
+	// IsLastHelmReleaseBundle, when true, indicates that this ConfigurationBundle
+	// is the final bundle in the sequence for the associated Helm release.
+	// This can be used to trigger finalization steps, such as marking the
+	// release as fully deployed or completely uninstalled in external tracking systems.
+	// +kubebuilder:default:=false
+	// +optional
+	IsLastHelmReleaseBundle bool `json:"isLastHelmReleaseBundle,omitempty"`
 }
 
 type ConfigurationBundleStatus struct {

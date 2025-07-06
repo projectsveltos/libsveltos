@@ -22,6 +22,7 @@ package v1beta1
 
 import (
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -732,6 +733,11 @@ func (in *ConfigurationBundleSpec) DeepCopyInto(out *ConfigurationBundleSpec) {
 		in, out := &in.Resources, &out.Resources
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.Timeout != nil {
+		in, out := &in.Timeout, &out.Timeout
+		*out = new(metav1.Duration)
+		**out = **in
 	}
 }
 
