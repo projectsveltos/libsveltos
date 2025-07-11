@@ -40,6 +40,9 @@ const (
 
 	// EventReportClusterTypeLabel is added to each EventReport
 	EventReportClusterTypeLabel = "eventreport.projectsveltos.io/cluster-type"
+
+	// EventReportPullModeLabel is added to each EventReport from clusters in pull mode
+	EventReportPullModeLabel = "eventreport.projectsveltos.io/pullmode"
 )
 
 func GetEventReportName(healthName, clusterName string, clusterType *ClusterType) string {
