@@ -19,6 +19,7 @@ package pullmode
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
@@ -38,6 +39,7 @@ type Options struct {
 	DeployedGVKs           []string
 	Annotations            map[string]string
 	RequestorHash          []byte
+	ServiceAccount         types.NamespacedName
 }
 
 type Option func(*Options)
@@ -126,6 +128,15 @@ func WithAnnotations(annotations map[string]string) Option {
 	}
 }
 
+func WithServiceAccount(namespace, name string) Option {
+	return func(args *Options) {
+		args.ServiceAccount = types.NamespacedName{
+			Namespace: namespace,
+			Name:      name,
+		}
+	}
+}
+
 func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Option,
 ) *libsveltosv1beta1.ConfigurationGroup {
 
@@ -166,6 +177,8 @@ func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Op
 	confGroup.Spec.MaxConsecutiveFailures = c.MaxConsecutiveFailures
 
 	confGroup.Spec.RequestorHash = c.RequestorHash
+	confGroup.Spec.ServiceAccountNamespace = c.ServiceAccount.Namespace
+	confGroup.Spec.ServiceAccountName = c.ServiceAccount.Name
 
 	return confGroup
 }

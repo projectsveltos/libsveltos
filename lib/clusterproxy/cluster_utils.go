@@ -138,6 +138,10 @@ func getKubernetesRestConfigForAdmin(ctx context.Context, c client.Client,
 		return nil, err
 	}
 
+	if kubeconfigContent == nil {
+		return nil, nil
+	}
+
 	kubeconfig, closer, err := CreateKubeconfig(logger, kubeconfigContent)
 	if err != nil {
 		return nil, err
@@ -162,6 +166,10 @@ func getKubernetesClientForAdmin(ctx context.Context, c client.Client,
 	if err != nil {
 		return nil, err
 	}
+	if config == nil {
+		return nil, nil
+	}
+
 	logger.V(logsettings.LogVerbose).Info("return new client")
 	return client.New(config, client.Options{Scheme: c.Scheme()})
 }

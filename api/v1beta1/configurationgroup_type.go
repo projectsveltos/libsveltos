@@ -173,6 +173,20 @@ type ConfigurationGroupSpec struct {
 	// changed and the ConfigurationGroup needs to be updated accordingly.
 	// +optional
 	RequestorHash []byte `json:"requestorHash,omitempty"`
+
+	// ServiceAccountName is the name of the ServiceAccount to impersonate when applying
+	// the configuration. If empty, the default ServiceAccount for the Sveltos-applier
+	// will be used.
+	// The ServiceAccount must exist in the managed cluster.
+	// +optional
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+
+	// ServiceAccountNamespace is the namespace of the ServiceAccount to impersonate when applying
+	// the configuration. If empty, the default namespace for the Sveltos-applier
+	// will be used (typically the same namespace where the Sveltos-applier is deployed).
+	// The ServiceAccount must exist in the managed cluster.
+	// +optional
+	ServiceAccountNamespace string `json:"serviceAccountNamespace,omitempty"`
 }
 
 type ConfigurationGroupStatus struct {

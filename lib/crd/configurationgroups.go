@@ -247,6 +247,20 @@ spec:
                   changed and the ConfigurationGroup needs to be updated accordingly.
                 format: byte
                 type: string
+              serviceAccountName:
+                description: |-
+                  ServiceAccountName is the name of the ServiceAccount to impersonate when applying
+                  the configuration. If empty, the default ServiceAccount for the Sveltos-applier
+                  will be used.
+                  The ServiceAccount must exist in the managed cluster.
+                type: string
+              serviceAccountNamespace:
+                description: |-
+                  ServiceAccountNamespace is the namespace of the ServiceAccount to impersonate when applying
+                  the configuration. If empty, the default namespace for the Sveltos-applier
+                  will be used (typically the same namespace where the Sveltos-applier is deployed).
+                  The ServiceAccount must exist in the managed cluster.
+                type: string
               sourceRef:
                 description: |-
                   SourceRef is the user facing Sveltos resource that caused this ConfigurationGroup to be
