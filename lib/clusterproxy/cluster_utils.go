@@ -132,23 +132,21 @@ func getKubernetesRestConfigForAdmin(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
 	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (*rest.Config, error) {
 
-	pullMode, err := isSveltosClusterInPullMode(ctx, c, clusterNamespace, clusterName, logger)
-	if err != nil {
-		return nil, err
-	}
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
+		pullMode, err := isSveltosClusterInPullMode(ctx, c, clusterNamespace, clusterName, logger)
+		if err != nil {
+			return nil, err
+		}
 
-	if pullMode {
-		return nil, nil
+		if pullMode {
+			return nil, nil
+		}
 	}
 
 	kubeconfigContent, err := roles.GetKubeconfig(ctx, c, clusterNamespace, clusterName,
 		adminNamespace, adminName, clusterType)
 	if err != nil {
 		return nil, err
-	}
-
-	if kubeconfigContent == nil {
-		return nil, fmt.Errorf("failed to get cluster kubeconfig")
 	}
 
 	kubeconfig, closer, err := CreateKubeconfig(logger, kubeconfigContent)
