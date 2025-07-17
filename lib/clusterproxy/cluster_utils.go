@@ -132,6 +132,15 @@ func getKubernetesRestConfigForAdmin(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
 	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (*rest.Config, error) {
 
+	pullMode, err := isSveltosClusterInPullMode(ctx, c, clusterNamespace, clusterName, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	if pullMode {
+		return nil, nil
+	}
+
 	kubeconfigContent, err := roles.GetKubeconfig(ctx, c, clusterNamespace, clusterName,
 		adminNamespace, adminName, clusterType)
 	if err != nil {
@@ -139,7 +148,7 @@ func getKubernetesRestConfigForAdmin(ctx context.Context, c client.Client,
 	}
 
 	if kubeconfigContent == nil {
-		return nil, nil
+		return nil, fmt.Errorf("failed to get cluster kubeconfig")
 	}
 
 	kubeconfig, closer, err := CreateKubeconfig(logger, kubeconfigContent)
@@ -165,9 +174,6 @@ func getKubernetesClientForAdmin(ctx context.Context, c client.Client,
 		adminNamespace, adminName, clusterType, logger)
 	if err != nil {
 		return nil, err
-	}
-	if config == nil {
-		return nil, nil
 	}
 
 	logger.V(logsettings.LogVerbose).Info("return new client")
@@ -196,6 +202,17 @@ func GetKubernetesRestConfig(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
 	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (*rest.Config, error) {
 
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
+		pullMode, err := isSveltosClusterInPullMode(ctx, c, clusterNamespace, clusterName, logger)
+		if err != nil {
+			return nil, err
+		}
+
+		if pullMode {
+			return nil, nil
+		}
+	}
+
 	if adminName != "" && adminName != kubernetesAdmin {
 		return getKubernetesRestConfigForAdmin(ctx, c, clusterNamespace, clusterName,
 			adminNamespace, adminName, clusterType, logger)
@@ -212,11 +229,6 @@ func GetKubernetesClient(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
 	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (client.Client, error) {
 
-	if adminName != "" && adminName != kubernetesAdmin {
-		return getKubernetesClientForAdmin(ctx, c, clusterNamespace, clusterName,
-			adminNamespace, adminName, clusterType, logger)
-	}
-
 	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
 		pullMode, err := isSveltosClusterInPullMode(ctx, c, clusterNamespace, clusterName, logger)
 		if err != nil {
@@ -226,7 +238,14 @@ func GetKubernetesClient(ctx context.Context, c client.Client,
 		if pullMode {
 			return nil, nil
 		}
+	}
 
+	if adminName != "" && adminName != kubernetesAdmin {
+		return getKubernetesClientForAdmin(ctx, c, clusterNamespace, clusterName,
+			adminNamespace, adminName, clusterType, logger)
+	}
+
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
 		return GetSveltosKubernetesClient(ctx, logger, c, c.Scheme(), clusterNamespace, clusterName)
 	}
 	return GetCAPIKubernetesClient(ctx, logger, c, c.Scheme(), clusterNamespace, clusterName)
