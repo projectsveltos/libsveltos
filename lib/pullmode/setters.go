@@ -187,6 +187,9 @@ type BundleOptions struct {
 	Timeout                 *metav1.Duration
 	ReleaseNamespace        string
 	ReleaseName             string
+	ChartVersion            string
+	Icon                    string
+	RepoURL                 string
 	UninstallRealease       bool
 	IsLastHelmReleaseBundle bool
 }
@@ -199,10 +202,15 @@ func WithTimeout(timeout *metav1.Duration) BundleOption {
 	}
 }
 
-func WithReleaseInfo(namespace, name string, uninstall, isLast bool) BundleOption {
+func WithReleaseInfo(namespace, name, repoURL, chartVersion, icon string,
+	uninstall, isLast bool) BundleOption {
+
 	return func(args *BundleOptions) {
 		args.ReleaseNamespace = namespace
 		args.ReleaseName = name
+		args.ChartVersion = chartVersion
+		args.RepoURL = repoURL
+		args.Icon = icon
 		args.UninstallRealease = uninstall
 		args.IsLastHelmReleaseBundle = isLast
 	}
@@ -224,6 +232,9 @@ func applyBundleSetters(confBundle *libsveltosv1beta1.ConfigurationBundle, sette
 	confBundle.Spec.Timeout = c.Timeout
 	confBundle.Spec.HelmReleaseNamespace = c.ReleaseNamespace
 	confBundle.Spec.HelmReleaseName = c.ReleaseName
+	confBundle.Spec.HelmChartVersion = c.ChartVersion
+	confBundle.Spec.HelmIcon = c.Icon
+	confBundle.Spec.HelmRepoURL = c.RepoURL
 	confBundle.Spec.HelmReleaseUninstall = c.UninstallRealease
 	confBundle.Spec.IsLastHelmReleaseBundle = c.IsLastHelmReleaseBundle
 
