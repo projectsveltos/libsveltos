@@ -371,16 +371,16 @@ func GetDeploymentStatus(ctx context.Context, c client.Client,
 	}
 
 	if currentCG.Spec.Action != libsveltosv1beta1.ActionDeploy {
-		return &currentCG.Status, fmt.Errorf("action not deploy")
+		return &currentCG.Status, fmt.Errorf("ConfigurationGroup action not set to deploy")
 	}
 
 	if currentCG.Spec.UpdatePhase != libsveltosv1beta1.UpdatePhaseReady {
-		return &currentCG.Status, fmt.Errorf("updatePhase not ready")
+		return &currentCG.Status, fmt.Errorf("ConfigurationGroup updatePhase not set to ready")
 	}
 
 	if currentCG.Status.ObservedGeneration != 0 {
 		if currentCG.Status.ObservedGeneration != currentCG.Generation {
-			msg := fmt.Sprintf("Status.ObservedGeneration (%d) does not match Generation (%d)",
+			msg := fmt.Sprintf("ConfigurationGroup Status.ObservedGeneration (%d) does not match Generation (%d)",
 				currentCG.Status.ObservedGeneration, currentCG.Generation)
 			logger.V(logsettings.LogInfo).Info(msg)
 			return &currentCG.Status, NewProcessingMismatchError(msg)
@@ -388,7 +388,7 @@ func GetDeploymentStatus(ctx context.Context, c client.Client,
 	}
 
 	if !reflect.DeepEqual(currentCG.Status.ObservedRequestorHash, currentCG.Spec.RequestorHash) {
-		msg := "Status.ObservedRequestorHash does not match Spec.RequestorHash"
+		msg := "ConfigurationGroup Status.ObservedRequestorHash does not match Spec.RequestorHash"
 		logger.V(logsettings.LogInfo).Info(msg)
 		return &currentCG.Status, NewProcessingMismatchError(msg)
 	}
@@ -418,7 +418,7 @@ func GetRemoveStatus(ctx context.Context, c client.Client,
 	}
 
 	if currentCG.Spec.Action != libsveltosv1beta1.ActionRemove {
-		return &currentCG.Status, fmt.Errorf("action not remove")
+		return &currentCG.Status, fmt.Errorf("ConfigurationGroup action not set to remove")
 	}
 
 	return &currentCG.Status, nil

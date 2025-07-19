@@ -57,6 +57,16 @@ spec:
             type: object
           spec:
             properties:
+              helmChartVersion:
+                description: |-
+                  HelmChartVersion indicates the chart version of the Helm release
+                  these resources belong to, if any
+                type: string
+              helmIcon:
+                description: |-
+                  HelmIcon indicates the URL of the icon of the Helm release
+                  these resources belong to, if any
+                type: string
               helmReleaseName:
                 description: |-
                   HelmReleaseName indicates the name of the Helm release
@@ -74,6 +84,11 @@ spec:
                   part of a Helm release uninstallation process.
                   This can be used to trigger specific cleanup or post-uninstall hooks.
                 type: boolean
+              helmRepoURL:
+                description: |-
+                  HelmRepoURL indicates the repo URL of the Helm release
+                  these resources belong to, if any
+                type: string
               isLastHelmReleaseBundle:
                 default: false
                 description: |-

@@ -140,6 +140,7 @@ func prepareConfigurationBundle(namespace, name string, resources []unstructured
 
 	confBundle.Spec.Resources = content
 	confBundle = applyBundleSetters(confBundle, setters...)
+
 	return confBundle, nil
 }
 
@@ -213,6 +214,7 @@ func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 
 	currentBundle.Spec = bundle.Spec
 	currentBundle.Spec.NotTracked = skipTracking
+
 	err = c.Update(ctx, currentBundle)
 	if err != nil {
 		return nil, err

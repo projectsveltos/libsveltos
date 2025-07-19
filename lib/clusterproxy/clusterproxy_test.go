@@ -154,6 +154,15 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(testEnv.Create(context.TODO(), ns)).To(Succeed())
 		Expect(testEnv.Create(context.TODO(), cluster)).To(Succeed())
 
+		const timeout = 20 * time.Second
+		// Eventual loop so testEnv Cache is synced
+		Eventually(func() error {
+			currentCluster := &clusterv1.Cluster{}
+			return testEnv.Get(context.TODO(),
+				types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Name},
+				currentCluster)
+		}, timeout, time.Second).Should(BeNil())
+
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: cluster.Namespace,
@@ -166,7 +175,6 @@ var _ = Describe("clusterproxy ", func() {
 
 		Expect(testEnv.Create(context.TODO(), secret)).To(Succeed())
 
-		const timeout = 20 * time.Second
 		// Eventual loop so testEnv Cache is synced
 		Eventually(func() error {
 			currentSecret := &corev1.Secret{}

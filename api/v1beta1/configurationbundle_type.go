@@ -52,6 +52,21 @@ type ConfigurationBundleSpec struct {
 	// +optional
 	HelmReleaseName string `json:"helmReleaseName,omitempty"`
 
+	// HelmChartVersion indicates the chart version of the Helm release
+	// these resources belong to, if any
+	// +optional
+	HelmChartVersion string `json:"helmChartVersion,omitempty"`
+
+	// HelmIcon indicates the URL of the icon of the Helm release
+	// these resources belong to, if any
+	// +optional
+	HelmIcon string `json:"helmIcon,omitempty"`
+
+	// HelmRepoURL indicates the repo URL of the Helm release
+	// these resources belong to, if any
+	// +optional
+	HelmRepoURL string `json:"helmRepoURL,omitempty"`
+
 	// HelmReleaseUninstall, when true, indicates that these resources are
 	// part of a Helm release uninstallation process.
 	// This can be used to trigger specific cleanup or post-uninstall hooks.
