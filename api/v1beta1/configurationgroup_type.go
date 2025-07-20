@@ -70,6 +70,8 @@ type ConfigurationGroupSpec struct {
 	SourceRef *corev1.ObjectReference `json:"sourceRef,omitempty"`
 
 	// ConfigurationItems represents a list of configurations to deploy
+	// The order of items in this list determines deployment sequence
+	// +listType=atomic
 	// +optional
 	ConfigurationItems []ConfigurationItem `json:"configurationItem,omitempty"`
 
