@@ -44,8 +44,9 @@ spec:
                 - Remove
                 type: string
               configurationItem:
-                description: ConfigurationItems represents a list of configurations
-                  to deploy
+                description: |-
+                  ConfigurationItems represents a list of configurations to deploy
+                  The order of items in this list determines deployment sequence
                 items:
                   properties:
                     contentRef:
@@ -101,6 +102,7 @@ spec:
                       type: string
                   type: object
                 type: array
+                x-kubernetes-list-type: atomic
               continueOnConflict:
                 default: false
                 description: |-
