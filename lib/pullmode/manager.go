@@ -23,12 +23,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	libsveltosset "github.com/projectsveltos/libsveltos/lib/set"
 )
 
 type stagedManager struct {
 	mu             sync.RWMutex
-	stagedBundles  map[string]*libsveltosset.Set
+	stagedBundles  map[string][]corev1.ObjectReference
 	currentBundles map[corev1.ObjectReference]*libsveltosv1beta1.ConfigurationBundle
 }
 
@@ -40,7 +39,7 @@ var (
 func getStagedResourcesManager() *stagedManager {
 	once.Do(func() {
 		instance = &stagedManager{
-			stagedBundles:  make(map[string]*libsveltosset.Set),
+			stagedBundles:  make(map[string][]corev1.ObjectReference),
 			currentBundles: make(map[corev1.ObjectReference]*libsveltosv1beta1.ConfigurationBundle),
 		}
 	})
@@ -58,9 +57,9 @@ func (s *stagedManager) storeBundle(clusterNamespace, clusterName, requestorName
 	defer s.mu.Unlock()
 	key := s.geKey(clusterNamespace, clusterName, requestorName, requestorFeature)
 	if _, ok := s.stagedBundles[key]; !ok {
-		s.stagedBundles[key] = &libsveltosset.Set{}
+		s.stagedBundles[key] = make([]corev1.ObjectReference, 0)
 	}
-	s.stagedBundles[key].Insert(&corev1.ObjectReference{Namespace: bundle.Namespace, Name: bundle.Name})
+	s.stagedBundles[key] = append(s.stagedBundles[key], corev1.ObjectReference{Namespace: bundle.Namespace, Name: bundle.Name})
 	s.currentBundles[corev1.ObjectReference{Namespace: bundle.Namespace, Name: bundle.Name}] = bundle
 }
 
@@ -76,10 +75,9 @@ func (s *stagedManager) getBundles(clusterNamespace, clusterName, requestorName,
 		return []libsveltosv1beta1.ConfigurationBundle{}
 	}
 
-	items := v.Items()
-	bundles := make([]libsveltosv1beta1.ConfigurationBundle, v.Len())
-	for i := range items {
-		ref := corev1.ObjectReference{Namespace: items[i].Namespace, Name: items[i].Name}
+	bundles := make([]libsveltosv1beta1.ConfigurationBundle, len(v))
+	for i := range v {
+		ref := corev1.ObjectReference{Namespace: v[i].Namespace, Name: v[i].Name}
 		bundles[i] = *s.currentBundles[ref]
 	}
 
@@ -95,9 +93,9 @@ func (s *stagedManager) clearBundles(clusterNamespace, clusterName, requestorNam
 	if !ok {
 		return
 	}
-	items := bundles.Items()
-	for i := range items {
-		ref := corev1.ObjectReference{Namespace: items[i].Namespace, Name: items[i].Name}
+
+	for i := range bundles {
+		ref := corev1.ObjectReference{Namespace: bundles[i].Namespace, Name: bundles[i].Name}
 		delete(s.currentBundles, ref)
 	}
 
