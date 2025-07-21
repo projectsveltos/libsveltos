@@ -59,6 +59,17 @@ const (
 	UpdatePhasePreparing = UpdatePhase("Preparing")
 )
 
+// SourceStatus defines the lifecycle status of a source resource.
+// +kubebuilder:validation:Enum=Active;Deleted
+type SourceStatus string
+
+const (
+	// SourceStatusActive indicates the source resource is active.
+	SourceStatusActive SourceStatus = "Active"
+	// SourceStatusDeleted indicates the source resource has been deleted.
+	SourceStatusDeleted SourceStatus = "Deleted"
+)
+
 type ConfigurationGroupSpec struct {
 	// +kubebuilder:default:=Deploy
 	Action Action `json:"action,omitempty"`
@@ -68,6 +79,13 @@ type ConfigurationGroupSpec struct {
 	// facing resource is either a ClusterProfile or a Profile.
 	// +optional
 	SourceRef *corev1.ObjectReference `json:"sourceRef,omitempty"`
+
+	// SourceStatus indicates the lifecycle status of the source resource (e.g., ClusterSummary)
+	// that created this ConfigurationGroup. Valid values are "Active" and "Deleted".
+	// This field helps determine if the ConfigurationGroup was created by a source that is
+	// no longer present or in a different state.
+	// +kubebuilder:default:=Active
+	SourceStatus SourceStatus `json:"sourceStatus,omitempty"`
 
 	// ConfigurationItems represents a list of configurations to deploy
 	// The order of items in this list determines deployment sequence

@@ -349,6 +349,37 @@ func TerminateDeploymentTracking(ctx context.Context, c client.Client,
 		requestorName, requestorFeature, logger)
 }
 
+// GetSourceStatus retrieves the SourceStatus of the ConfigurationGroup associated with a specific requestor.
+//
+// This function identifies a ConfigurationGroup using the provided cluster details (namespace, name),
+// requestor details (kind, name, feature), and then extracts its SourceStatus.
+//
+// Returns:
+//
+//	*libsveltosv1beta1.SourceStatus: A pointer to the SourceStatus of the found ConfigurationGroup.
+//	                                 Returns nil if the ConfigurationGroup is not found or in case of an error.
+//	error: An error if there was a problem retrieving the ConfigurationGroup or its status.
+//	       Returns nil if the operation was successful and the status was retrieved (or if the CG was not found).
+func GetSourceStatus(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
+	logger logr.Logger) (*libsveltosv1beta1.SourceStatus, error) {
+
+	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+	_, currentConfigurationGroup, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
+	if err != nil {
+		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		return nil, err
+	}
+
+	if currentConfigurationGroup == nil {
+		// The resource currently does not exist. Nothing to do
+		return nil, nil
+	}
+
+	cg := currentConfigurationGroup.(*libsveltosv1beta1.ConfigurationGroup)
+	return &cg.Spec.SourceStatus, nil
+}
+
 // For SveltosClusters operating in pull mode, this method is invoked by components
 // on the management cluster to retrieve the deployment status of managed resources.
 func GetDeploymentStatus(ctx context.Context, c client.Client,

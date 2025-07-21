@@ -584,4 +584,39 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 			requestorKind, requestorName, requestorFeature, logger)
 		Expect(isBeingRemoved).To(BeFalse())
 	})
+
+	It("GetSourceStatus returns ConfigurationGroup.Spec.SourceStatus", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		requestorKind := randomString()
+		requestorName := randomString()
+		requestorFeature := randomString()
+
+		createNamespace(clusterNamespace)
+
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+
+		configurationGroup := &libsveltosv1beta1.ConfigurationGroup{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      randomString(),
+				Labels:    labels,
+				Annotations: map[string]string{
+					pullmode.RequestorNameAnnotationKey: requestorName,
+				},
+			},
+			Spec: libsveltosv1beta1.ConfigurationGroupSpec{
+				SourceStatus: libsveltosv1beta1.SourceStatusActive,
+			},
+		}
+
+		Expect(k8sClient.Create(context.TODO(), configurationGroup)).To(Succeed())
+		Expect(waitForObject(context.TODO(), k8sClient, configurationGroup)).To(Succeed())
+
+		sourceStatus, err := pullmode.GetSourceStatus(context.TODO(), k8sClient, clusterNamespace, clusterName, requestorKind,
+			requestorName, requestorFeature, logger)
+		Expect(err).To(BeNil())
+		Expect(sourceStatus).ToNot(BeNil())
+		Expect(*sourceStatus).To(Equal(libsveltosv1beta1.SourceStatusActive))
+	})
 })
