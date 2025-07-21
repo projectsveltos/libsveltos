@@ -26,6 +26,7 @@ import (
 
 type Options struct {
 	SourceRef              *corev1.ObjectReference
+	SourceStatus           libsveltosv1beta1.SourceStatus
 	Tier                   int32
 	DryRun                 bool
 	Reloader               bool
@@ -95,6 +96,12 @@ func WithTier(tier int32) Option {
 func WithSourceRef(sourceRef *corev1.ObjectReference) Option {
 	return func(args *Options) {
 		args.SourceRef = sourceRef
+	}
+}
+
+func WithSourceStatus(sourceStatus libsveltosv1beta1.SourceStatus) Option {
+	return func(args *Options) {
+		args.SourceStatus = sourceStatus
 	}
 }
 
@@ -171,6 +178,7 @@ func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Op
 	confGroup.Spec.DeployedGroupVersionKind = c.DeployedGVKs
 
 	confGroup.Spec.SourceRef = c.SourceRef
+	confGroup.Spec.SourceStatus = c.SourceStatus
 
 	confGroup.Spec.ContinueOnError = c.ContinueOnError
 	confGroup.Spec.ContinueOnConflict = c.ContinueOnConflict
