@@ -93,3 +93,7 @@ func GetConfigurationBundleCRDYAML() []byte {
 func GetConfigurationGroupCRDYAML() []byte {
 	return ConfigurationGroupCRD
 }
+
+func GetSveltosLicenseCRDYAML() []byte {
+	return SveltosLicenseCRD
+}

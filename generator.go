@@ -145,4 +145,7 @@ func main() {
 
 	configurationGroupFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_configurationgroups.lib.projectsveltos.io.yaml"
 	generate(configurationGroupFile, "configurationgroups", "ConfigurationGroup")
+
+	sveltosLicenseFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_sveltoslicenses.lib.projectsveltos.io.yaml"
+	generate(sveltosLicenseFile, "sveltoslicenses", "SveltosLicense")
 }

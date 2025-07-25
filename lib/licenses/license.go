@@ -24,6 +24,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"time"
 
@@ -50,6 +51,15 @@ const (
 	FeaturePullMode = Features("PullMode")
 )
 
+// +kubebuilder:validation:Enum:=Enterprise;EnterprisePlus
+type Plan string
+
+const (
+	PlanEnterprise = Features("Enterprise")
+
+	PlanEnterprisePlus = Features("EnterprisePlus")
+)
+
 // LicensePayload defines the internal structure of the data that gets signed
 // and embedded within the Kubernetes Secret.
 type LicensePayload struct {
@@ -62,8 +72,17 @@ type LicensePayload struct {
 	// Features is a list of feature strings enabled by this license.
 	Features []Features `json:"features"`
 
+	// Specify the type of plan
+	// +optional
+	Plan Plan `json:"plan,omitempty"`
+
 	// ExpirationDate is the exact time when the license expires.
 	ExpirationDate time.Time `json:"expirationDate"`
+
+	// GracePeriodDays specifies the number of days the license remains functional
+	// after its expiration date, during which warnings are issued.
+	// +optional
+	GracePeriodDays int `json:"gracePeriodDays,omitempty"`
 
 	// MaxClusters is the maximum number of clusters allowed for this license (optional).
 	// +optional
@@ -77,7 +96,61 @@ type LicensePayload struct {
 	ClusterFingerprint string `json:"clusterFingerprint,omitempty"`
 }
 
-// Returns the decoded and verified LicensePayload, or an error if validation fails.
+// Custom error types to differentiate license states
+type LicenseError struct {
+	Status  LicenseStatus
+	Message string
+	Err     error
+}
+
+func (e *LicenseError) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("%s (status: %s): %v", e.Message, e.Status.String(), e.Err)
+	}
+	return fmt.Sprintf("%s (status: %s)", e.Message, e.Status.String())
+}
+
+func (e *LicenseError) Unwrap() error {
+	return e.Err
+}
+
+// LicenseStatus represents the state of the license (copy from previous example or import)
+type LicenseStatus int
+
+const (
+	LicenseStatusValid LicenseStatus = iota
+	LicenseStatusExpiredGracePeriod
+	LicenseStatusExpiredEnforced
+)
+
+// String method for better printing of status
+func (s LicenseStatus) String() string {
+	switch s {
+	case LicenseStatusValid:
+		return "Valid"
+	case LicenseStatusExpiredGracePeriod:
+		return "Expired (Grace Period)"
+	case LicenseStatusExpiredEnforced:
+		return "Expired (Enforced)"
+	default:
+		return "Unknown"
+	}
+}
+
+// GetActualGracePeriod calculates the effective grace period duration.
+// It uses GracePeriodDays if set and positive, otherwise it uses the DefaultGracePeriod.
+func getActualGracePeriod(lp *LicensePayload) time.Duration {
+	// defaultGracePeriod is the fallback duration if GracePeriodDays is not specified or is 0.
+	const defaultGracePeriod = time.Hour * 24 * 7 // One week
+
+	if lp.GracePeriodDays > 0 {
+		return time.Duration(lp.GracePeriodDays) * 24 * time.Hour
+	}
+	return defaultGracePeriod
+}
+
+// Returns the decoded and verified LicensePayload, or a LicenseError if validation fails,
+// indicating the license status.
 func VerifyLicenseSecret(ctx context.Context, c client.Client, secretNsName types.NamespacedName,
 	publicKey *rsa.PublicKey, logger logr.Logger) (*LicensePayload, error) {
 
@@ -85,21 +158,31 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client, secretNsName type
 	err := c.Get(ctx, secretNsName, licenseSecret)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return nil, fmt.Errorf("license secret '%s' not found: %w", secretNsName.String(), err)
+			return nil, err
 		}
 		return nil, fmt.Errorf("failed to get license secret '%s': %w", secretNsName.String(), err)
 	}
 
 	payload, ok := licenseSecret.Data[licenseKey]
 	if !ok {
-		return nil, fmt.Errorf("license secret '%s' is missing the %q key",
+		msg := fmt.Sprintf("license secret '%s' is missing the %q key",
 			secretNsName.String(), licenseKey)
+		return nil, &LicenseError{
+			Status:  LicenseStatusExpiredEnforced,
+			Message: msg,
+			Err:     errors.New(msg),
+		}
 	}
 
 	signature, ok := licenseSecret.Data[signatureKey]
 	if !ok {
-		return nil, fmt.Errorf("license secret '%s' is missing the %q key",
+		msg := fmt.Sprintf("license secret '%s' is missing the %q key",
 			secretNsName.String(), signatureKey)
+		return nil, &LicenseError{
+			Status:  LicenseStatusExpiredEnforced,
+			Message: msg,
+			Err:     errors.New(msg),
+		}
 	}
 
 	// Verify the digital signature
@@ -109,28 +192,61 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client, secretNsName type
 		logger.V(logs.LogInfo).Info(
 			fmt.Sprintf("Digital signature verification failed for license from secret %s: %v",
 				secretNsName.String(), err))
-		return nil, fmt.Errorf("digital signature verification failed: %w", err)
+		return nil, &LicenseError{
+			Status:  LicenseStatusExpiredEnforced,
+			Message: fmt.Sprintf("digital signature verification failed for secret '%s'", secretNsName.String()),
+			Err:     err,
+		}
 	}
 
 	logger.V(logs.LogInfo).Info("Digital signature successfully verified for license from secret")
 
-	// Unmarshal the LicensePayload from the verified data
 	var verifiedPayload LicensePayload
 	if err := json.Unmarshal(payload, &verifiedPayload); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal verified license payload from secret %q: %w",
 			secretNsName.String(), err)
 	}
 
-	// 6. Perform internal license content validation (e.g., expiration, cluster fingerprint)
-	if verifiedPayload.ExpirationDate.Before(time.Now()) {
-		return &verifiedPayload, fmt.Errorf("license is expired (expires %s)",
-			verifiedPayload.ExpirationDate.Format(time.RFC3339))
+	now := time.Now()
+
+	// Calculate the enforcement date (ExpirationDate + GracePeriod)
+	enforcementDate := verifiedPayload.ExpirationDate.Add(getActualGracePeriod(&verifiedPayload))
+
+	if now.Before(verifiedPayload.ExpirationDate) {
+		logger.V(logs.LogInfo).Info("License is valid",
+			"expires", verifiedPayload.ExpirationDate.Format(time.RFC3339))
+	} else if now.After(verifiedPayload.ExpirationDate) && now.Before(enforcementDate) {
+		daysLeftInGrace := enforcementDate.Sub(now).Hours() / 24
+		msg := fmt.Sprintf(`License expired on %s, but is within grace period.
+		Functionality will be enforced in approximately %.0f days.`,
+			verifiedPayload.ExpirationDate.Format(time.RFC3339), daysLeftInGrace)
+		logger.V(logs.LogInfo).Info(msg,
+			"expiration_date", verifiedPayload.ExpirationDate.Format(time.RFC3339),
+			"enforcement_date", enforcementDate.Format(time.RFC3339))
+
+		return &verifiedPayload, &LicenseError{
+			Status:  LicenseStatusExpiredGracePeriod,
+			Message: msg,
+		}
+	} else {
+		msg := fmt.Sprintf(`License has fully expired and is enforced.
+			Expired %s, grace period ended %s.`,
+			verifiedPayload.ExpirationDate.Format(time.RFC3339),
+			enforcementDate.Format(time.RFC3339))
+		logger.V(logs.LogInfo).Error(nil, msg)
+		return &verifiedPayload, &LicenseError{
+			Status:  LicenseStatusExpiredEnforced,
+			Message: msg,
+		}
 	}
 
 	if verifiedPayload.ClusterFingerprint != "" &&
 		!isClusterFingerprintValid(ctx, c, verifiedPayload.ClusterFingerprint, logger) {
 
-		return &verifiedPayload, fmt.Errorf("license is not valid for this cluster (fingerprint mismatch)")
+		return &verifiedPayload, &LicenseError{
+			Status:  LicenseStatusExpiredEnforced,
+			Message: "license is not valid for this cluster (fingerprint mismatch)",
+		}
 	}
 
 	return &verifiedPayload, nil
