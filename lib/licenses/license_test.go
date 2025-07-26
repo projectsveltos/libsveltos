@@ -63,12 +63,12 @@ data:
 
 		c := fake.NewClientBuilder().WithObjects(initObjects...).Build()
 
-		publicKey, err := license.GetPublicKeyFromString()
+		publicKey, err := license.GetPublicKey()
 		Expect(err).To(BeNil())
 
-		_, err = license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
-		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(ContainSubstring("License has fully expired and is enforced"))
+		licenseVerificationResult := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		Expect(licenseVerificationResult.RawError).To(BeNil())
+		Expect(licenseVerificationResult.IsExpired).To(BeTrue())
 	})
 
 	It("Get Features from license", func() {
@@ -92,17 +92,19 @@ data:
 
 		c := fake.NewClientBuilder().WithObjects(initObjects...).Build()
 
-		publicKey, err := license.GetPublicKeyFromString()
+		publicKey, err := license.GetPublicKey()
 		Expect(err).To(BeNil())
 
-		payload, err := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
-		Expect(err).To(BeNil())
+		licenseVerificationResult := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		Expect(licenseVerificationResult.RawError).To(BeNil())
+		Expect(licenseVerificationResult.IsExpired).To(BeFalse())
+		Expect(licenseVerificationResult.IsInGracePeriod).To(BeFalse())
 
-		Expect(payload).ToNot(BeNil())
-		Expect(payload.Features).ToNot(BeNil())
-		Expect(payload.Features).To(ContainElements(license.FeaturePullMode))
+		Expect(licenseVerificationResult.Payload).ToNot(BeNil())
+		Expect(licenseVerificationResult.Payload.Features).ToNot(BeNil())
+		Expect(licenseVerificationResult.Payload.Features).To(ContainElements(license.FeaturePullMode))
 
-		Expect(payload.MaxClusters).To(Equal(1))
+		Expect(licenseVerificationResult.Payload.MaxClusters).To(Equal(1))
 	})
 
 	It("Verifies Cluster Fingerprint", func() {
@@ -133,22 +135,24 @@ data:
 
 		c := fake.NewClientBuilder().WithObjects(initObjects...).Build()
 
-		publicKey, err := license.GetPublicKeyFromString()
+		publicKey, err := license.GetPublicKey()
 		Expect(err).To(BeNil())
 
-		payload, err := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
-		Expect(err).To(BeNil())
+		licenseVerificationResult := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		Expect(licenseVerificationResult.RawError).To(BeNil())
+		Expect(licenseVerificationResult.IsExpired).To(BeFalse())
+		Expect(licenseVerificationResult.IsInGracePeriod).To(BeFalse())
 
-		Expect(payload).ToNot(BeNil())
-		Expect(payload.MaxClusters).To(Equal(1))
+		Expect(licenseVerificationResult.Payload).ToNot(BeNil())
+		Expect(licenseVerificationResult.Payload.MaxClusters).To(Equal(1))
 
 		currentNs := &corev1.Namespace{}
 		Expect(c.Get(context.TODO(), types.NamespacedName{Name: "kube-system"}, currentNs)).To(Succeed())
 		currentNs.UID = "000cbaab-1234-4932-a111-8c5cff6c9752"
 		Expect(c.Update(context.TODO(), currentNs)).To(Succeed())
 
-		_, err = license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
-		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(ContainSubstring("license is not valid for this cluster (fingerprint mismatch)"))
+		licenseVerificationResult = license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		Expect(licenseVerificationResult.RawError).ToNot(BeNil())
+		Expect(licenseVerificationResult.RawError.Error()).To(ContainSubstring("License is not valid for this cluster (fingerprint mismatch)"))
 	})
 })
