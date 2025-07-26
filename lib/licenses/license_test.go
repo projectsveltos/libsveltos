@@ -70,7 +70,7 @@ data:
 
 		_, err = license.VerifyLicenseSecret(context.TODO(), c, secretInfo, publicKey, logger)
 		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(ContainSubstring("license is expired"))
+		Expect(err.Error()).To(ContainSubstring("License has fully expired and is enforced"))
 	})
 
 	It("Get Features from license", func() {
