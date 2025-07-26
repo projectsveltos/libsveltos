@@ -151,8 +151,14 @@ func getActualGracePeriod(lp *LicensePayload) time.Duration {
 
 // Returns the decoded and verified LicensePayload, or a LicenseError if validation fails,
 // indicating the license status.
-func VerifyLicenseSecret(ctx context.Context, c client.Client, secretNsName types.NamespacedName,
+// Requires permission to read Secret in projectsveltos namespace
+func VerifyLicenseSecret(ctx context.Context, c client.Client,
 	publicKey *rsa.PublicKey, logger logr.Logger) (*LicensePayload, error) {
+
+	secretNsName := types.NamespacedName{
+		Namespace: "projectsveltos",
+		Name:      "sveltos-license",
+	}
 
 	licenseSecret := &corev1.Secret{}
 	err := c.Get(ctx, secretNsName, licenseSecret)
@@ -185,7 +191,6 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client, secretNsName type
 		}
 	}
 
-	// Verify the digital signature
 	hashedPayload := sha256.Sum256(payload)
 	err = rsa.VerifyPSS(publicKey, crypto.SHA256, hashedPayload[:], signature, nil)
 	if err != nil {
@@ -199,7 +204,7 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client, secretNsName type
 		}
 	}
 
-	logger.V(logs.LogInfo).Info("Digital signature successfully verified for license from secret")
+	logger.V(logs.LogDebug).Info("Digital signature successfully verified for license from secret")
 
 	var verifiedPayload LicensePayload
 	if err := json.Unmarshal(payload, &verifiedPayload); err != nil {
@@ -248,7 +253,6 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client, secretNsName type
 			Message: "license is not valid for this cluster (fingerprint mismatch)",
 		}
 	}
-
 	return &verifiedPayload, nil
 }
 

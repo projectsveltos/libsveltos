@@ -38,8 +38,6 @@ import (
 var _ = Describe("License", func() {
 	var logger logr.Logger
 
-	secretInfo := types.NamespacedName{Namespace: "projectsveltos", Name: "sveltos-license"}
-
 	BeforeEach(func() {
 		logger = textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
 	})
@@ -68,7 +66,7 @@ data:
 		publicKey, err := license.GetPublicKeyFromString()
 		Expect(err).To(BeNil())
 
-		_, err = license.VerifyLicenseSecret(context.TODO(), c, secretInfo, publicKey, logger)
+		_, err = license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
 		Expect(err).ToNot(BeNil())
 		Expect(err.Error()).To(ContainSubstring("License has fully expired and is enforced"))
 	})
@@ -97,7 +95,7 @@ data:
 		publicKey, err := license.GetPublicKeyFromString()
 		Expect(err).To(BeNil())
 
-		payload, err := license.VerifyLicenseSecret(context.TODO(), c, secretInfo, publicKey, logger)
+		payload, err := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
 		Expect(err).To(BeNil())
 
 		Expect(payload).ToNot(BeNil())
@@ -138,7 +136,7 @@ data:
 		publicKey, err := license.GetPublicKeyFromString()
 		Expect(err).To(BeNil())
 
-		payload, err := license.VerifyLicenseSecret(context.TODO(), c, secretInfo, publicKey, logger)
+		payload, err := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
 		Expect(err).To(BeNil())
 
 		Expect(payload).ToNot(BeNil())
@@ -149,7 +147,7 @@ data:
 		currentNs.UID = "000cbaab-1234-4932-a111-8c5cff6c9752"
 		Expect(c.Update(context.TODO(), currentNs)).To(Succeed())
 
-		_, err = license.VerifyLicenseSecret(context.TODO(), c, secretInfo, publicKey, logger)
+		_, err = license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
 		Expect(err).ToNot(BeNil())
 		Expect(err.Error()).To(ContainSubstring("license is not valid for this cluster (fingerprint mismatch)"))
 	})
