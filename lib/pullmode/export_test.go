@@ -31,9 +31,6 @@ var (
 )
 
 const (
-	StagedLabelKey   = stagedLabelKey
-	StagedLabelValue = stagedLabelValue
-
 	RequestorNameAnnotationKey = requestorNameAnnotationKey
 )
 

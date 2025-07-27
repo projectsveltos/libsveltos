@@ -196,7 +196,6 @@ var _ = Describe("Utils for pullmode APIs", func() {
 		stagedBundles := make(map[string]bool)
 		for range 4 {
 			bundle := createConfigurationBundle(clusterNamespace, requestorName, labels)
-			bundle.Labels[pullmode.StagedLabelKey] = pullmode.StagedLabelValue
 			Expect(k8sClient.Create(context.TODO(), bundle)).To(Succeed())
 			Expect(waitForObject(context.TODO(), k8sClient, bundle)).To(Succeed())
 			stagedBundles[bundle.Name] = true

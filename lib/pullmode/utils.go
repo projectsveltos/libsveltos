@@ -28,7 +28,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -45,8 +44,6 @@ const (
 	requestorNameAnnotationKey = "pullmode.projectsveltos.io/requestorname"
 
 	indexAnnotationKey = "pullmode.projectsveltos.io/index"
-	stagedLabelKey     = "pullmode.projectsveltos.io/staged"
-	stagedLabelValue   = "staged"
 )
 
 type bundleData struct {
@@ -154,13 +151,6 @@ func createConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 		return nil, err
 	}
 
-	if labels == nil {
-		labels = map[string]string{}
-	}
-	if isStaged {
-		labels[stagedLabelKey] = stagedLabelValue
-	}
-
 	bundle.Annotations = map[string]string{
 		requestorNameAnnotationKey: requestorName,
 		indexAnnotationKey:         index,
@@ -198,13 +188,6 @@ func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 	if err != nil {
 		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get configurationBundle: %v", err))
 		return nil, err
-	}
-
-	if currentBundle.Labels == nil {
-		currentBundle.Labels = map[string]string{}
-	}
-	if isStaged {
-		currentBundle.Labels[stagedLabelKey] = stagedLabelValue
 	}
 
 	currentBundle.Annotations = map[string]string{
@@ -620,32 +603,4 @@ func getHash(resources []unstructured.Unstructured) ([]byte, error) {
 
 	// Return hex-encoded hash
 	return hasher.Sum(nil), nil
-}
-
-func removeStagedLabel(ctx context.Context, c client.Client,
-	configurationBundle *libsveltosv1beta1.ConfigurationBundle) error {
-
-	// ConfigurationBundles are created and then status is updated with hash.
-	// If committing staged configurationBundles happen fast, this might fail
-	// the cached version used to remove the label might not be the latest one (after status update)
-
-	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		currentConfigurationBundle := &libsveltosv1beta1.ConfigurationBundle{}
-		configurationBundleName := types.NamespacedName{
-			Namespace: configurationBundle.Namespace,
-			Name:      configurationBundle.Name,
-		}
-
-		err := c.Get(ctx, configurationBundleName, currentConfigurationBundle)
-		if err != nil {
-			return err
-		}
-
-		labels := currentConfigurationBundle.Labels
-		delete(labels, stagedLabelKey)
-		currentConfigurationBundle.Labels = labels
-
-		return c.Update(ctx, currentConfigurationBundle)
-	})
-	return err
 }

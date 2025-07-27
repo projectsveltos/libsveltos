@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sort"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -251,19 +250,6 @@ func CommitStagedResourcesForDeployment(ctx context.Context, c client.Client,
 
 	manager := getStagedResourcesManager()
 	stagedBundles := manager.getBundles(clusterNamespace, clusterName, requestorName, requestorFeature)
-
-	// Remove staged label
-	for i := range stagedBundles {
-		ccb := &stagedBundles[i]
-		if err := removeStagedLabel(ctx, c, ccb); err != nil {
-			logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to remove staged label from configurationBundles: %v", err))
-			return err
-		}
-	}
-
-	sort.Slice(stagedBundles, func(i, j int) bool {
-		return stagedBundles[i].CreationTimestamp.Before(&stagedBundles[j].CreationTimestamp)
-	})
 
 	bundles := make([]bundleData, len(stagedBundles))
 	for i := range stagedBundles {
