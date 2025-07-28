@@ -19,12 +19,15 @@ package telemetry
 // Cluster represents the telemetry data Sveltos collects from each
 // management cluster
 type Cluster struct {
-	UUID                   string `json:"uuid"`
-	SveltosVersion         string `json:"sveltosVersion"`
-	ManagedSveltosClusters int    `json:"sveltosClusters"`
-	ReadySveltosClusters   int    `json:"readySveltosClusters"`
-	ManagedCAPIClusters    int    `json:"capiClusters"`
-	ClusterProfiles        int    `json:"clusterProfiles"`
-	Profiles               int    `json:"profiles"`
-	ClusterSummaries       int    `json:"clusterSummaries"`
+	UUID                    string `json:"uuid"`
+	SveltosVersion          string `json:"sveltosVersion"`
+	ManagedSveltosClusters  int    `json:"sveltosClusters"`
+	ReadySveltosClusters    int    `json:"readySveltosClusters"`
+	PullModeSveltosClusters int    `json:"pullSveltosClusters,omitempty"`
+	ManagedCAPIClusters     int    `json:"capiClusters"`
+	ClusterProfiles         int    `json:"clusterProfiles"`
+	Profiles                int    `json:"profiles"`
+	ClusterSummaries        int    `json:"clusterSummaries"`
+	EventTriggers           int    `json:"eventTriggers,omitempty"`
+	ClusterHealthChecks     int    `json:"clusterHealthChecks,omitempty"`
 }
