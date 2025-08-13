@@ -12,10 +12,10 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.38.0
 	github.com/pkg/errors v0.9.1
-	github.com/projectsveltos/lua-utils/glua-json v0.0.0-20250301182851-e4fbb9fd7ff7
-	github.com/projectsveltos/lua-utils/glua-runes v0.0.0-20250301182851-e4fbb9fd7ff7
-	github.com/projectsveltos/lua-utils/glua-sprig v0.0.0-20250301182851-e4fbb9fd7ff7
-	github.com/projectsveltos/lua-utils/glua-strings v0.0.0-20250301182851-e4fbb9fd7ff7
+	github.com/projectsveltos/lua-utils/glua-json v0.0.0-20250809120506-2b7d4265df58
+	github.com/projectsveltos/lua-utils/glua-runes v0.0.0-20250809120506-2b7d4265df58
+	github.com/projectsveltos/lua-utils/glua-sprig v0.0.0-20250809120506-2b7d4265df58
+	github.com/projectsveltos/lua-utils/glua-strings v0.0.0-20250809120506-2b7d4265df58
 	github.com/yuin/gopher-lua v1.1.1
 	golang.org/x/text v0.28.0
 	gopkg.in/yaml.v3 v3.0.1
