@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	"github.com/projectsveltos/libsveltos/lib/logsettings"
+	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 var _ = Describe("Logsettings", func() {
@@ -42,28 +42,28 @@ var _ = Describe("Logsettings", func() {
 			},
 		}
 
-		logsettings.UpdateLogLevel(conf)
+		logs.UpdateLogLevel(conf)
 		f := flag.Lookup("v")
 		Expect(f).ToNot(BeNil())
-		Expect(f.Value.String()).To(Equal(strconv.Itoa(logsettings.LogDebug)))
+		Expect(f.Value.String()).To(Equal(strconv.Itoa(logs.LogDebug)))
 
 		conf.Spec.Configuration = []libsveltosv1beta1.ComponentConfiguration{
 			{Component: libsveltosv1beta1.ComponentAddonManager, LogLevel: libsveltosv1beta1.LogLevelInfo},
 		}
 
-		logsettings.UpdateLogLevel(conf)
+		logs.UpdateLogLevel(conf)
 		f = flag.Lookup("v")
 		Expect(f).ToNot(BeNil())
-		Expect(f.Value.String()).To(Equal(strconv.Itoa(logsettings.LogInfo)))
+		Expect(f.Value.String()).To(Equal(strconv.Itoa(logs.LogInfo)))
 
 		conf.Spec.Configuration = []libsveltosv1beta1.ComponentConfiguration{
 			{Component: libsveltosv1beta1.ComponentAddonManager, LogLevel: libsveltosv1beta1.LogLevelVerbose},
 		}
 
-		logsettings.UpdateLogLevel(conf)
+		logs.UpdateLogLevel(conf)
 		f = flag.Lookup("v")
 		Expect(f).ToNot(BeNil())
-		Expect(f.Value.String()).To(Equal(strconv.Itoa(logsettings.LogVerbose)))
+		Expect(f.Value.String()).To(Equal(strconv.Itoa(logs.LogVerbose)))
 
 		newDebugValue := 8
 		instance.SetDebugValue(newDebugValue)
@@ -71,7 +71,7 @@ var _ = Describe("Logsettings", func() {
 			{Component: libsveltosv1beta1.ComponentAddonManager, LogLevel: libsveltosv1beta1.LogLevelDebug},
 		}
 
-		logsettings.UpdateLogLevel(conf)
+		logs.UpdateLogLevel(conf)
 		f = flag.Lookup("v")
 		Expect(f).ToNot(BeNil())
 		Expect(f.Value.String()).To(Equal(strconv.Itoa(newDebugValue)))
@@ -82,7 +82,7 @@ var _ = Describe("Logsettings", func() {
 			{Component: libsveltosv1beta1.ComponentAddonManager, LogLevel: libsveltosv1beta1.LogLevelInfo},
 		}
 
-		logsettings.UpdateLogLevel(conf)
+		logs.UpdateLogLevel(conf)
 		f = flag.Lookup("v")
 		Expect(f).ToNot(BeNil())
 		Expect(f.Value.String()).To(Equal(strconv.Itoa(newInfoValue)))

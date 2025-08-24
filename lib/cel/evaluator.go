@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	"github.com/projectsveltos/libsveltos/lib/logsettings"
+	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 // EvaluateRules evaluates all rules against an unstructured object
@@ -36,10 +36,10 @@ func EvaluateRules(resource *unstructured.Unstructured,
 	// Evaluate each match rule
 	for i := range rules {
 		rule := &rules[i]
-		logger.V(logsettings.LogDebug).Info(fmt.Sprintf("evaluate match rule %s", rule.Name))
+		logger.V(logs.LogDebug).Info(fmt.Sprintf("evaluate match rule %s", rule.Name))
 		matched, err = evaluateRule(rule.Rule, resource, logger)
 		if err != nil {
-			logger.V(logsettings.LogInfo).Info(fmt.Sprintf("Failed to evaluate rule %s %s/%s for %s: %v",
+			logger.V(logs.LogInfo).Info(fmt.Sprintf("Failed to evaluate rule %s %s/%s for %s: %v",
 				rule.Name, resource.GetKind(), resource.GetNamespace(), resource.GetName(), err))
 			continue
 		}
@@ -61,28 +61,28 @@ func evaluateRule(expression string, resource *unstructured.Unstructured,
 	)
 	if err != nil {
 		err = fmt.Errorf("failed to create CEL environment: %w", err)
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
 		return false, err
 	}
 
 	ast, issues := env.Parse(expression)
 	if issues != nil && issues.Err() != nil {
 		err = fmt.Errorf("failed to parse CEL expression: %w", issues.Err())
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
 		return false, err
 	}
 
 	checked, issues := env.Check(ast)
 	if issues != nil && issues.Err() != nil {
 		err = fmt.Errorf("failed to check CEL expression: %w", issues.Err())
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
 		return false, err
 	}
 
 	program, err := env.Program(checked)
 	if err != nil {
 		err = fmt.Errorf("failed to create CEL program: %w", err)
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
 		return false, err
 	}
 
@@ -91,13 +91,13 @@ func evaluateRule(expression string, resource *unstructured.Unstructured,
 	})
 	if err != nil {
 		err = fmt.Errorf("failed to evaluate CEL expression: %w", err)
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
 		return false, fmt.Errorf("failed to evaluate CEL expression: %w", err)
 	}
 
 	if result.Type() != types.BoolType {
 		err = fmt.Errorf("expected boolean result, got: %v", result.Type())
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
 		return false, err
 	}
 

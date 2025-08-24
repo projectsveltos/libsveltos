@@ -218,24 +218,27 @@ func UpdateLogLevel(
 	found := false
 	for _, c := range d.Spec.Configuration {
 		if instance.component == c.Component {
-			if c.LogLevel == libsveltosv1beta1.LogLevelVerbose {
+			switch c.LogLevel {
+			case libsveltosv1beta1.LogLevelVerbose:
 				found = true
 				instance.logger.Info("Setting log severity to verbose", "verbose", instance.verboseValue)
 				if err := flag.Lookup("v").Value.Set(instance.verboseValue); err != nil {
 					instance.logger.Error(err, "unable to set log level")
 				}
-			} else if c.LogLevel == libsveltosv1beta1.LogLevelDebug {
+			case libsveltosv1beta1.LogLevelDebug:
 				found = true
 				instance.logger.Info("Setting log severity to debug", "debug", instance.debugValue)
 				if err := flag.Lookup("v").Value.Set(instance.debugValue); err != nil {
 					instance.logger.Error(err, "unable to set log level")
 				}
-			} else if c.LogLevel == libsveltosv1beta1.LogLevelInfo {
+			case libsveltosv1beta1.LogLevelInfo:
 				found = true
 				instance.logger.Info("Setting log severity to info", "info", instance.infoValue)
 				if err := flag.Lookup("v").Value.Set(instance.infoValue); err != nil {
 					instance.logger.Error(err, "unable to set log level")
 				}
+			case libsveltosv1beta1.LogLevelNotSet:
+				// Nothing to do
 			}
 		}
 	}
