@@ -37,7 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	"github.com/projectsveltos/libsveltos/lib/logsettings"
+	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 	"github.com/projectsveltos/libsveltos/lib/roles"
 	"github.com/projectsveltos/libsveltos/lib/sharding"
 )
@@ -179,7 +179,7 @@ func getKubernetesClientForAdmin(ctx context.Context, c client.Client,
 		return nil, err
 	}
 
-	logger.V(logsettings.LogVerbose).Info("return new client")
+	logger.V(logs.LogVerbose).Info("return new client")
 	return client.New(config, client.Options{Scheme: c.Scheme()})
 }
 
@@ -512,7 +512,7 @@ func getMatchingSveltosClusters(ctx context.Context, c client.Client, selector l
 	namespace string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
 	if selector == nil {
-		logger.V(logsettings.LogInfo).Info(nilSelectorMessage)
+		logger.V(logs.LogInfo).Info(nilSelectorMessage)
 		return nil, fmt.Errorf("%s", nilSelectorMessage)
 	}
 
@@ -563,20 +563,20 @@ func GetMatchingClusters(ctx context.Context, c client.Client, selector *metav1.
 	namespace, capiOnboardAnnotation string, logger logr.Logger) ([]corev1.ObjectReference, error) {
 
 	if selector == nil {
-		logger.V(logsettings.LogInfo).Info(nilSelectorMessage)
+		logger.V(logs.LogInfo).Info(nilSelectorMessage)
 		return nil, fmt.Errorf("%s", nilSelectorMessage)
 	}
 
 	matching := make([]corev1.ObjectReference, 0)
 
 	if len(selector.MatchLabels)+len(selector.MatchExpressions) == 0 {
-		logger.V(logsettings.LogInfo).Info("empty selector matches no cluster")
+		logger.V(logs.LogInfo).Info("empty selector matches no cluster")
 		return matching, nil
 	}
 
 	clusterSelector, err := metav1.LabelSelectorAsSelector(selector)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to convert selector %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to convert selector %v", err))
 		return nil, fmt.Errorf("%w", err)
 	}
 
@@ -610,7 +610,7 @@ func isCAPIPresent(ctx context.Context, c client.Client, logger logr.Logger) (bo
 			types.NamespacedName{Name: "clusters.cluster.x-k8s.io"}, clusterCRD)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				logger.V(logsettings.LogDebug).Info("clusterCRD CRD not present")
+				logger.V(logs.LogDebug).Info("clusterCRD CRD not present")
 				atomic.StoreInt32(&checkedCAPIPresence, 1)
 				atomic.StoreInt32(&capiPresent, 0)
 				return false, nil

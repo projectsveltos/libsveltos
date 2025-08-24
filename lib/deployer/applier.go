@@ -29,7 +29,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,9 +37,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
@@ -192,7 +193,8 @@ func CustomSplit(text string) ([]string, error) {
 	// First split by document separators if they exist
 	var documents []string
 	if strings.Contains(text, "---") {
-		dec := yaml.NewDecoder(bytes.NewReader([]byte(text)))
+		const bufferSize = 4096
+		dec := utilyaml.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(text)), bufferSize)
 		for {
 			var value interface{}
 			err := dec.Decode(&value)

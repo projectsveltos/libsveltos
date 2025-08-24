@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	"github.com/projectsveltos/libsveltos/lib/logsettings"
+	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 const (
@@ -88,7 +88,7 @@ func reconcileConfigurationBundle(ctx context.Context, c client.Client,
 
 	name, currentBundle, err := getConfigurationBundleName(ctx, c, clusterNamespace, requestorName, index, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationBundle name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationBundle name: %v", err))
 		return nil, err
 	}
 
@@ -96,7 +96,7 @@ func reconcileConfigurationBundle(ctx context.Context, c client.Client,
 	// it means agent has not pulled it yet or finished cleaning
 	if currentBundle != nil && !currentBundle.GetDeletionTimestamp().IsZero() {
 		msgError := "ConfigurationBundle is currently existing but marked for deletion"
-		logger.V(logsettings.LogInfo).Info(msgError)
+		logger.V(logs.LogInfo).Info(msgError)
 		return nil, errors.New(msgError)
 	}
 
@@ -147,7 +147,7 @@ func createConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 
 	bundle, err := prepareConfigurationBundle(namespace, name, resources, setters...)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to prepare configurationBundle: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to prepare configurationBundle: %v", err))
 		return nil, err
 	}
 
@@ -166,7 +166,7 @@ func createConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 	// For staged ConfigurationBundle also stores current hash
 	hash, err := getHash(resources)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to evaluate hash: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to evaluate hash: %v", err))
 	}
 	bundle.Status.Hash = hash
 	err = c.Status().Update(ctx, bundle)
@@ -179,14 +179,14 @@ func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 
 	bundle, err := prepareConfigurationBundle(namespace, name, resources, setters...)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to prepare configurationBundle: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to prepare configurationBundle: %v", err))
 		return nil, err
 	}
 
 	currentBundle := &libsveltosv1beta1.ConfigurationBundle{}
 	err = c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, currentBundle)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get configurationBundle: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get configurationBundle: %v", err))
 		return nil, err
 	}
 
@@ -206,7 +206,7 @@ func updateConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 	// For staged ConfigurationBundle also stores current hash
 	hash, err := getHash(resources)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to evaluate hash: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to evaluate hash: %v", err))
 	}
 	currentBundle.Status.Hash = hash
 	err = c.Status().Update(ctx, currentBundle)
@@ -284,7 +284,7 @@ func markConfigurationGroupAsPreparing(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	_, currentCG, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return err
 	}
 
@@ -304,7 +304,7 @@ func reconcileConfigurationGroup(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	name, currentCG, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return err
 	}
 
@@ -312,20 +312,20 @@ func reconcileConfigurationGroup(ctx context.Context, c client.Client,
 	// it means agent has not pulled it yet or finished cleaning
 	if currentCG != nil && !currentCG.GetDeletionTimestamp().IsZero() {
 		msgError := "ConfigurationGroup is currently existing but marked for deletion"
-		logger.V(logsettings.LogInfo).Info(msgError)
+		logger.V(logs.LogInfo).Info(msgError)
 		return errors.New(msgError)
 	}
 
 	l := logger.WithValues("configurationgropup", fmt.Sprintf("%s/%s", clusterNamespace, name))
 	action := libsveltosv1beta1.ActionDeploy
 	if currentCG == nil {
-		l.V(logsettings.LogDebug).Info(fmt.Sprintf("creating configurationGroup for requestor %s (bundles %d)",
+		l.V(logs.LogDebug).Info(fmt.Sprintf("creating configurationGroup for requestor %s (bundles %d)",
 			requestorName, len(bundles)))
 		return createConfigurationGroup(ctx, c, clusterNamespace, name, requestorName,
 			bundles, labels, action, setters...)
 	}
 
-	l.V(logsettings.LogDebug).Info(fmt.Sprintf("updating configurationGroup for requestor %s (bundles %d)",
+	l.V(logs.LogDebug).Info(fmt.Sprintf("updating configurationGroup for requestor %s (bundles %d)",
 		requestorName, len(bundles)))
 	return updateConfigurationGroup(ctx, c, clusterNamespace, name, bundles, action, logger, setters...)
 }
@@ -337,7 +337,7 @@ func markConfigurationGroupForRemoval(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	name, currentCG, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return err
 	}
 
@@ -357,7 +357,7 @@ func deleteConfigurationGroup(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	_, currentConfigurationGroup, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return err
 	}
 
@@ -368,7 +368,7 @@ func deleteConfigurationGroup(ctx context.Context, c client.Client,
 
 	l := logger.WithValues("configurationgropup",
 		fmt.Sprintf("%s/%s", currentConfigurationGroup.GetNamespace(), currentConfigurationGroup.GetName()))
-	l.V(logsettings.LogDebug).Info(fmt.Sprintf("deleting configurationGroup for requestor %s",
+	l.V(logs.LogDebug).Info(fmt.Sprintf("deleting configurationGroup for requestor %s",
 		requestorName))
 	return c.Delete(ctx, currentConfigurationGroup)
 }
@@ -425,7 +425,7 @@ func updateConfigurationGroup(ctx context.Context, c client.Client, namespace, n
 	currentGroup := &libsveltosv1beta1.ConfigurationGroup{}
 	err := c.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, currentGroup)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get configurationGroup: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get configurationGroup: %v", err))
 		return err
 	}
 
@@ -441,7 +441,7 @@ func deleteStaleConfigurationBundles(ctx context.Context, c client.Client,
 
 	currentBundles, err := getConfigurationBundles(ctx, c, clusterNamespace, requestorName, "", labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to list configurationBundles: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to list configurationBundles: %v", err))
 		return err
 	}
 
@@ -454,7 +454,7 @@ func deleteStaleConfigurationBundles(ctx context.Context, c client.Client,
 		currentBundle := &currentBundles.Items[i]
 		if _, ok := bundleMap[currentBundle.Name]; !ok {
 			if err := c.Delete(ctx, currentBundle); err != nil {
-				logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to delete stale configurationBundle: %v", err))
+				logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to delete stale configurationBundle: %v", err))
 				return err
 			}
 		}
@@ -475,7 +475,7 @@ func getReferencedConfigurationBundles(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	_, currentConfigurationGroup, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return currentBundles, err
 	}
 
