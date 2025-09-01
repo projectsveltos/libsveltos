@@ -35,8 +35,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	apiv1 "k8s.io/client-go/tools/clientcmd/api/v1"
-	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
@@ -48,15 +48,16 @@ var (
 
 // GetUnstructured returns an unstructured given a []bytes containing it
 func GetUnstructured(object []byte) (*unstructured.Unstructured, error) {
-	request := &unstructured.Unstructured{}
-	universalDeserializer := scheme.Codecs.UniversalDeserializer()
-	_, _, err := universalDeserializer.Decode(object, nil, request)
+	var out map[string]interface{}
+	err := yaml.Unmarshal(object, &out)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode k8s resource %.50s. Err: %w",
 			string(object), err)
 	}
+	u := &unstructured.Unstructured{}
+	u.SetUnstructuredContent(out)
 
-	return request, nil
+	return u, nil
 }
 
 // GetDynamicResourceInterface returns a dynamic ResourceInterface for the policy's GroupVersionKind
@@ -155,7 +156,6 @@ func getUserOrSAKubeconfig(
 			},
 		},
 		CurrentContext: user,
-		Preferences:    apiv1.Preferences{},
 	}
 
 	if caData == nil {
