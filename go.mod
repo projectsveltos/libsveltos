@@ -9,7 +9,7 @@ require (
 	github.com/google/cel-go v0.26.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/mocktools/go-smtp-mock/v2 v2.5.1
-	github.com/onsi/ginkgo/v2 v2.25.2
+	github.com/onsi/ginkgo/v2 v2.25.3
 	github.com/onsi/gomega v1.38.2
 	github.com/pkg/errors v0.9.1
 	github.com/projectsveltos/lua-utils/glua-json v0.0.0-20250809120506-2b7d4265df58
@@ -17,15 +17,14 @@ require (
 	github.com/projectsveltos/lua-utils/glua-sprig v0.0.0-20250809120506-2b7d4265df58
 	github.com/projectsveltos/lua-utils/glua-strings v0.0.0-20250809120506-2b7d4265df58
 	github.com/yuin/gopher-lua v1.1.1
-	golang.org/x/text v0.28.0
+	golang.org/x/text v0.29.0
 	k8s.io/api v0.34.0
 	k8s.io/apiextensions-apiserver v0.34.0
 	k8s.io/apimachinery v0.34.0
 	k8s.io/client-go v0.34.0
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubectl v0.34.0
 	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d
-	sigs.k8s.io/cluster-api v1.11.0
+	sigs.k8s.io/cluster-api v1.11.1
 	sigs.k8s.io/controller-runtime v0.22.0
 	sigs.k8s.io/kustomize/api v0.20.1
 	sigs.k8s.io/kustomize/kyaml v0.20.1
@@ -89,7 +88,7 @@ require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/term v0.34.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
