@@ -22,9 +22,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -40,6 +42,7 @@ import (
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/klog/v2/textlogger"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -277,16 +280,62 @@ func GetResource(policy *unstructured.Unstructured, ignoreForConfigurationDrift 
 
 // ComputePolicyHash compute policy hash.
 func ComputePolicyHash(policy *unstructured.Unstructured) (string, error) {
-	b, err := policy.MarshalJSON()
+	logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+
+	if policy.GetAnnotations() != nil {
+		// Exclude Sveltos hash annotation if present.
+		annotations := policy.GetAnnotations()
+		delete(annotations, PolicyHash)
+		policy.SetAnnotations(annotations)
+	}
+
+	// Convert to ordered map structure
+	orderedObj := normalizeObject(policy.Object)
+	logger.V(logs.LogInfo).Info(fmt.Sprintf("MGIANLUC orderedObj %v", orderedObj))
+
+	jsonBytes, err := json.Marshal(orderedObj)
 	if err != nil {
 		return "", err
 	}
-	hash := sha256.New()
-	_, err = hash.Write(b)
-	if err != nil {
-		return "", err
+
+	logger.V(logs.LogInfo).Info(fmt.Sprintf("MGIANLUC policy %s", string(jsonBytes)))
+
+	resourceHash := sha256.Sum256(jsonBytes)
+	logger.V(logs.LogInfo).Info(fmt.Sprintf("MGIANLUC hash %x", resourceHash))
+	return fmt.Sprintf("sha256:%x", resourceHash), nil
+}
+
+func normalizeObject(obj interface{}) interface{} {
+	switch v := obj.(type) {
+	case map[string]interface{}:
+		// Create ordered map
+		orderedMap := make(map[string]interface{})
+
+		// Get sorted keys
+		keys := make([]string, 0, len(v))
+		for k := range v {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		// Build ordered map
+		for _, k := range keys {
+			orderedMap[k] = normalizeObject(v[k])
+		}
+		return orderedMap
+
+	case []interface{}:
+		// Recursively normalize array elements
+		normalized := make([]interface{}, len(v))
+		for i, item := range v {
+			normalized[i] = normalizeObject(item)
+		}
+		return normalized
+
+	default:
+		// Primitive types return as-is
+		return v
 	}
-	return fmt.Sprintf("sha256:%x", hash.Sum(nil)), nil
 }
 
 // AddLabel adds label to an object
