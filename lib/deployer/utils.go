@@ -162,34 +162,38 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 		if kindOk {
 			if kind != referenceKind {
 				return resourceInfo, &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addOwnerMessage(currentObject))}
+					message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+						"This resource is currently deployed because of %s %s/%s.\n",
+						object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+						getOwnerMessage(currentObject), kind, namespace, name)}
 			}
 		}
 		if namespaceOk {
 			if namespace != referenceNamespace {
 				return resourceInfo, &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addOwnerMessage(currentObject))}
+					message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+						"This resource is currently deployed because of %s %s/%s.\n",
+						object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+						getOwnerMessage(currentObject), kind, namespace, name)}
 			}
 		}
 		if nameOk {
 			if name != referenceName {
 				return resourceInfo, &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addOwnerMessage(currentObject))}
+					message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+						"This resource is currently deployed because of %s %s/%s.\n",
+						object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+						getOwnerMessage(currentObject), kind, namespace, name)}
 			}
 		}
 
 		if nameOk {
 			if name != referenceName {
 				return resourceInfo, &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addOwnerMessage(currentObject))}
+					message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+						"This resource is currently deployed because of %s %s/%s.\n",
+						object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+						getOwnerMessage(currentObject), kind, namespace, name)}
 			}
 		}
 
@@ -219,25 +223,28 @@ func validateSveltosOwner(object, currentObject *unstructured.Unstructured, prof
 
 	if ownerName != "" {
 		if ownerName != profile.GetName() || ownerKind != profile.GetObjectKind().GroupVersionKind().Kind {
-			currentOwner := fmt.Sprintf("%s:%s", ownerKind, ownerName)
 			return &ConflictError{
-				message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-					object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name, currentOwner)}
+				message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+					"This resource is currently deployed because of %s %s/%s.\n",
+					object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+					getOwnerMessage(currentObject), kind, namespace, name)}
 		}
 	} else if k8s_utils.HasSveltosResourcesAsOwnerReference(currentObject) && !k8s_utils.IsOwnerReference(currentObject, profile) {
 		return &ConflictError{
-			message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-				object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-				addOwnerMessage(currentObject))}
+			message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+				"This resource is currently deployed because of %s %s/%s.\n",
+				object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+				getOwnerMessage(currentObject), kind, namespace, name)}
 	}
 
 	return nil
 }
 
-// GetOwnerMessage returns a message listing why this object is deployed. The message lists:
+// getDetailedConflictMessage returns a message reporting the detected conflict and
+// listing why this object is deployed. The message lists:
 // - which is currently causing it to be deployed (owner)
 // - which Secret/ConfigMap contains it
-func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
+func getDetailedConflictMessage(ctx context.Context, dr dynamic.ResourceInterface,
 	objectName string) (string, error) {
 
 	currentObject, err := dr.Get(ctx, objectName, metav1.GetOptions{})
@@ -255,18 +262,19 @@ func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
 		namespace := labels[ReferenceNamespaceLabel]
 		name := labels[ReferenceNameLabel]
 
-		message += fmt.Sprintf("Object %s:%s/%s currently deployed because of %s %s/%s.\n",
-			currentObject.GroupVersionKind().Kind, currentObject.GetNamespace(), currentObject.GetName(),
-			kind, namespace, name)
-	}
+		ownerMessage := getOwnerMessage(currentObject)
 
-	message += addOwnerMessage(currentObject)
+		message += fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+			"This resource is currently deployed because of %s %s/%s.\n",
+			currentObject.GroupVersionKind().Kind, currentObject.GetNamespace(), currentObject.GetName(),
+			ownerMessage, kind, namespace, name)
+	}
 
 	return message, nil
 }
 
-func addOwnerMessage(u *unstructured.Unstructured) string {
-	message := " Sveltos instance currently deploying this resource: "
+func getOwnerMessage(u *unstructured.Unstructured) string {
+	message := "The Sveltos profile currently deploying this resource is "
 
 	// First, if available, use annotation
 	annotations := u.GetAnnotations()
