@@ -28,9 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
-
-	//nolint:staticcheck // SA1019: We are unable to update the dependency at this time.
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 
