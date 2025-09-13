@@ -33,9 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2/textlogger"
-
-	//nolint:staticcheck // SA1019: We are unable to update the dependency at this time.
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -227,7 +225,9 @@ var _ = Describe("clusterproxy ", func() {
 
 	It("IsCAPIClusterReadyToBeConfigured returns false for a cluster with Status.Initialization.ControlPlaneInitialized set to false", func() {
 		initialized := false
-		cluster.Status.ControlPlaneReady = initialized
+		cluster.Status.Initialization = clusterv1.ClusterInitializationStatus{
+			ControlPlaneInitialized: &initialized,
+		}
 
 		initObjects := []client.Object{
 			cluster,
@@ -244,7 +244,9 @@ var _ = Describe("clusterproxy ", func() {
 
 	It("IsCAPIClusterReadyToBeConfigured returns true for a cluster with Status.Initialization.ControlPlaneInitialized set to true", func() {
 		initialized := true
-		cluster.Status.ControlPlaneReady = initialized
+		cluster.Status.Initialization = clusterv1.ClusterInitializationStatus{
+			ControlPlaneInitialized: &initialized,
+		}
 		initObjects := []client.Object{
 			cluster,
 		}
@@ -261,7 +263,9 @@ var _ = Describe("clusterproxy ", func() {
 	It("IsCAPIClusterReadyToBeConfigured returns false when there are no ready replicas", func() {
 		initialized := false
 		cluster.Status = clusterv1.ClusterStatus{
-			ControlPlaneReady: initialized,
+			Initialization: clusterv1.ClusterInitializationStatus{
+				ControlPlaneInitialized: &initialized,
+			},
 		}
 
 		initObjects := []client.Object{

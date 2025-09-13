@@ -23,8 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	//nolint:staticcheck // SA1019: We are unable to update the dependency at this time.
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
@@ -43,7 +42,7 @@ func (p ClusterPredicate) Create(obj event.TypedCreateEvent[*clusterv1.Cluster])
 	)
 
 	// Only need to trigger a reconcile if the Cluster.Spec.Paused is false
-	if !cluster.Spec.Paused {
+	if cluster.Spec.Paused != nil && !(*cluster.Spec.Paused) {
 		log.V(logs.LogVerbose).Info(
 			"Cluster is not paused.  Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.",
 		)
@@ -86,23 +85,22 @@ func (p ClusterPredicate) Update(obj event.TypedUpdateEvent[*clusterv1.Cluster])
 	}
 
 	// return true if Cluster.Spec.Paused has changed from true to false
-	if oldCluster.Spec.Paused && !newCluster.Spec.Paused {
+	if oldCluster.Spec.Paused != nil && *oldCluster.Spec.Paused &&
+		newCluster.Spec.Paused != nil && !*newCluster.Spec.Paused {
+
 		log.V(logs.LogVerbose).Info(
 			"Cluster was unpaused. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
 		return true
 	}
 
-	// return true if Cluster.Status.ControlPlaneReady has changed
-	if oldCluster.Status.ControlPlaneReady != newCluster.Status.ControlPlaneReady {
-		log.V(logs.LogVerbose).Info(
-			"Cluster ControlPlaneReady changed. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
-		return true
-	}
+	// Check if Initialization.ControlPlaneInitialized has changed
+	if oldCluster.Status.Initialization.ControlPlaneInitialized == nil && newCluster.Status.Initialization.ControlPlaneInitialized != nil ||
+		oldCluster.Status.Initialization.ControlPlaneInitialized != nil && newCluster.Status.Initialization.ControlPlaneInitialized == nil ||
+		oldCluster.Status.Initialization.ControlPlaneInitialized != nil && newCluster.Status.Initialization.ControlPlaneInitialized != nil &&
+			*oldCluster.Status.Initialization.ControlPlaneInitialized != *newCluster.Status.Initialization.ControlPlaneInitialized {
 
-	if oldCluster.Status.InfrastructureReady != newCluster.Status.InfrastructureReady {
 		log.V(logs.LogVerbose).Info(
-			"Cluster InfrastructureReady changed. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set..",
-		)
+			"Cluster Initialization.ControlPlaneInitialized changed. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
 		return true
 	}
 
