@@ -28,7 +28,8 @@ import (
 	"github.com/projectsveltos/libsveltos/lib/predicates"
 	"github.com/projectsveltos/libsveltos/lib/sharding"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	//nolint:staticcheck // SA1019: We are unable to update the dependency at this time.
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
@@ -232,7 +233,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 		clusterPredicate := predicates.ClusterPredicate{Logger: logger}
 
 		paused := false
-		cluster.Spec.Paused = &paused
+		cluster.Spec.Paused = paused
 
 		result := clusterPredicate.Create(event.TypedCreateEvent[*clusterv1.Cluster]{Object: cluster})
 		Expect(result).To(BeTrue())
@@ -241,7 +242,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 		clusterPredicate := predicates.ClusterPredicate{Logger: logger}
 
 		paused := true
-		cluster.Spec.Paused = &paused
+		cluster.Spec.Paused = paused
 		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: "true"}
 
 		result := clusterPredicate.Create(event.TypedCreateEvent[*clusterv1.Cluster]{Object: cluster})
@@ -257,7 +258,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 		clusterPredicate := predicates.ClusterPredicate{Logger: logger}
 
 		paused := false
-		cluster.Spec.Paused = &paused
+		cluster.Spec.Paused = paused
 
 		oldCluster := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -267,7 +268,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 		}
 
 		paused = true
-		oldCluster.Spec.Paused = &paused
+		oldCluster.Spec.Paused = paused
 		oldCluster.Annotations = map[string]string{clusterv1.PausedAnnotation: "true"}
 
 		result := clusterPredicate.Update(event.TypedUpdateEvent[*clusterv1.Cluster]{ObjectNew: cluster, ObjectOld: oldCluster})
@@ -277,7 +278,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 		clusterPredicate := predicates.ClusterPredicate{Logger: logger}
 
 		paused := true
-		cluster.Spec.Paused = &paused
+		cluster.Spec.Paused = paused
 		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: "true"}
 		oldCluster := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -287,7 +288,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 		}
 
 		paused = false
-		oldCluster.Spec.Paused = &paused
+		oldCluster.Spec.Paused = paused
 		oldCluster.Annotations = cluster.Annotations
 
 		result := clusterPredicate.Update(event.TypedUpdateEvent[*clusterv1.Cluster]{ObjectNew: cluster, ObjectOld: oldCluster})
@@ -297,15 +298,14 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 		clusterPredicate := predicates.ClusterPredicate{Logger: logger}
 
 		paused := false
-		cluster.Spec.Paused = &paused
+		cluster.Spec.Paused = paused
 		oldCluster := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      cluster.Name,
 				Namespace: cluster.Namespace,
 			},
 		}
-		paused = true
-		oldCluster.Spec.Paused = &paused
+		oldCluster.Spec.Paused = paused
 
 		result := clusterPredicate.Update(event.TypedUpdateEvent[*clusterv1.Cluster]{ObjectNew: cluster, ObjectOld: oldCluster})
 		Expect(result).To(BeFalse())
