@@ -55,9 +55,9 @@ const (
 type Plan string
 
 const (
-	PlanEnterprise = Features("Enterprise")
+	PlanEnterprise = Plan("Enterprise")
 
-	PlanEnterprisePlus = Features("EnterprisePlus")
+	PlanEnterprisePlus = Plan("EnterprisePlus")
 )
 
 // LicensePayload defines the internal structure of the data that gets signed
