@@ -20,10 +20,12 @@ import (
 	"reflect"
 
 	"github.com/go-logr/logr"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/util/conditions"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
@@ -93,14 +95,30 @@ func (p ClusterPredicate) Update(obj event.TypedUpdateEvent[*clusterv1.Cluster])
 		return true
 	}
 
-	// Check if Initialization.ControlPlaneInitialized has changed
-	if oldCluster.Status.Initialization.ControlPlaneInitialized == nil && newCluster.Status.Initialization.ControlPlaneInitialized != nil ||
-		oldCluster.Status.Initialization.ControlPlaneInitialized != nil && newCluster.Status.Initialization.ControlPlaneInitialized == nil ||
-		oldCluster.Status.Initialization.ControlPlaneInitialized != nil && newCluster.Status.Initialization.ControlPlaneInitialized != nil &&
-			*oldCluster.Status.Initialization.ControlPlaneInitialized != *newCluster.Status.Initialization.ControlPlaneInitialized {
+	if !conditions.IsTrue(oldCluster, clusterv1.ClusterControlPlaneInitializedCondition) &&
+		conditions.IsTrue(newCluster, clusterv1.ClusterControlPlaneInitializedCondition) {
 
 		log.V(logs.LogVerbose).Info(
-			"Cluster Initialization.ControlPlaneInitialized changed. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+			"Cluster ControlPlaneInitialized was set." +
+				"Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+		return true
+	}
+
+	if !ptr.Deref(oldCluster.Status.Initialization.InfrastructureProvisioned, false) &&
+		ptr.Deref(newCluster.Status.Initialization.InfrastructureProvisioned, false) {
+
+		log.V(logs.LogVerbose).Info(
+			"Cluster Initialization.InfrastructureProvisioned changed." +
+				"Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+		return true
+	}
+
+	if !ptr.Deref(oldCluster.Status.Initialization.ControlPlaneInitialized, false) &&
+		ptr.Deref(newCluster.Status.Initialization.ControlPlaneInitialized, false) {
+
+		log.V(logs.LogVerbose).Info(
+			"Cluster Initialization.ControlPlaneInitialized changed. " +
+				"Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
 		return true
 	}
 
