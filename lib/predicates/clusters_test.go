@@ -31,6 +31,9 @@ import (
 	//nolint:staticcheck // SA1019: We are unable to update the dependency at this time.
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
+	//nolint:staticcheck // Compatible with core/v1beta1 Conditions
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
@@ -341,6 +344,23 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 
 		result := clusterPredicate.Update(event.TypedUpdateEvent[*clusterv1.Cluster]{ObjectNew: cluster, ObjectOld: oldCluster})
 		Expect(result).To(BeTrue())
+	})
+	It("Update reprocesses when v1Cluster ControlPlaneInitialized changes from false to true", func() {
+		clusterPredicate := predicates.ClusterPredicate{Logger: logger}
+
+		conditions.MarkTrue(cluster, clusterv1.ControlPlaneInitializedCondition)
+
+		oldCluster := &clusterv1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cluster.Name,
+				Namespace: cluster.Namespace,
+			},
+		}
+		conditions.MarkFalse(oldCluster, clusterv1.ControlPlaneInitializedCondition, "controlPlane not initialized", clusterv1.ConditionSeverityWarning, "")
+
+		result := clusterPredicate.Update(event.TypedUpdateEvent[*clusterv1.Cluster]{ObjectNew: cluster, ObjectOld: oldCluster})
+		Expect(result).To(BeTrue())
+
 	})
 })
 

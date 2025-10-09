@@ -26,6 +26,9 @@ import (
 	//nolint:staticcheck // SA1019: We are unable to update the dependency at this time.
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
+	//nolint:staticcheck // Compatible with core/v1beta1 Conditions
+	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
@@ -89,6 +92,15 @@ func (p ClusterPredicate) Update(obj event.TypedUpdateEvent[*clusterv1.Cluster])
 	if oldCluster.Spec.Paused && !newCluster.Spec.Paused {
 		log.V(logs.LogVerbose).Info(
 			"Cluster was unpaused. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+		return true
+	}
+
+	// return true if Cluster.Status.Conditions.ControlPlaneInitialized has changed
+	if !conditions.IsTrue(oldCluster, clusterv1.ControlPlaneInitializedCondition) &&
+		conditions.IsTrue(newCluster, clusterv1.ControlPlaneInitializedCondition) {
+
+		log.V(logs.LogVerbose).Info(
+			"Cluster ControlPlaneInitialized changed to true. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
 		return true
 	}
 
