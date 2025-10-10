@@ -42,11 +42,14 @@ var _ = Describe("Clean utils", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: randomString(),
 				Name:      randomString(),
+				Annotations: map[string]string{
+					deployer.ReferenceKindAnnotation:      randomString(),
+					deployer.ReferenceNameAnnotation:      randomString(),
+					deployer.ReferenceNamespaceAnnotation: randomString(),
+					randomKey:                             randomValue,
+				},
 				Labels: map[string]string{
-					deployer.ReferenceKindLabel:      randomString(),
-					deployer.ReferenceNameLabel:      randomString(),
-					deployer.ReferenceNamespaceLabel: randomString(),
-					randomKey:                        randomValue,
+					randomKey: randomValue,
 				},
 			},
 		}
@@ -61,8 +64,12 @@ var _ = Describe("Clean utils", func() {
 
 		currentDepl := &appsv1.Deployment{}
 		Expect(c.Get(context.TODO(), types.NamespacedName{Namespace: depl.Namespace, Name: depl.Name}, currentDepl)).To(Succeed())
+		Expect(len(currentDepl.Annotations)).To(Equal(1))
+		v, ok := currentDepl.Annotations[randomKey]
+		Expect(ok).To(BeTrue())
+		Expect(v).To(Equal(randomValue))
 		Expect(len(currentDepl.Labels)).To(Equal(1))
-		v, ok := currentDepl.Labels[randomKey]
+		v, ok = currentDepl.Labels[randomKey]
 		Expect(ok).To(BeTrue())
 		Expect(v).To(Equal(randomValue))
 	})
@@ -74,11 +81,11 @@ var _ = Describe("Clean utils", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: randomString(),
 				Name:      randomString(),
-				Labels: map[string]string{
-					deployer.ReferenceKindLabel:      randomString(),
-					deployer.ReferenceNameLabel:      randomString(),
-					deployer.ReferenceNamespaceLabel: randomString(),
-					randomKey:                        randomValue,
+				Annotations: map[string]string{
+					deployer.ReferenceKindAnnotation:      randomString(),
+					deployer.ReferenceNameAnnotation:      randomString(),
+					deployer.ReferenceNamespaceAnnotation: randomString(),
+					randomKey:                             randomValue,
 				},
 			},
 		}
