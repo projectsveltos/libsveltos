@@ -37,7 +37,8 @@ func UndeployStaleResource(ctx context.Context, skipAnnotationKey, skipAnnotatio
 
 	// Verify if this policy was deployed because of a projectsveltos (ReferenceLabelName
 	// is present as label in such a case).
-	if !hasLabel(&r, ReferenceNameLabel, "") {
+	// Check both labels (this used to be set) and annotations (this is what gets set now)
+	if !hasLabel(&r, ReferenceNameLabel, "") && !hasAnnotation(&r, ReferenceNameAnnotation, "") {
 		return nil, nil
 	}
 
@@ -115,6 +116,8 @@ func handleResourceDelete(ctx context.Context, c client.Client, policy client.Ob
 	// If mode is set to LeavePolicies, leave policies in the workload cluster.
 	// Remove all labels added by Sveltos.
 	if leavePolicies {
+		// for backward compatibility (those labels used to be set, but are now
+		// replaced by corresponding annotations)
 		l := policy.GetLabels()
 		delete(l, ReferenceKindLabel)
 		delete(l, ReferenceNameLabel)
@@ -122,6 +125,10 @@ func handleResourceDelete(ctx context.Context, c client.Client, policy client.Ob
 		policy.SetLabels(l)
 
 		annotations := policy.GetAnnotations()
+		delete(annotations, ReferenceKindAnnotation)
+		delete(annotations, ReferenceNameAnnotation)
+		delete(annotations, ReferenceNamespaceAnnotation)
+		delete(annotations, ReferenceTierAnnotation)
 		delete(annotations, OwnerKind)
 		delete(annotations, OwnerName)
 		delete(annotations, OwnerTier)
