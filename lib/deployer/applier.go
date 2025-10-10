@@ -245,8 +245,8 @@ func CustomSplit(text string) ([]string, error) {
 
 // GetResource returns sveltos Resource and the resource hash
 func GetResource(policy *unstructured.Unstructured, ignoreForConfigurationDrift bool,
-	referencedObject *corev1.ObjectReference, profile client.Object, tier int32, featureID string,
-	logger logr.Logger) (resource *libsveltosv1beta1.Resource, policyHash string) {
+	referencedObject *corev1.ObjectReference, profile client.Object, profileTier, referenceTier int32,
+	featureID string, logger logr.Logger) (resource *libsveltosv1beta1.Resource, policyHash string) {
 
 	resource = &libsveltosv1beta1.Resource{
 		Name:                        policy.GetName(),
@@ -265,12 +265,13 @@ func GetResource(policy *unstructured.Unstructured, ignoreForConfigurationDrift 
 	}
 
 	// Get policy hash of referenced policy
-	AddLabel(policy, ReferenceKindLabel, referencedObject.GetObjectKind().GroupVersionKind().Kind)
-	AddLabel(policy, ReferenceNameLabel, referencedObject.Name)
-	AddLabel(policy, ReferenceNamespaceLabel, referencedObject.Namespace)
 	AddLabel(policy, ReasonLabel, featureID)
+	AddAnnotation(policy, ReferenceKindAnnotation, referencedObject.GetObjectKind().GroupVersionKind().Kind)
+	AddAnnotation(policy, ReferenceNameAnnotation, referencedObject.Name)
+	AddAnnotation(policy, ReferenceNamespaceAnnotation, referencedObject.Namespace)
+	AddAnnotation(policy, ReferenceTierAnnotation, fmt.Sprintf("%d", referenceTier))
 	AddAnnotation(policy, PolicyHash, policyHash)
-	AddAnnotation(policy, OwnerTier, fmt.Sprintf("%d", tier))
+	AddAnnotation(policy, OwnerTier, fmt.Sprintf("%d", profileTier))
 	AddAnnotation(policy, OwnerName, profile.GetName())
 	AddAnnotation(policy, OwnerKind, profile.GetObjectKind().GroupVersionKind().Kind)
 
@@ -358,13 +359,13 @@ func AddAnnotation(obj metav1.Object, annotationKey, annotationValue string) {
 // If resource cannot be deployed, return a ConflictError.
 // If any other error occurs while doing those verification, the error is returned
 func CanDeployResource(ctx context.Context, dr dynamic.ResourceInterface, policy *unstructured.Unstructured,
-	referencedObject *corev1.ObjectReference, profile client.Object, profileTier int32, logger logr.Logger,
-) (resourceInfo *ResourceInfo, requeueOldOwner bool, err error) {
+	referencedObject *corev1.ObjectReference, profile client.Object, profileTier, referenceTier int32,
+	logger logr.Logger) (resourceInfo *ResourceInfo, requeueOldOwner bool, err error) {
 
 	l := logger.WithValues("resource",
 		fmt.Sprintf("%s:%s/%s", referencedObject.Kind, referencedObject.Namespace, referencedObject.Name))
 	resourceInfo, err = ValidateObjectForUpdate(ctx, dr, policy,
-		referencedObject.Kind, referencedObject.Namespace, referencedObject.Name, profile)
+		referencedObject.Kind, referencedObject.Namespace, referencedObject.Name, referenceTier, profile)
 	if err != nil {
 		var conflictErr *ConflictError
 		ok := errors.As(err, &conflictErr)

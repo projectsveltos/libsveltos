@@ -78,13 +78,11 @@ var _ = Describe("Client", func() {
 			ns := &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
-					Labels: map[string]string{
-						deployer.ReferenceKindLabel:      string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
-						deployer.ReferenceNameLabel:      configMapName,
-						deployer.ReferenceNamespaceLabel: configMapNs,
-					},
 					Annotations: map[string]string{
-						deployer.PolicyHash: policyHash,
+						deployer.ReferenceKindAnnotation:      string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
+						deployer.ReferenceNameAnnotation:      configMapName,
+						deployer.ReferenceNamespaceAnnotation: configMapNs,
+						deployer.PolicyHash:                   policyHash,
 					},
 					OwnerReferences: []metav1.OwnerReference{
 						{
@@ -111,13 +109,13 @@ var _ = Describe("Client", func() {
 
 			// If different configMap, return error
 			_, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
-				randomString(), randomString(), cp)
+				randomString(), randomString(), 100, cp)
 			Expect(err).ToNot(BeNil())
 
 			// If same configMap, return no error
 			var resourceInfo *deployer.ResourceInfo
 			resourceInfo, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
-				configMapNs, configMapName, cp)
+				configMapNs, configMapName, 100, cp)
 			Expect(err).To(BeNil())
 			Expect(resourceInfo.CurrentResource).ToNot(BeNil())
 			Expect(resourceInfo.CurrentResource.GetResourceVersion()).ToNot(BeEmpty())
@@ -142,15 +140,13 @@ var _ = Describe("Client", func() {
 			ns := &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
-					Labels: map[string]string{
-						deployer.ReferenceKindLabel:      string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
-						deployer.ReferenceNameLabel:      configMapName,
-						deployer.ReferenceNamespaceLabel: configMapNs,
-					},
 					Annotations: map[string]string{
-						deployer.PolicyHash: policyHash,
-						deployer.OwnerKind:  "ClusterProfile",
-						deployer.OwnerName:  cp.GetName(),
+						deployer.ReferenceKindAnnotation:      string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
+						deployer.ReferenceNameAnnotation:      configMapName,
+						deployer.ReferenceNamespaceAnnotation: configMapNs,
+						deployer.PolicyHash:                   policyHash,
+						deployer.OwnerKind:                    "ClusterProfile",
+						deployer.OwnerName:                    cp.GetName(),
 					},
 				},
 			}
@@ -169,26 +165,81 @@ var _ = Describe("Client", func() {
 
 			// If different configMap, return error
 			_, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
-				randomString(), randomString(), cp)
+				randomString(), randomString(), 100, cp)
 			Expect(err).ToNot(BeNil())
 
 			// If different profile, return err
 			p, err := k8s_utils.GetUnstructured([]byte(profile))
 			Expect(err).To(BeNil())
 			_, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
-				configMapNs, configMapName, p)
+				configMapNs, configMapName, 100, p)
 			Expect(err).ToNot(BeNil())
 
 			// If same configMap, return no error
 			var resourceInfo *deployer.ResourceInfo
 			resourceInfo, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
-				configMapNs, configMapName, cp)
+				configMapNs, configMapName, 100, cp)
 			Expect(err).To(BeNil())
 			Expect(resourceInfo.CurrentResource).ToNot(BeNil())
 			Expect(resourceInfo.CurrentResource.GetResourceVersion()).ToNot(BeEmpty())
 			Expect(resourceInfo.Hash).To(Equal(policyHash))
 			Expect(resourceInfo.CurrentResource).ToNot(BeNil())
 			Expect(resourceInfo.CurrentResource.GetName()).To(Equal(ns.Name))
+		})
+
+	It("ValidateObjectForUpdate returns no error when resource is already installed because of different ConfigMap (annotations) with higher tier",
+		func() {
+			name := randomString()
+
+			cp, err := k8s_utils.GetUnstructured([]byte(clusterProfile))
+			Expect(err).To(BeNil())
+
+			nsInstance := fmt.Sprintf(nsTemplate, name)
+
+			configMapNs := randomString()
+			configMapName := randomString()
+			policyHash := randomString()
+
+			ns := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: name,
+					Annotations: map[string]string{
+						deployer.ReferenceKindAnnotation:      string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
+						deployer.ReferenceNameAnnotation:      configMapName,
+						deployer.ReferenceNamespaceAnnotation: configMapNs,
+						deployer.PolicyHash:                   policyHash,
+						deployer.OwnerKind:                    "ClusterProfile",
+						deployer.OwnerName:                    cp.GetName(),
+					},
+				},
+			}
+
+			Expect(testEnv.Create(context.TODO(), ns)).To(Succeed())
+			Expect(waitForObject(context.TODO(), testEnv.Client, ns)).To(Succeed())
+
+			Expect(addTypeInformationToObject(scheme, ns))
+
+			dr, err := k8s_utils.GetDynamicResourceInterface(testEnv.Config, ns.GroupVersionKind(), "")
+			Expect(err).To(BeNil())
+
+			var u *unstructured.Unstructured
+			u, err = k8s_utils.GetUnstructured([]byte(nsInstance))
+			Expect(err).To(BeNil())
+
+			// If different configMap, return no error since tier is lower
+			_, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
+				randomString(), randomString(), 90, cp)
+			Expect(err).To(BeNil())
+
+			// If different configMap, return error since tier is same
+			_, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
+				randomString(), randomString(), 100, cp)
+			Expect(err).ToNot(BeNil())
+
+			// If different configMap, return error since tier is higher
+			_, err = deployer.ValidateObjectForUpdate(context.TODO(), dr, u, string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
+				randomString(), randomString(), 110, cp)
+			Expect(err).ToNot(BeNil())
 		})
 
 	It("addOwnerReference adds an OwnerReference to an object. removeOwnerReference removes it", func() {
