@@ -1,6 +1,6 @@
 module github.com/projectsveltos/libsveltos
 
-go 1.25.0
+go 1.25.2
 
 require (
 	github.com/BurntSushi/toml v1.5.0
@@ -9,7 +9,7 @@ require (
 	github.com/google/cel-go v0.26.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/mocktools/go-smtp-mock/v2 v2.5.1
-	github.com/onsi/ginkgo/v2 v2.25.3
+	github.com/onsi/ginkgo/v2 v2.26.0
 	github.com/onsi/gomega v1.38.2
 	github.com/pkg/errors v0.9.1
 	github.com/projectsveltos/lua-utils/glua-json v0.0.0-20250809120506-2b7d4265df58
@@ -17,15 +17,15 @@ require (
 	github.com/projectsveltos/lua-utils/glua-sprig v0.0.0-20250809120506-2b7d4265df58
 	github.com/projectsveltos/lua-utils/glua-strings v0.0.0-20250809120506-2b7d4265df58
 	github.com/yuin/gopher-lua v1.1.1
-	golang.org/x/text v0.29.0
+	golang.org/x/text v0.30.0
 	k8s.io/api v0.34.1
 	k8s.io/apiextensions-apiserver v0.34.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d
-	sigs.k8s.io/cluster-api v1.11.1
-	sigs.k8s.io/controller-runtime v0.22.1
+	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
+	sigs.k8s.io/cluster-api v1.11.2
+	sigs.k8s.io/controller-runtime v0.22.3
 	sigs.k8s.io/kustomize/api v0.20.1
 	sigs.k8s.io/kustomize/kyaml v0.20.1
 	sigs.k8s.io/yaml v1.6.0
@@ -84,15 +84,16 @@ require (
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/mod v0.28.0 // indirect
+	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/term v0.34.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/term v0.35.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
-	golang.org/x/tools v0.36.0 // indirect
+	golang.org/x/tools v0.37.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250303144028-a0af3efb3deb // indirect
