@@ -82,6 +82,7 @@ spec:
                       - SveltosAgent
                       - ConversionWebhook
                       - Techsupport
+                      - MCPServer
                       type: string
                     logLevel:
                       description: 'LogLevel is the log severity above which logs
