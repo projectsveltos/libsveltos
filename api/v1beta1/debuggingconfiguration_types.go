@@ -42,7 +42,7 @@ const (
 )
 
 //nolint:lll // kubebuilder marker
-// +kubebuilder:validation:Enum:=AddonManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager;ShardController;UIBackend;SveltosAgent;ConversionWebhook;Techsupport
+// +kubebuilder:validation:Enum:=AddonManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager;ShardController;UIBackend;SveltosAgent;ConversionWebhook;Techsupport;MCPServer
 
 type Component string
 
@@ -82,6 +82,9 @@ const (
 
 	// ComponentTechsupport is the techsupport pod
 	ComponentTechsupport = Component("Techsupport")
+
+	// ComponentMCPServer is the MCP Server pod
+	ComponentMCPServer = Component("MCPServer")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.
