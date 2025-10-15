@@ -74,6 +74,7 @@ type EventReportSpec struct {
 	EventSourceName string `json:"eventSourceName"`
 
 	// MatchingResources contains a list of resources matching an EventSource
+	// +listType=atomic
 	// +optional
 	MatchingResources []corev1.ObjectReference `json:"matchingResources,omitempty"`
 
