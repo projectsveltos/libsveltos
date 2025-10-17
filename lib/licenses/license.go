@@ -43,21 +43,24 @@ const (
 )
 
 // Features is all features requiring a license
-// +kubebuilder:validation:Enum:=PullMode
+// +kubebuilder:validation:Enum:=PullMode;MCP
 type Features string
 
 const (
 	// FeaturePullMode is the ability to manage cluster behing firewalls
 	FeaturePullMode = Features("PullMode")
+
+	// FeatureMCP is the ability to use Sveltos MCP Server
+	FeatureMCP = Features("MCP")
 )
 
 // +kubebuilder:validation:Enum:=Enterprise;EnterprisePlus
 type Plan string
 
 const (
-	PlanEnterprise = Features("Enterprise")
+	PlanEnterprise = Plan("Enterprise")
 
-	PlanEnterprisePlus = Features("EnterprisePlus")
+	PlanEnterprisePlus = Plan("EnterprisePlus")
 )
 
 // LicensePayload defines the internal structure of the data that gets signed

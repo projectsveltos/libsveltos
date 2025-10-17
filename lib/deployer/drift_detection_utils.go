@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	"github.com/projectsveltos/libsveltos/lib/logsettings"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 	"github.com/projectsveltos/libsveltos/lib/sveltos_upgrade"
 )
@@ -99,7 +98,7 @@ func deployResourceSummaryInstance(ctx context.Context, clusterClient client.Cli
 		currentResourceSummary)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.V(logsettings.LogDebug).Info("resourceSummary instance not present. creating it.")
+			logger.V(logs.LogDebug).Info("resourceSummary instance not present. creating it.")
 			toDeployResourceSummary := &libsveltosv1beta1.ResourceSummary{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        name,
@@ -140,6 +139,6 @@ func deployResourceSummaryInstance(ctx context.Context, clusterClient client.Cli
 	currentResourceSummary.Labels = lbls
 	currentResourceSummary.Annotations = annotations
 
-	logger.V(logsettings.LogDebug).Info("resourceSummary instance already present. updating it.")
+	logger.V(logs.LogDebug).Info("resourceSummary instance already present. updating it.")
 	return clusterClient.Update(ctx, currentResourceSummary)
 }

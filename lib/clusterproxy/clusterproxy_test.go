@@ -33,7 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2/textlogger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -223,8 +223,12 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(len(cps.Items)).To(Equal(2))
 	})
 
-	It("IsCAPIClusterReadyToBeConfigured returns false for a cluster with Status.ControlPlaneReady set to false", func() {
-		cluster.Status.ControlPlaneReady = false
+	It("IsCAPIClusterReadyToBeConfigured returns false for a cluster with Status.Initialization.ControlPlaneInitialized set to false", func() {
+		initialized := false
+		cluster.Status.Initialization = clusterv1.ClusterInitializationStatus{
+			ControlPlaneInitialized: &initialized,
+		}
+
 		initObjects := []client.Object{
 			cluster,
 		}
@@ -238,8 +242,11 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(ready).To(Equal(false))
 	})
 
-	It("IsCAPIClusterReadyToBeConfigured returns true for a cluster with Status.ControlPlaneReady set to true", func() {
-		cluster.Status.ControlPlaneReady = true
+	It("IsCAPIClusterReadyToBeConfigured returns true for a cluster with Status.Initialization.ControlPlaneInitialized set to true", func() {
+		initialized := true
+		cluster.Status.Initialization = clusterv1.ClusterInitializationStatus{
+			ControlPlaneInitialized: &initialized,
+		}
 		initObjects := []client.Object{
 			cluster,
 		}
@@ -253,11 +260,11 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(ready).To(Equal(true))
 	})
 
-	It("IsCAPIClusterReadyToBeConfigured returns true for a cluster when ControlPlaneInitialized is true", func() {
-		cluster.Status.Conditions = []clusterv1.Condition{
-			{
-				Type:   clusterv1.ControlPlaneInitializedCondition,
-				Status: corev1.ConditionTrue,
+	It("IsCAPIClusterReadyToBeConfigured returns false when there are no ready replicas", func() {
+		initialized := false
+		cluster.Status = clusterv1.ClusterStatus{
+			Initialization: clusterv1.ClusterInitializationStatus{
+				ControlPlaneInitialized: &initialized,
 			},
 		}
 
@@ -271,7 +278,7 @@ var _ = Describe("clusterproxy ", func() {
 			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name},
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
-		Expect(ready).To(Equal(true))
+		Expect(ready).To(Equal(false))
 	})
 
 	It("UpdateSveltosSecretData updates secret with SveltosCluster kubeconfig", func() {

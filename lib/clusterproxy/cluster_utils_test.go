@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2/textlogger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -44,16 +44,20 @@ var _ = Describe("Cluster utils", func() {
 	BeforeEach(func() {
 		namespace = "cluster-utils" + randomString()
 
+		paused := true
+		initialized := true
 		cluster = &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      randomString(),
 				Namespace: namespace,
 			},
 			Spec: clusterv1.ClusterSpec{
-				Paused: true,
+				Paused: &paused,
 			},
 			Status: clusterv1.ClusterStatus{
-				ControlPlaneReady: true,
+				Initialization: clusterv1.ClusterInitializationStatus{
+					ControlPlaneInitialized: &initialized,
+				},
 			},
 		}
 
@@ -90,8 +94,9 @@ var _ = Describe("Cluster utils", func() {
 	})
 
 	It("IsClusterPaused returns false when Spec.Paused is set to false", func() {
-		cluster.Spec.Paused = false
-		sveltosCluster.Spec.Paused = false
+		paused := false
+		cluster.Spec.Paused = &paused
+		sveltosCluster.Spec.Paused = paused
 		initObjects := []client.Object{
 			cluster, sveltosCluster,
 		}
@@ -538,6 +543,7 @@ var _ = Describe("Cluster utils", func() {
 
 		onboardAnnotation := randomString()
 
+		initialized := true
 		matchingCapiCluster := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      randomString(),
@@ -548,7 +554,9 @@ var _ = Describe("Cluster utils", func() {
 				},
 			},
 			Status: clusterv1.ClusterStatus{
-				ControlPlaneReady: true,
+				Initialization: clusterv1.ClusterInitializationStatus{
+					ControlPlaneInitialized: &initialized,
+				},
 			},
 		}
 
@@ -560,7 +568,9 @@ var _ = Describe("Cluster utils", func() {
 				Annotations: map[string]string{},
 			},
 			Status: clusterv1.ClusterStatus{
-				ControlPlaneReady: true,
+				Initialization: clusterv1.ClusterInitializationStatus{
+					ControlPlaneInitialized: &initialized,
+				},
 			},
 		}
 

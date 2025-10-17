@@ -19,6 +19,7 @@ package deployer
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -32,20 +33,43 @@ import (
 )
 
 const (
-	// ReferenceLabelKind is added to each policy deployed by a ClusterSummary
+	// ReferenceKindLabel is added to each policy deployed by a ClusterSummary
 	// instance to a managed Cluster. Indicates the Kind (ConfigMap or Secret)
 	// containing the policy.
+	// Deprecated: replaced by annotation
 	ReferenceKindLabel = "projectsveltos.io/reference-kind"
 
 	// ReferenceNameLabel is added to each policy deployed by a ClusterSummary
 	// instance to a managed Cluster. Indicates the name of the ConfigMap/Secret
 	// containing the policy.
+	// Deprecated: replaced by annotation
 	ReferenceNameLabel = "projectsveltos.io/reference-name"
 
 	// ReferenceNamespaceLabel is added to each policy deployed by a ClusterSummary
 	// instance to a managed Cluster. Indicates the namespace of the ConfigMap/Secret
 	// containing the policy.
+	// Deprecated: replaced by annotation
 	ReferenceNamespaceLabel = "projectsveltos.io/reference-namespace"
+
+	// ReferenceKindAnnotation is added to each policy deployed by a ClusterSummary
+	// instance to a managed Cluster. Indicates the Kind (ConfigMap or Secret)
+	// containing the policy.
+	ReferenceKindAnnotation = "projectsveltos.io/reference-kind"
+
+	// ReferenceNameAnnotation is added to each policy deployed by a ClusterSummary
+	// instance to a managed Cluster. Indicates the name of the ConfigMap/Secret
+	// containing the policy.
+	ReferenceNameAnnotation = "projectsveltos.io/reference-name"
+
+	// ReferenceNamespaceAnnotation is added to each policy deployed by a ClusterSummary
+	// instance to a managed Cluster. Indicates the namespace of the ConfigMap/Secret
+	// containing the policy.
+	ReferenceNamespaceAnnotation = "projectsveltos.io/reference-namespace"
+
+	// ReferenceTierAnnotation is added to each policy deployed by a ClusterSummary
+	// instance to a managed Cluster. Indicates the namespace of the ConfigMap/Secret
+	// containing the policy.
+	ReferenceTierAnnotation = "projectsveltos.io/reference-tier"
 
 	// PolicyHash is the annotation set on a policy when deployed in a managed
 	// cluster.
@@ -129,7 +153,7 @@ func (r *ResourceInfo) GetResourceVersion() string {
 // If object exists, return value of PolicyHash annotation.
 func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 	object *unstructured.Unstructured, referenceKind, referenceNamespace, referenceName string,
-	profile client.Object) (*ResourceInfo, error) {
+	referenceTier int32, profile client.Object) (*ResourceInfo, error) {
 
 	if object == nil {
 		return nil, nil
@@ -154,49 +178,40 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 		}
 	}
 
-	if labels := currentObject.GetLabels(); labels != nil {
-		kind, kindOk := labels[ReferenceKindLabel]
-		namespace, namespaceOk := labels[ReferenceNamespaceLabel]
-		name, nameOk := labels[ReferenceNameLabel]
+	kind, namespace, name, tier := getReferenceInfo(currentObject)
 
-		if kindOk {
+	// if proposed tier is lower than current tier, do not check for conflict on referenced resource.
+	if referenceTier >= tier {
+		if kind != "" {
 			if kind != referenceKind {
 				return resourceInfo, &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addOwnerMessage(currentObject))}
+					message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+						"This resource is currently deployed because of %s %s/%s.\n",
+						object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+						getOwnerMessage(currentObject), kind, namespace, name)}
 			}
-		}
-		if namespaceOk {
+
 			if namespace != referenceNamespace {
 				return resourceInfo, &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addOwnerMessage(currentObject))}
+					message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+						"This resource is currently deployed because of %s %s/%s.\n",
+						object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+						getOwnerMessage(currentObject), kind, namespace, name)}
 			}
-		}
-		if nameOk {
+
 			if name != referenceName {
 				return resourceInfo, &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addOwnerMessage(currentObject))}
+					message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+						"This resource is currently deployed because of %s %s/%s.\n",
+						object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+						getOwnerMessage(currentObject), kind, namespace, name)}
 			}
 		}
+	}
 
-		if nameOk {
-			if name != referenceName {
-				return resourceInfo, &ConflictError{
-					message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-						object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-						addOwnerMessage(currentObject))}
-			}
-		}
-
-		err := validateSveltosOwner(object, currentObject, profile, kind, namespace, name)
-		if err != nil {
-			return resourceInfo, &ConflictError{message: err.Error()}
-		}
+	err = validateSveltosOwner(object, currentObject, profile, kind, namespace, name)
+	if err != nil {
+		return resourceInfo, &ConflictError{message: err.Error()}
 	}
 
 	// Only in case object exists and there are no conflicts, return hash
@@ -205,6 +220,53 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 	}
 
 	return resourceInfo, nil
+}
+
+// getReferenceInfo extracts the kind, namespace, and name from object annotations
+// and falls back to labels if the annotations are missing or the annotation map is nil.
+func getReferenceInfo(object *unstructured.Unstructured) (kind, namespace, name string, tier int32) {
+	// 1. Attempt to get info from Annotations
+	annotations := object.GetAnnotations()
+	if annotations != nil {
+		kind = annotations[ReferenceKindAnnotation]
+		namespace = annotations[ReferenceNamespaceAnnotation]
+		name = annotations[ReferenceNameAnnotation]
+
+		const defaultTier = 100
+		tier := int32(defaultTier)
+		tierStr, tierOk := annotations[ReferenceTierAnnotation]
+		if tierOk {
+			tier64, err := strconv.ParseInt(tierStr, 10, 32)
+			if err == nil {
+				tier = int32(tier64)
+			}
+			// If ParseInt fails, 'tier' remains the DefaultTier (100)
+		}
+
+		// If we found the kind, we assume the annotation set is complete enough.
+		if kind != "" {
+			return kind, namespace, name, tier
+		}
+	}
+
+	// 2. Fallback to Labels if annotations were nil OR kind was not found in annotations
+	labels := object.GetLabels()
+	if labels != nil {
+		var kindOk bool
+
+		// NOTE: You had a bug in your original prompt's fallback logic where it
+		// still referenced 'annotations'. This is corrected here to use 'labels'.
+		kind, kindOk = labels[ReferenceKindLabel]
+		namespace = labels[ReferenceNamespaceLabel]
+		name = labels[ReferenceNameLabel]
+
+		if kindOk {
+			return kind, namespace, name, tier
+		}
+	}
+
+	// 3. Info not found
+	return "", "", "", tier
 }
 
 func validateSveltosOwner(object, currentObject *unstructured.Unstructured, profile client.Object,
@@ -219,25 +281,28 @@ func validateSveltosOwner(object, currentObject *unstructured.Unstructured, prof
 
 	if ownerName != "" {
 		if ownerName != profile.GetName() || ownerKind != profile.GetObjectKind().GroupVersionKind().Kind {
-			currentOwner := fmt.Sprintf("%s:%s", ownerKind, ownerName)
 			return &ConflictError{
-				message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-					object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name, currentOwner)}
+				message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+					"This resource is currently deployed because of %s %s/%s.\n",
+					object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+					getOwnerMessage(currentObject), kind, namespace, name)}
 		}
 	} else if k8s_utils.HasSveltosResourcesAsOwnerReference(currentObject) && !k8s_utils.IsOwnerReference(currentObject, profile) {
 		return &ConflictError{
-			message: fmt.Sprintf("conflict: policy (kind: %s) %s/%s is currently deployed by %s: %s/%s.\n%s",
-				object.GetKind(), object.GetNamespace(), object.GetName(), kind, namespace, name,
-				addOwnerMessage(currentObject))}
+			message: fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+				"This resource is currently deployed because of %s %s/%s.\n",
+				object.GroupVersionKind().Kind, object.GetNamespace(), object.GetName(),
+				getOwnerMessage(currentObject), kind, namespace, name)}
 	}
 
 	return nil
 }
 
-// GetOwnerMessage returns a message listing why this object is deployed. The message lists:
+// getDetailedConflictMessage returns a message reporting the detected conflict and
+// listing why this object is deployed. The message lists:
 // - which is currently causing it to be deployed (owner)
 // - which Secret/ConfigMap contains it
-func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
+func getDetailedConflictMessage(ctx context.Context, dr dynamic.ResourceInterface,
 	objectName string) (string, error) {
 
 	currentObject, err := dr.Get(ctx, objectName, metav1.GetOptions{})
@@ -255,18 +320,19 @@ func GetOwnerMessage(ctx context.Context, dr dynamic.ResourceInterface,
 		namespace := labels[ReferenceNamespaceLabel]
 		name := labels[ReferenceNameLabel]
 
-		message += fmt.Sprintf("Object %s:%s/%s currently deployed because of %s %s/%s.\n",
-			currentObject.GroupVersionKind().Kind, currentObject.GetNamespace(), currentObject.GetName(),
-			kind, namespace, name)
-	}
+		ownerMessage := getOwnerMessage(currentObject)
 
-	message += addOwnerMessage(currentObject)
+		message += fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+			"This resource is currently deployed because of %s %s/%s.\n",
+			currentObject.GroupVersionKind().Kind, currentObject.GetNamespace(), currentObject.GetName(),
+			ownerMessage, kind, namespace, name)
+	}
 
 	return message, nil
 }
 
-func addOwnerMessage(u *unstructured.Unstructured) string {
-	message := " Sveltos instance currently deploying this resource: "
+func getOwnerMessage(u *unstructured.Unstructured) string {
+	message := "The Sveltos profile currently deploying this resource is "
 
 	// First, if available, use annotation
 	annotations := u.GetAnnotations()

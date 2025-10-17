@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	"github.com/projectsveltos/libsveltos/lib/logsettings"
+	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 // ProcessingMismatchError represents an error when the resource has not been fully processed,
@@ -142,7 +142,7 @@ func RecordResourcesForDeployment(ctx context.Context, c client.Client,
 		}
 		hash, err := getHash(resources[k])
 		if err != nil {
-			logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to evaluate hash: %v", err))
+			logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to evaluate hash: %v", err))
 		}
 
 		bundles[i] = bundleData{Name: bundle.Name, Hash: hash}
@@ -187,7 +187,7 @@ func StageResourcesForDeployment(ctx context.Context, c client.Client,
 
 	manager := getStagedResourcesManager()
 
-	logger.V(logsettings.LogDebug).Info(fmt.Sprintf("staging %d resources for deployment",
+	logger.V(logs.LogDebug).Info(fmt.Sprintf("staging %d resources for deployment",
 		len(resources)))
 
 	// Create all ConfigurationBundles. There one configurationBundle per key.
@@ -218,7 +218,7 @@ func DiscardStagedResourcesForDeployment(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, requestorKind, requestorName, requestorFeature string,
 	logger logr.Logger) error {
 
-	logger.V(logsettings.LogDebug).Info("discarding staged resources")
+	logger.V(logs.LogDebug).Info("discarding staged resources")
 
 	// Get current referenced configurationBundles. All ConfigurationBundles currently not referenced
 	// by ConfigurationGroup will be discarded
@@ -353,7 +353,7 @@ func GetSourceStatus(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	_, currentConfigurationGroup, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return nil, err
 	}
 
@@ -375,7 +375,7 @@ func GetDeploymentStatus(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return nil, err
 	}
 
@@ -383,7 +383,7 @@ func GetDeploymentStatus(ctx context.Context, c client.Client,
 	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name},
 		currentCG)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
 		return nil, err
 	}
 
@@ -399,14 +399,14 @@ func GetDeploymentStatus(ctx context.Context, c client.Client,
 		if currentCG.Status.ObservedGeneration != currentCG.Generation {
 			msg := fmt.Sprintf("ConfigurationGroup Status.ObservedGeneration (%d) does not match Generation (%d)",
 				currentCG.Status.ObservedGeneration, currentCG.Generation)
-			logger.V(logsettings.LogInfo).Info(msg)
+			logger.V(logs.LogInfo).Info(msg)
 			return &currentCG.Status, NewProcessingMismatchError(msg)
 		}
 	}
 
 	if !reflect.DeepEqual(currentCG.Status.ObservedRequestorHash, currentCG.Spec.RequestorHash) {
 		msg := "ConfigurationGroup Status.ObservedRequestorHash does not match Spec.RequestorHash"
-		logger.V(logsettings.LogInfo).Info(msg)
+		logger.V(logs.LogInfo).Info(msg)
 		return &currentCG.Status, NewProcessingMismatchError(msg)
 	}
 
@@ -422,7 +422,7 @@ func GetRemoveStatus(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return nil, err
 	}
 
@@ -430,7 +430,7 @@ func GetRemoveStatus(ctx context.Context, c client.Client,
 	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name},
 		currentCG)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
 		return nil, err
 	}
 
@@ -451,7 +451,7 @@ func IsBeingProvisioned(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return false
 	}
 
@@ -459,7 +459,7 @@ func IsBeingProvisioned(ctx context.Context, c client.Client,
 	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name},
 		currentCG)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
 		return false
 	}
 
@@ -475,7 +475,7 @@ func IsBeingProvisioned(ctx context.Context, c client.Client,
 	if currentCG.Status.ObservedRequestorHash != nil &&
 		!reflect.DeepEqual(currentCG.Status.ObservedRequestorHash, currentCG.Spec.RequestorHash) {
 
-		logger.V(logsettings.LogInfo).Info("requestor hash mismatch - latest changes not yet processed")
+		logger.V(logs.LogInfo).Info("requestor hash mismatch - latest changes not yet processed")
 		return false
 	}
 
@@ -498,7 +498,7 @@ func IsBeingRemoved(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return false
 	}
 
@@ -509,7 +509,7 @@ func IsBeingRemoved(ctx context.Context, c client.Client,
 			// ConfigurationGroup has been removed
 			return true
 		}
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
 		return false
 	}
 
@@ -533,7 +533,7 @@ func GetRequestorHash(ctx context.Context, c client.Client,
 	labels := getConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
 	name, _, err := getConfigurationGroupName(ctx, c, clusterNamespace, requestorName, labels)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup name: %v", err))
 		return nil, err
 	}
 
@@ -541,7 +541,7 @@ func GetRequestorHash(ctx context.Context, c client.Client,
 	err = c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: name},
 		currentCG)
 	if err != nil {
-		logger.V(logsettings.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get ConfigurationGroup: %v", err))
 		return nil, err
 	}
 

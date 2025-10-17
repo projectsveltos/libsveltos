@@ -330,6 +330,17 @@ type ValidateHealth struct {
 	// representing whether object is a match (true or false)
 	// +optional
 	Script string `json:"script,omitempty"`
+
+	// EvaluateCEL contains a list of named CEL (Common Expression Language) rules.
+	// Each rule will be evaluated in order against each object selected based on
+	// the criteria defined above. Each rule's expression must return a boolean value
+	// indicating whether the object is a match.
+	//
+	// Evaluation stops at the first rule that returns true; subsequent
+	// rules will not be evaluated.
+	//
+	// +optional
+	EvaluateCEL []CELRule `json:"evaluateCEL,omitempty"`
 }
 
 // +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;FailedNonRetriable;Removing;Removed;AgentRemoving

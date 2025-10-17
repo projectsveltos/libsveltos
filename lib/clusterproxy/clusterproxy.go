@@ -29,7 +29,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -328,16 +329,15 @@ func isCAPIClusterReadyToBeConfigured(ctx context.Context, c client.Client,
 }
 
 func isCAPIClusterReady(capiCluster *clusterv1.Cluster) bool {
-	for i := range capiCluster.Status.Conditions {
-		c := capiCluster.Status.Conditions[i]
-		if c.Type == clusterv1.ControlPlaneInitializedCondition &&
-			c.Status == corev1.ConditionTrue {
-
-			return true
-		}
+	if conditions.IsTrue(capiCluster, clusterv1.ClusterControlPlaneInitializedCondition) {
+		return true
 	}
 
-	return capiCluster.Status.ControlPlaneReady
+	if capiCluster.Status.Initialization.ControlPlaneInitialized != nil {
+		return *capiCluster.Status.Initialization.ControlPlaneInitialized
+	}
+
+	return false
 }
 
 // GetMachinesForCluster find all Machines for a given CAPI Cluster.

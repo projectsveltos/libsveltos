@@ -21,6 +21,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/klog/v2/textlogger"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/deployer"
@@ -544,5 +545,132 @@ type: ExternalName
 			Target: driftExclusions[1].Target,
 		}
 		Expect(patches).To(ContainElement(expectedPatch))
+	})
+
+	It("GetUnstructured with YAML/JSON/KYAML", func() {
+		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+
+		serviceYAML := `apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: "2025-05-09T21:14:40Z"
+  labels:
+    app: hostnames
+  name: hostnames
+  namespace: default
+  resourceVersion: "37697"
+  uid: "7aad616c-1686-4231-b32e-5ec68a738bba"
+spec:
+  clusterIP: "10.0.162.160"
+  clusterIPs:
+    - "10.0.162.160"
+  internalTrafficPolicy: "Cluster"
+  ipFamilies:
+    - "IPv4"
+  ipFamilyPolicy: "SingleStack"
+  ports:
+    - port: 80
+      protocol: "TCP"
+      targetPort: 9376
+  selector:
+    app: hostnames
+  sessionAffinity: "None"
+  type: "ClusterIP"
+status:
+  loadBalancer: {}`
+
+		result, err := deployer.GetUnstructured([]byte(serviceYAML), logger)
+		Expect(err).To(BeNil())
+		Expect(len(result)).To(Equal(1))
+		Expect(result[0].GetKind()).To(Equal("Service"))
+
+		serviceJSON := `{
+  "kind": "Service",
+  "metadata": {
+    "creationTimestamp": "2025-05-09T21:14:40Z",
+    "labels": {
+      "app": "hostnames"
+    },
+    "name": "hostnames",
+    "namespace": "default",
+    "resourceVersion": "37697",
+    "uid": "7aad616c-1686-4231-b32e-5ec68a738bba"
+  },
+  "spec": {
+    "clusterIP": "10.0.162.160",
+    "clusterIPs": [
+      "10.0.162.160"
+    ],
+    "internalTrafficPolicy": "Cluster",
+    "ipFamilies": [
+      "IPv4"
+    ],
+    "ipFamilyPolicy": "SingleStack",
+    "ports": [
+      {
+        "port": 80,
+        "protocol": "TCP",
+        "targetPort": 9376
+      }
+    ],
+    "selector": {
+      "app": "hostnames"
+    },
+    "sessionAffinity": "None",
+    "type": "ClusterIP"
+  },
+  "status": {
+    "loadBalancer": {}
+  }
+}`
+
+		result, err = deployer.GetUnstructured([]byte(serviceJSON), logger)
+		Expect(err).To(BeNil())
+		Expect(len(result)).To(Equal(1))
+		Expect(result[0].GetKind()).To(Equal("Service"))
+
+		serviceKYAML := `{
+  apiVersion: "v1",
+  kind: "Service",
+  metadata: {
+    creationTimestamp: "2025-05-09T21:14:40Z",
+    labels: {
+      app: "hostnames",
+    },
+    name: "hostnames",
+    namespace: "default",
+    resourceVersion: "37697",
+    uid: "7aad616c-1686-4231-b32e-5ec68a738bba",
+  },
+  spec: {
+    clusterIP: "10.0.162.160",
+    clusterIPs: [
+      "10.0.162.160",
+    ],
+    internalTrafficPolicy: "Cluster",
+    ipFamilies: [
+      "IPv4",
+    ],
+    ipFamilyPolicy: "SingleStack",
+    ports: [{
+      port: 80,
+      protocol: "TCP",
+      targetPort: 9376,
+    }],
+    selector: {
+      app: "hostnames",
+    },
+    sessionAffinity: "None",
+    type: "ClusterIP",
+  },
+  status: {
+    loadBalancer: {},
+  },
+}`
+
+		result, err = deployer.GetUnstructured([]byte(serviceKYAML), logger)
+		Expect(err).To(BeNil())
+		Expect(len(result)).To(Equal(1))
+		Expect(result[0].GetKind()).To(Equal("Service"))
 	})
 })

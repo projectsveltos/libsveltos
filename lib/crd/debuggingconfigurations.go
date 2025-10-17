@@ -21,7 +21,7 @@ var DebuggingConfigurationCRD = []byte(`apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: debuggingconfigurations.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
@@ -82,6 +82,7 @@ spec:
                       - SveltosAgent
                       - ConversionWebhook
                       - Techsupport
+                      - MCPServer
                       type: string
                     logLevel:
                       description: 'LogLevel is the log severity above which logs

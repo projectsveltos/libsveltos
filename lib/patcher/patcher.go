@@ -133,9 +133,9 @@ func writeFile(fs filesys.FileSystem, path string, content *bytes.Buffer) error 
 func adaptSelector(selector *sveltosv1beta1.PatchSelector) (output *kustomizetypes.Selector) {
 	if selector != nil {
 		output = &kustomizetypes.Selector{}
-		output.Gvk.Group = selector.Group
-		output.Gvk.Kind = selector.Kind
-		output.Gvk.Version = selector.Version
+		output.Group = selector.Group
+		output.Kind = selector.Kind
+		output.Version = selector.Version
 		output.Name = selector.Name
 		output.Namespace = selector.Namespace
 		output.LabelSelector = selector.LabelSelector

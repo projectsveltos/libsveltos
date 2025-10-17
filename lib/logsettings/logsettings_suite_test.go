@@ -31,15 +31,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/textlogger"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/internal/test/helpers"
-	"github.com/projectsveltos/libsveltos/lib/logsettings"
+	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 var (
-	instance *logsettings.LogSetter
+	instance *logs.LogSetter
 	testEnv  *helpers.TestEnvironment
 	cancel   context.CancelFunc
 	ctx      context.Context
@@ -81,7 +81,7 @@ var _ = BeforeSuite(func() {
 
 	klog.InitFlags(nil)
 	Expect(flag.Lookup("v").Value.Set("0")).To(BeNil())
-	instance = logsettings.RegisterForLogSettings(ctx, libsveltosv1beta1.ComponentAddonManager,
+	instance = logs.RegisterForLogSettings(ctx, libsveltosv1beta1.ComponentAddonManager,
 		textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), testEnv.Config)
 })
 

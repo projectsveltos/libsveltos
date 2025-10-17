@@ -22,14 +22,15 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,9 +39,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
@@ -192,7 +195,8 @@ func CustomSplit(text string) ([]string, error) {
 	// First split by document separators if they exist
 	var documents []string
 	if strings.Contains(text, "---") {
-		dec := yaml.NewDecoder(bytes.NewReader([]byte(text)))
+		const bufferSize = 4096
+		dec := utilyaml.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(text)), bufferSize)
 		for {
 			var value interface{}
 			err := dec.Decode(&value)
@@ -241,8 +245,8 @@ func CustomSplit(text string) ([]string, error) {
 
 // GetResource returns sveltos Resource and the resource hash
 func GetResource(policy *unstructured.Unstructured, ignoreForConfigurationDrift bool,
-	referencedObject *corev1.ObjectReference, profile client.Object, tier int32, featureID string,
-	logger logr.Logger) (resource *libsveltosv1beta1.Resource, policyHash string) {
+	referencedObject *corev1.ObjectReference, profile client.Object, profileTier, referenceTier int32,
+	featureID string, logger logr.Logger) (resource *libsveltosv1beta1.Resource, policyHash string) {
 
 	resource = &libsveltosv1beta1.Resource{
 		Name:                        policy.GetName(),
@@ -261,12 +265,13 @@ func GetResource(policy *unstructured.Unstructured, ignoreForConfigurationDrift 
 	}
 
 	// Get policy hash of referenced policy
-	AddLabel(policy, ReferenceKindLabel, referencedObject.GetObjectKind().GroupVersionKind().Kind)
-	AddLabel(policy, ReferenceNameLabel, referencedObject.Name)
-	AddLabel(policy, ReferenceNamespaceLabel, referencedObject.Namespace)
 	AddLabel(policy, ReasonLabel, featureID)
+	AddAnnotation(policy, ReferenceKindAnnotation, referencedObject.GetObjectKind().GroupVersionKind().Kind)
+	AddAnnotation(policy, ReferenceNameAnnotation, referencedObject.Name)
+	AddAnnotation(policy, ReferenceNamespaceAnnotation, referencedObject.Namespace)
+	AddAnnotation(policy, ReferenceTierAnnotation, fmt.Sprintf("%d", referenceTier))
 	AddAnnotation(policy, PolicyHash, policyHash)
-	AddAnnotation(policy, OwnerTier, fmt.Sprintf("%d", tier))
+	AddAnnotation(policy, OwnerTier, fmt.Sprintf("%d", profileTier))
 	AddAnnotation(policy, OwnerName, profile.GetName())
 	AddAnnotation(policy, OwnerKind, profile.GetObjectKind().GroupVersionKind().Kind)
 
@@ -275,16 +280,51 @@ func GetResource(policy *unstructured.Unstructured, ignoreForConfigurationDrift 
 
 // ComputePolicyHash compute policy hash.
 func ComputePolicyHash(policy *unstructured.Unstructured) (string, error) {
-	b, err := policy.MarshalJSON()
+	policy = omitHashAnnotation(policy)
+
+	// Convert to ordered map structure
+	orderedObj := normalizeObject(policy.Object)
+
+	jsonBytes, err := json.Marshal(orderedObj)
 	if err != nil {
 		return "", err
 	}
-	hash := sha256.New()
-	_, err = hash.Write(b)
-	if err != nil {
-		return "", err
+
+	resourceHash := sha256.Sum256(jsonBytes)
+	return fmt.Sprintf("sha256:%x", resourceHash), nil
+}
+
+func normalizeObject(obj interface{}) interface{} {
+	switch v := obj.(type) {
+	case map[string]interface{}:
+		// Create ordered map
+		orderedMap := make(map[string]interface{})
+
+		// Get sorted keys
+		keys := make([]string, 0, len(v))
+		for k := range v {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		// Build ordered map
+		for _, k := range keys {
+			orderedMap[k] = normalizeObject(v[k])
+		}
+		return orderedMap
+
+	case []interface{}:
+		// Recursively normalize array elements
+		normalized := make([]interface{}, len(v))
+		for i, item := range v {
+			normalized[i] = normalizeObject(item)
+		}
+		return normalized
+
+	default:
+		// Primitive types return as-is
+		return v
 	}
-	return fmt.Sprintf("sha256:%x", hash.Sum(nil)), nil
 }
 
 // AddLabel adds label to an object
@@ -319,13 +359,13 @@ func AddAnnotation(obj metav1.Object, annotationKey, annotationValue string) {
 // If resource cannot be deployed, return a ConflictError.
 // If any other error occurs while doing those verification, the error is returned
 func CanDeployResource(ctx context.Context, dr dynamic.ResourceInterface, policy *unstructured.Unstructured,
-	referencedObject *corev1.ObjectReference, profile client.Object, profileTier int32, logger logr.Logger,
-) (resourceInfo *ResourceInfo, requeueOldOwner bool, err error) {
+	referencedObject *corev1.ObjectReference, profile client.Object, profileTier, referenceTier int32,
+	logger logr.Logger) (resourceInfo *ResourceInfo, requeueOldOwner bool, err error) {
 
 	l := logger.WithValues("resource",
 		fmt.Sprintf("%s:%s/%s", referencedObject.Kind, referencedObject.Namespace, referencedObject.Name))
 	resourceInfo, err = ValidateObjectForUpdate(ctx, dr, policy,
-		referencedObject.Kind, referencedObject.Namespace, referencedObject.Name, profile)
+		referencedObject.Kind, referencedObject.Namespace, referencedObject.Name, referenceTier, profile)
 	if err != nil {
 		var conflictErr *ConflictError
 		ok := errors.As(err, &conflictErr)
@@ -356,7 +396,7 @@ func GenerateConflictResourceReport(ctx context.Context, dr dynamic.ResourceInte
 		Resource: *resource,
 		Action:   string(libsveltosv1beta1.ConflictResourceAction),
 	}
-	message, err := GetOwnerMessage(ctx, dr, resource.Name)
+	message, err := getDetailedConflictMessage(ctx, dr, resource.Name)
 	if err == nil {
 		conflictReport.Message = message
 	}
