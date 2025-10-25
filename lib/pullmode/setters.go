@@ -192,14 +192,18 @@ func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Op
 }
 
 type BundleOptions struct {
-	Timeout                 *metav1.Duration
-	ReleaseNamespace        string
-	ReleaseName             string
-	ChartVersion            string
-	Icon                    string
-	RepoURL                 string
-	UninstallRealease       bool
-	IsLastHelmReleaseBundle bool
+	Timeout                   *metav1.Duration
+	ReleaseNamespace          string
+	ReleaseName               string
+	ChartVersion              string
+	Icon                      string
+	RepoURL                   string
+	UninstallRealease         bool
+	IsLastHelmReleaseBundle   bool
+	ReferencedObjectKind      string
+	ReferencedObjectNamespace string
+	ReferencedObjectName      string
+	ReferencedTier            int32
 }
 
 type BundleOption func(*BundleOptions)
@@ -224,6 +228,17 @@ func WithReleaseInfo(namespace, name, repoURL, chartVersion, icon string,
 	}
 }
 
+func WithResourceInfo(kind, namespace, name string,
+	tier int32) BundleOption {
+
+	return func(args *BundleOptions) {
+		args.ReferencedObjectKind = kind
+		args.ReferencedObjectNamespace = namespace
+		args.ReferencedObjectName = name
+		args.ReferencedTier = tier
+	}
+}
+
 func applyBundleSetters(confBundle *libsveltosv1beta1.ConfigurationBundle, setters ...BundleOption,
 ) *libsveltosv1beta1.ConfigurationBundle {
 
@@ -245,6 +260,11 @@ func applyBundleSetters(confBundle *libsveltosv1beta1.ConfigurationBundle, sette
 	confBundle.Spec.HelmRepoURL = c.RepoURL
 	confBundle.Spec.HelmReleaseUninstall = c.UninstallRealease
 	confBundle.Spec.IsLastHelmReleaseBundle = c.IsLastHelmReleaseBundle
+
+	confBundle.Spec.ReferencedObjectKind = c.ReferencedObjectKind
+	confBundle.Spec.ReferencedObjectNamespace = c.ReferencedObjectNamespace
+	confBundle.Spec.ReferencedObjectName = c.ReferencedObjectName
+	confBundle.Spec.ReferenceTier = c.ReferencedTier
 
 	return confBundle
 }
