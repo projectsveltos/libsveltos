@@ -81,6 +81,26 @@ type ConfigurationBundleSpec struct {
 	// +kubebuilder:default:=false
 	// +optional
 	IsLastHelmReleaseBundle bool `json:"isLastHelmReleaseBundle,omitempty"`
+
+	// ReferencedObjectKind is the Kind of the object (ConfigMap, Secret, etc)
+	// referenced by PolicyRefs/KustomizationRef which contributed to this ConfigurationBundle.
+	// +optional
+	ReferencedObjectKind string `json:"referencedObjectKind,omitempty"`
+
+	// ReferencedObjectNamespace is the Namespace of the object (ConfigMap, Secret, etc)
+	// referenced by PolicyRefs/KustomizationRef which contributed to this ConfigurationBundle.
+	// +optional
+	ReferencedObjectNamespace string `json:"referencedObjectNamespace,omitempty"`
+
+	// ReferencedObjectName is the Name of the object (ConfigMap, Secret, etc)
+	// referenced by PolicyRefs/KustomizationRef which contributed to this ConfigurationBundle.
+	// +optional
+	ReferencedObjectName string `json:"referencedObjectName,omitempty"`
+
+	// ReferenceTier indicates the tier of the object (ConfigMap, Secret, etc)
+	// referenced by PolicyRefs/KustomizationRef which contributed to this ConfigurationBundle.
+	// +optional
+	ReferenceTier int32 `json:"referenceTier,omitempty"`
 }
 
 type ConfigurationBundleStatus struct {
