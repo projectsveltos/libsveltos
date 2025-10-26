@@ -315,18 +315,27 @@ func getDetailedConflictMessage(ctx context.Context, dr dynamic.ResourceInterfac
 
 	var message string
 
-	if labels := currentObject.GetLabels(); labels != nil {
-		kind := labels[ReferenceKindLabel]
-		namespace := labels[ReferenceNamespaceLabel]
-		name := labels[ReferenceNameLabel]
-
-		ownerMessage := getOwnerMessage(currentObject)
-
-		message += fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
-			"This resource is currently deployed because of %s %s/%s.\n",
-			currentObject.GroupVersionKind().Kind, currentObject.GetNamespace(), currentObject.GetName(),
-			ownerMessage, kind, namespace, name)
+	var kind, namespace, name string
+	if annotations := currentObject.GetAnnotations(); annotations != nil {
+		kind = annotations[ReferenceKindAnnotation]
+		namespace = annotations[ReferenceNamespaceAnnotation]
+		name = annotations[ReferenceNameAnnotation]
 	}
+	if kind == "" {
+		// 2. Fallback to Labels if annotations were nil OR kind was not found in annotations
+		if labels := currentObject.GetLabels(); labels != nil {
+			kind = labels[ReferenceKindLabel]
+			namespace = labels[ReferenceNamespaceLabel]
+			name = labels[ReferenceNameLabel]
+		}
+	}
+
+	ownerMessage := getOwnerMessage(currentObject)
+
+	message += fmt.Sprintf("A conflict was detected while deploying resource %s:%s/%s. %s"+
+		"This resource is currently deployed because of %s %s/%s.\n",
+		currentObject.GroupVersionKind().Kind, currentObject.GetNamespace(), currentObject.GetName(),
+		ownerMessage, kind, namespace, name)
 
 	return message, nil
 }
