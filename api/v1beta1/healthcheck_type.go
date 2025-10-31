@@ -41,6 +41,7 @@ type HealthCheckSpec struct {
 	// - resource: The resource being evaluated
 	// - healthStatus: The health status of the resource, which can be one of "Healthy", "Progressing", "Degraded", or "Suspended"
 	// - message: An optional message providing additional information about the health status
+	// - reEvaluate: If set to true, this healthCheck instances will be re-evaluated in 10 seconds
 	// +kubebuilder:validation:MinLength=1
 	EvaluateHealth string `json:"evaluateHealth"`
 
