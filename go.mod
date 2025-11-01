@@ -1,6 +1,6 @@
 module github.com/projectsveltos/libsveltos
 
-go 1.25.2
+go 1.25.3
 
 require (
 	github.com/BurntSushi/toml v1.5.0
@@ -9,7 +9,7 @@ require (
 	github.com/google/cel-go v0.26.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/mocktools/go-smtp-mock/v2 v2.5.1
-	github.com/onsi/ginkgo/v2 v2.26.0
+	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
 	github.com/pkg/errors v0.9.1
 	github.com/projectsveltos/lua-utils/glua-json v0.0.0-20250809120506-2b7d4265df58
