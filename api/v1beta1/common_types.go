@@ -181,6 +181,14 @@ type ResourceSelector struct {
 	// +optional
 	LabelFilters []LabelFilter `json:"labelFilters,omitempty"`
 
+	// Selector is a standard Kubernetes label selector. Resources are selected
+	// if their labels match the selector. This field uses the standard
+	// Kubernetes label matching syntax (e.g., {"environment": "production"}).
+	// If both LabelFilters and Selector are specified, the requirements from
+	// both are logically ANDed.
+	// +optional
+	Selector *metav1.LabelSelector `json:"selector,omitempty"`
+
 	// Namespace of the resource deployed in the  Cluster.
 	// Empty for resources scoped at cluster level.
 	// For namespaced resources, an empty string "" indicates all namespaces.
