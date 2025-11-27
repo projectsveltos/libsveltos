@@ -52,6 +52,9 @@ const (
 
 	// FeatureMCP is the ability to use Sveltos MCP Server
 	FeatureMCP = Features("MCP")
+
+	// FeaturePromotion is the ability to use Sveltos ClusterPromotion
+	FeaturePromotion = Features("Promotion")
 )
 
 // +kubebuilder:validation:Enum:=Enterprise;EnterprisePlus
