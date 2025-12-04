@@ -55,6 +55,27 @@ func IsProcessingMismatch(err error) bool {
 	return errors.As(err, &genErr)
 }
 
+type ActionNotSetToDeployError struct {
+	Message string
+}
+
+func (e *ActionNotSetToDeployError) Error() string {
+	return e.Message
+}
+
+// NewActionNotSetToDeploy creates a new ActionNotSetToDeploy
+func NewActionNotSetToDeploy(msg string) *ActionNotSetToDeployError {
+	return &ActionNotSetToDeployError{
+		Message: msg,
+	}
+}
+
+// IsActionNotSetToDeploy checks if an error is a ActionNotSetToDeploy
+func IsActionNotSetToDeploy(err error) bool {
+	var genErr *ActionNotSetToDeployError
+	return errors.As(err, &genErr)
+}
+
 // GetClusterLabels returns a map of labels used to filter ConfigurationGroups for a specific cluster.
 // It takes the cluster namespace and cluster name as input.
 func GetClusterLabels(clusterNamespace, clusterName string) map[string]string {
@@ -388,7 +409,7 @@ func GetDeploymentStatus(ctx context.Context, c client.Client,
 	}
 
 	if currentCG.Spec.Action != libsveltosv1beta1.ActionDeploy {
-		return &currentCG.Status, fmt.Errorf("ConfigurationGroup action not set to deploy")
+		return &currentCG.Status, NewActionNotSetToDeploy("ConfigurationGroup action not set to deploy")
 	}
 
 	if currentCG.Spec.UpdatePhase != libsveltosv1beta1.UpdatePhaseReady {
