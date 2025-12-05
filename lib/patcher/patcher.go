@@ -22,10 +22,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	uyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/kustomize/api/resmap"
@@ -47,22 +49,31 @@ type CustomPatchPostRenderer struct {
 }
 
 func (k *CustomPatchPostRenderer) RunUnstructured(unstructuredObjs []*unstructured.Unstructured) ([]*unstructured.Unstructured, error) {
-	var renderedManifests bytes.Buffer
+	result := make([]*unstructured.Unstructured, 0, len(unstructuredObjs))
+
 	for _, obj := range unstructuredObjs {
-		data, err := kyaml.Marshal(obj.Object)
+		// Filter patches that match this object's target
+		matchingPatches := k.getMatchingPatches(obj)
+
+		// Filter out patches where the path doesn't exist
+		applicablePatches := k.filterApplicablePatches(obj, matchingPatches)
+
+		if len(applicablePatches) == 0 {
+			// No applicable patches, keep object as-is
+			result = append(result, obj)
+			continue
+		}
+
+		// Apply patches
+		patchedObj, err := k.applyPatchesToObject(obj, applicablePatches)
 		if err != nil {
 			return nil, err
 		}
-		renderedManifests.Write(data)
-		renderedManifests.Write([]byte("---\n"))
+
+		result = append(result, patchedObj)
 	}
 
-	manifests, err := k.Run(&renderedManifests)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseYAMLToUnstructured(manifests)
+	return result, nil
 }
 
 func (k *CustomPatchPostRenderer) Run(renderedManifests *bytes.Buffer) (modifiedManifests *bytes.Buffer, err error) {
@@ -106,6 +117,207 @@ func (k *CustomPatchPostRenderer) Run(renderedManifests *bytes.Buffer) (modified
 	}
 
 	return bytes.NewBuffer(yaml), nil
+}
+
+// getMatchingPatches returns patches that match the given object
+func (k *CustomPatchPostRenderer) getMatchingPatches(obj *unstructured.Unstructured) []sveltosv1beta1.Patch {
+	var matching []sveltosv1beta1.Patch
+
+	for _, patch := range k.Patches {
+		if patchMatchesObject(patch.Target, obj) {
+			matching = append(matching, patch)
+		}
+	}
+
+	return matching
+}
+
+// patchMatchesObject checks if a patch target matches the object
+func patchMatchesObject(target *sveltosv1beta1.PatchSelector, obj *unstructured.Unstructured) bool {
+	gvk := obj.GroupVersionKind()
+
+	// Check Group
+	if target.Group != "" && target.Group != gvk.Group {
+		return false
+	}
+
+	// Check Version
+	if target.Version != "" && target.Version != gvk.Version {
+		return false
+	}
+
+	// Check Kind
+	if target.Kind != "" && target.Kind != gvk.Kind {
+		return false
+	}
+
+	// Check Namespace
+	if target.Namespace != "" && target.Namespace != obj.GetNamespace() {
+		return false
+	}
+
+	// Check Name
+	if target.Name != "" && target.Name != obj.GetName() {
+		return false
+	}
+
+	// Check LabelSelector
+	if target.LabelSelector != "" {
+		selector, err := labels.Parse(target.LabelSelector)
+		if err != nil {
+			// Invalid selector, skip this patch
+			return false
+		}
+
+		objLabels := labels.Set(obj.GetLabels())
+		if !selector.Matches(objLabels) {
+			return false
+		}
+	}
+
+	// Check AnnotationSelector
+	if target.AnnotationSelector != "" {
+		selector, err := labels.Parse(target.AnnotationSelector)
+		if err != nil {
+			// Invalid selector, skip this patch
+			return false
+		}
+
+		objAnnotations := labels.Set(obj.GetAnnotations())
+		if !selector.Matches(objAnnotations) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// filterApplicablePatches removes patches where operation is 'remove' and the target path doesn't exist
+func (k *CustomPatchPostRenderer) filterApplicablePatches(obj *unstructured.Unstructured,
+	patches []sveltosv1beta1.Patch) []sveltosv1beta1.Patch {
+
+	var applicable []sveltosv1beta1.Patch
+
+	for _, patch := range patches {
+		// Parse the patch to get operation and path
+		op, path := extractOpAndPath(patch.Patch)
+
+		// Only filter if operation is 'remove' and path doesn't exist
+		if op == "remove" && path != "" && !pathExistsInObject(obj, path) {
+			// Path doesn't exist, skip this remove operation
+			continue
+		}
+
+		applicable = append(applicable, patch)
+	}
+
+	return applicable
+}
+
+// extractOpAndPath extracts the operation and path from a patch string
+// Example: "- op: remove\n  path: /spec/template/spec/nodeSelector" -> ("remove", "/spec/template/spec/nodeSelector")
+func extractOpAndPath(patchStr string) (op, path string) {
+	// We only expect one YAML list item, so we can treat the whole string as one block of fields.
+	// However, if the input is truly multiline, splitting is fine.
+	lines := strings.Split(patchStr, "\n")
+
+	// Combine all lines into a single, space-separated string for simpler parsing.
+	// This allows us to search for "op:" and "path:" anywhere, regardless of line breaks.
+	singleLinePatch := strings.Join(lines, " ")
+
+	// --- Extraction Logic for 'op' ---
+	opIndex := strings.Index(singleLinePatch, "op:")
+	if opIndex != -1 {
+		// Find the start of the value: "op:" is 3 characters long
+		opValueString := singleLinePatch[opIndex+3:]
+
+		// Find the end of the value. Assume the value ends at the start of the next key
+		// (like "path:") or the end of the string.
+		// We'll use TrimSpace for simplicity, as op values are usually single words.
+		op = strings.TrimSpace(opValueString)
+
+		// In case the path key follows immediately on the same line,
+		// trim everything after "path:" or "Path:" from the 'op' value.
+		// This handles cases like "remove path: /foo"
+		if idx := strings.Index(op, "path:"); idx != -1 {
+			op = op[:idx]
+		}
+
+		op = strings.TrimSpace(op)
+		op = strings.Trim(op, `"'`)
+	}
+
+	// --- Extraction Logic for 'path' ---
+	pathIndex := strings.Index(singleLinePatch, "path:")
+	if pathIndex != -1 {
+		// Find the start of the value: "path:" is 5 characters long
+		pathValueString := singleLinePatch[pathIndex+5:]
+
+		// Trim the value of path
+		path = strings.TrimSpace(pathValueString)
+
+		// If the 'op' key follows immediately on the same line, trim everything after "op:".
+		// This handles cases like "/foo op: remove"
+		if idx := strings.Index(path, "op:"); idx != -1 {
+			path = path[:idx]
+		}
+
+		path = strings.TrimSpace(path)
+		path = strings.Trim(path, `"'`)
+	}
+
+	return op, path
+}
+
+// pathExistsInObject checks if a JSON path exists in the unstructured object
+func pathExistsInObject(obj *unstructured.Unstructured, jsonPath string) bool {
+	keys := strings.Split(strings.Trim(jsonPath, "/"), "/")
+	current := obj.Object
+
+	for _, key := range keys {
+		if key == "" {
+			continue
+		}
+
+		val, found := current[key]
+		if !found {
+			return false
+		}
+
+		// Navigate deeper if it's a nested object
+		if nested, ok := val.(map[string]interface{}); ok {
+			current = nested
+		}
+	}
+
+	return true
+}
+
+// applyPatchesToObject applies patches to a single object
+func (k *CustomPatchPostRenderer) applyPatchesToObject(obj *unstructured.Unstructured, patches []sveltosv1beta1.Patch) (*unstructured.Unstructured, error) {
+	var buf bytes.Buffer
+	data, err := kyaml.Marshal(obj.Object)
+	if err != nil {
+		return nil, err
+	}
+	buf.Write(data)
+
+	tempRenderer := &CustomPatchPostRenderer{Patches: patches}
+	patchedBuf, err := tempRenderer.Run(&buf)
+	if err != nil {
+		return nil, err
+	}
+
+	objs, err := parseYAMLToUnstructured(patchedBuf)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(objs) == 0 {
+		return obj, nil
+	}
+
+	return objs[0], nil
 }
 
 func writeToFile(fs filesys.FileSystem, path string, content []byte) error {
