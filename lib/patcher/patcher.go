@@ -21,7 +21,9 @@ package patcher
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -48,12 +50,17 @@ type CustomPatchPostRenderer struct {
 	Patches []sveltosv1beta1.Patch
 }
 
-func (k *CustomPatchPostRenderer) RunUnstructured(unstructuredObjs []*unstructured.Unstructured) ([]*unstructured.Unstructured, error) {
+func (k *CustomPatchPostRenderer) RunUnstructured(unstructuredObjs []*unstructured.Unstructured,
+) ([]*unstructured.Unstructured, error) {
+
 	result := make([]*unstructured.Unstructured, 0, len(unstructuredObjs))
 
 	for _, obj := range unstructuredObjs {
 		// Filter patches that match this object's target
-		matchingPatches := k.getMatchingPatches(obj)
+		matchingPatches, err := k.getMatchingPatches(obj)
+		if err != nil {
+			return nil, err
+		}
 
 		// Filter out patches where the path doesn't exist
 		applicablePatches := k.filterApplicablePatches(obj, matchingPatches)
@@ -120,45 +127,91 @@ func (k *CustomPatchPostRenderer) Run(renderedManifests *bytes.Buffer) (modified
 }
 
 // getMatchingPatches returns patches that match the given object
-func (k *CustomPatchPostRenderer) getMatchingPatches(obj *unstructured.Unstructured) []sveltosv1beta1.Patch {
+func (k *CustomPatchPostRenderer) getMatchingPatches(obj *unstructured.Unstructured,
+) ([]sveltosv1beta1.Patch, error) {
+
 	var matching []sveltosv1beta1.Patch
 
 	for _, patch := range k.Patches {
-		if patchMatchesObject(patch.Target, obj) {
+		matches, err := patchMatchesObject(patch.Target, obj)
+		if err != nil {
+			return matching, err
+		}
+		if matches {
 			matching = append(matching, patch)
 		}
 	}
 
-	return matching
+	return matching, nil
+}
+
+// regexMatches checks if the pattern (target) matches the value (current value of the object field).
+// If pattern is empty, it returns true (matches everything, including an empty value).
+// If pattern is not a valid regular expression, it returns an error.
+func regexMatches(pattern, value string) (bool, error) {
+	if pattern == "" {
+		return true, nil
+	}
+
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return false, err
+	}
+
+	return re.MatchString(value), nil
 }
 
 // patchMatchesObject checks if a patch target matches the object
-func patchMatchesObject(target *sveltosv1beta1.PatchSelector, obj *unstructured.Unstructured) bool {
+func patchMatchesObject(target *sveltosv1beta1.PatchSelector,
+	obj *unstructured.Unstructured) (bool, error) {
+
+	if target == nil {
+		return true, nil
+	}
+
 	gvk := obj.GroupVersionKind()
 
+	// Helper function to apply regex check and handle errors
+	checkMatch := func(pattern, value, fieldName string) (bool, error) {
+		matches, err := regexMatches(pattern, value)
+		if err != nil {
+			return false,
+				fmt.Errorf("invalid regex for target field %s: %w", fieldName, err)
+		}
+		return matches, nil
+	}
+
+	var matches bool
+	var err error
+
 	// Check Group
-	if target.Group != "" && target.Group != gvk.Group {
-		return false
+	matches, err = checkMatch(target.Group, gvk.Group, "Group")
+	if err != nil || !matches {
+		return matches, err
 	}
 
 	// Check Version
-	if target.Version != "" && target.Version != gvk.Version {
-		return false
+	matches, err = checkMatch(target.Version, gvk.Version, "Version")
+	if err != nil || !matches {
+		return matches, err
 	}
 
 	// Check Kind
-	if target.Kind != "" && target.Kind != gvk.Kind {
-		return false
+	matches, err = checkMatch(target.Kind, gvk.Kind, "Kind")
+	if err != nil || !matches {
+		return matches, err
 	}
 
 	// Check Namespace
-	if target.Namespace != "" && target.Namespace != obj.GetNamespace() {
-		return false
+	matches, err = checkMatch(target.Namespace, obj.GetNamespace(), "Namespace")
+	if err != nil || !matches {
+		return matches, err
 	}
 
 	// Check Name
-	if target.Name != "" && target.Name != obj.GetName() {
-		return false
+	matches, err = checkMatch(target.Name, obj.GetName(), "Name")
+	if err != nil || !matches {
+		return matches, err
 	}
 
 	// Check LabelSelector
@@ -166,12 +219,12 @@ func patchMatchesObject(target *sveltosv1beta1.PatchSelector, obj *unstructured.
 		selector, err := labels.Parse(target.LabelSelector)
 		if err != nil {
 			// Invalid selector, skip this patch
-			return false
+			return false, err
 		}
 
 		objLabels := labels.Set(obj.GetLabels())
 		if !selector.Matches(objLabels) {
-			return false
+			return false, nil
 		}
 	}
 
@@ -180,16 +233,16 @@ func patchMatchesObject(target *sveltosv1beta1.PatchSelector, obj *unstructured.
 		selector, err := labels.Parse(target.AnnotationSelector)
 		if err != nil {
 			// Invalid selector, skip this patch
-			return false
+			return false, err
 		}
 
 		objAnnotations := labels.Set(obj.GetAnnotations())
 		if !selector.Matches(objAnnotations) {
-			return false
+			return false, nil
 		}
 	}
 
-	return true
+	return true, nil
 }
 
 // filterApplicablePatches removes patches where operation is 'remove' and the target path doesn't exist
