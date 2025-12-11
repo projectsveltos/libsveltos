@@ -190,6 +190,12 @@ type SveltosClusterStatus struct {
 	// +optional
 	NextPause *metav1.Time `json:"nextPause,omitempty"`
 
+	// ActiveWindowHash is the hash of the SveltosCluster Spec.ActiveWindow.
+	// This is used to detect if the ActiveWindow configuration has changed
+	// and requires recalculation of NextPause and NextUnpause.
+	// +optional
+	ActiveWindowHash []byte `json:"activeWindowHash,omitempty"`
+
 	// connectionFailures is the number of consecutive failed attempts to connect
 	// to the remote cluster.
 	// +kubebuilder:default:=0

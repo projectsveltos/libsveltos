@@ -486,6 +486,13 @@ spec:
           status:
             description: SveltosClusterStatus defines the status of SveltosCluster
             properties:
+              activeWindowHash:
+                description: |-
+                  ActiveWindowHash is the hash of the SveltosCluster Spec.ActiveWindow.
+                  This is used to detect if the ActiveWindow configuration has changed
+                  and requires recalculation of NextPause and NextUnpause.
+                format: byte
+                type: string
               agentLastReportTime:
                 description: |-
                   AgentLastReportTime indicates the last time the Sveltos agent in the managed cluster
