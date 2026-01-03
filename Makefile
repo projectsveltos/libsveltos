@@ -29,9 +29,9 @@ GOIMPORTS := $(TOOLS_BIN_DIR)/goimports
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
 GINKGO := $(TOOLS_BIN_DIR)/ginkgo
 
-GOLANGCI_LINT_VERSION := "v2.5.0"
+GOLANGCI_LINT_VERSION := "v2.7.2"
 
-KUSTOMIZE_VER := v5.7.0
+KUSTOMIZE_VER := v5.8.0
 KUSTOMIZE_BIN := kustomize
 KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/$(KUSTOMIZE_BIN)-$(KUSTOMIZE_VER))
 KUSTOMIZE_PKG := sigs.k8s.io/kustomize/kustomize/v5
@@ -131,7 +131,7 @@ check-manifests: manifests ## Verify manifests file is up to date
 	test `git status --porcelain ./manifests/*.yaml | grep -cE '(^\?)|(^ M)'` -eq 0 || (echo "The manifest file changed, please 'make manifests' and commit the results"; exit 1)
 
 # KUBEBUILDER_ENVTEST_KUBERNETES_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-KUBEBUILDER_ENVTEST_KUBERNETES_VERSION = 1.34.0
+KUBEBUILDER_ENVTEST_KUBERNETES_VERSION = 1.35.0
 
 ifeq ($(shell go env GOOS),darwin) # Use the darwin/amd64 binary until an arm64 version is available
 KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch amd64 $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))

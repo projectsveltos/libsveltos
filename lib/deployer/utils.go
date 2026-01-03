@@ -36,18 +36,21 @@ const (
 	// ReferenceKindLabel is added to each policy deployed by a ClusterSummary
 	// instance to a managed Cluster. Indicates the Kind (ConfigMap or Secret)
 	// containing the policy.
+	//
 	// Deprecated: replaced by annotation
 	ReferenceKindLabel = "projectsveltos.io/reference-kind"
 
 	// ReferenceNameLabel is added to each policy deployed by a ClusterSummary
 	// instance to a managed Cluster. Indicates the name of the ConfigMap/Secret
 	// containing the policy.
+	//
 	// Deprecated: replaced by annotation
 	ReferenceNameLabel = "projectsveltos.io/reference-name"
 
 	// ReferenceNamespaceLabel is added to each policy deployed by a ClusterSummary
 	// instance to a managed Cluster. Indicates the namespace of the ConfigMap/Secret
 	// containing the policy.
+	//
 	// Deprecated: replaced by annotation
 	ReferenceNamespaceLabel = "projectsveltos.io/reference-namespace"
 
