@@ -39,10 +39,6 @@ import (
 // A cluster with no shardAnnotation will only be managed by
 // the deployment started with no shard-key arg.
 
-const (
-	ShardAnnotation = "sharding.projectsveltos.io/key"
-)
-
 // IsShardAMatch returns true if a cluster is a shard match.
 func IsShardAMatch(shardKey string, cluster client.Object) bool {
 	annotations := cluster.GetAnnotations()
@@ -52,7 +48,7 @@ func IsShardAMatch(shardKey string, cluster client.Object) bool {
 		return shardKey == ""
 	}
 
-	v, ok := annotations[ShardAnnotation]
+	v, ok := annotations[libsveltosv1beta1.ShardAnnotation]
 	if !ok {
 		// A cluster with no ShardAnnotation is only managed by
 		// deployment started with no shard-key arg.
