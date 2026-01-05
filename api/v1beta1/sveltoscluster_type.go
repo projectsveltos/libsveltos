@@ -24,6 +24,10 @@ const (
 	SveltosClusterKind = "SveltosCluster"
 )
 
+const (
+	ShardAnnotation = "sharding.projectsveltos.io/key"
+)
+
 type ActiveWindow struct {
 	// From in Cron format, see https://en.wikipedia.org/wiki/Cron.
 	// Indicates when to un-pause the cluster (cluster in paused state receives no update from sveltos).

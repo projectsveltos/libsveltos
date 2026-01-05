@@ -81,7 +81,7 @@ var _ = Describe("Sharding", func() {
 
 		Expect(sharding.IsShardAMatch(shard, cluster)).To(BeFalse())
 
-		cluster.Annotations[sharding.ShardAnnotation] = randomString()
+		cluster.Annotations[libsveltosv1beta1.ShardAnnotation] = randomString()
 		Expect(sharding.IsShardAMatch(shard, cluster)).To(BeFalse())
 	})
 
@@ -93,7 +93,7 @@ var _ = Describe("Sharding", func() {
 				Namespace: randomString(),
 				Name:      randomString(),
 				Annotations: map[string]string{
-					sharding.ShardAnnotation: shard,
+					libsveltosv1beta1.ShardAnnotation: shard,
 				},
 			},
 		}

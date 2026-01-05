@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	"github.com/projectsveltos/libsveltos/lib/predicates"
-	"github.com/projectsveltos/libsveltos/lib/sharding"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
@@ -170,7 +169,7 @@ var _ = Describe("ClusterProfile Predicates: SvelotsClusterPredicates", func() {
 	It("Update reprocesses when sveltos Cluster annotation change", func() {
 		clusterPredicate := predicates.SveltosClusterPredicates(logger)
 
-		cluster.Annotations = map[string]string{sharding.ShardAnnotation: "shard1"}
+		cluster.Annotations = map[string]string{libsveltosv1beta1.ShardAnnotation: "shard1"}
 
 		oldCluster := &libsveltosv1beta1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -329,7 +328,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 	It("Update reprocesses when v1Cluster annotation change", func() {
 		clusterPredicate := predicates.ClusterPredicate{Logger: logger}
 
-		cluster.Labels = map[string]string{sharding.ShardAnnotation: "shard-production"}
+		cluster.Labels = map[string]string{libsveltosv1beta1.ShardAnnotation: "shard-production"}
 
 		oldCluster := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{

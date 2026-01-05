@@ -33,7 +33,6 @@ import (
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/internal/test/helpers/external"
 	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
-	"github.com/projectsveltos/libsveltos/lib/sharding"
 )
 
 var _ = Describe("Cluster utils", func() {
@@ -229,8 +228,8 @@ var _ = Describe("Cluster utils", func() {
 				Namespace: randomString(),
 				Name:      randomString(),
 				Annotations: map[string]string{
-					sharding.ShardAnnotation: shardKey,
-					onboardAnnotation:        randomString(),
+					libsveltosv1beta1.ShardAnnotation: shardKey,
+					onboardAnnotation:                 randomString(),
 				},
 			},
 		}
@@ -240,7 +239,7 @@ var _ = Describe("Cluster utils", func() {
 				Namespace: randomString(),
 				Name:      randomString(),
 				Annotations: map[string]string{
-					sharding.ShardAnnotation: randomString(),
+					libsveltosv1beta1.ShardAnnotation: randomString(),
 				},
 			},
 		}
