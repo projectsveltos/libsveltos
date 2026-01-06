@@ -24,7 +24,7 @@ type AgentHeartbeatTimeoutError struct {
 }
 
 func (e *AgentHeartbeatTimeoutError) Error() string {
-	return "AgentLastReportTime is older than max allowed age"
+	return "AgentLastReportTime is older than max allowed age."
 }
 
 // IsAgentTimeoutError checks if the SveltosCluster failure message matches AgentTimeoutError
