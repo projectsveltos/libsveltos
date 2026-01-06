@@ -29,6 +29,7 @@ import (
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
+	"github.com/projectsveltos/libsveltos/lib/pullmode"
 )
 
 type ClusterPredicate struct {
@@ -46,13 +47,12 @@ func (p ClusterPredicate) Create(obj event.TypedCreateEvent[*clusterv1.Cluster])
 	// Only need to trigger a reconcile if the Cluster.Spec.Paused is false
 	if cluster.Spec.Paused != nil && !(*cluster.Spec.Paused) {
 		log.V(logs.LogVerbose).Info(
-			"Cluster is not paused.  Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.",
+			"Cluster is not paused.",
 		)
 		return true
 	}
 	log.V(logs.LogVerbose).Info(
-		`Cluster did not match expected conditions. \
-				Will not attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.`)
+		`Cluster did not match expected conditions.`)
 	return false
 }
 
@@ -73,7 +73,7 @@ func (p ClusterPredicate) Update(obj event.TypedUpdateEvent[*clusterv1.Cluster])
 	// a label change migth change which clusters match which clusterprofile
 	if !reflect.DeepEqual(oldCluster.Labels, newCluster.Labels) {
 		log.V(logs.LogVerbose).Info(
-			"Cluster labels changed. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.",
+			"Cluster labels changed.",
 		)
 		return true
 	}
@@ -81,7 +81,7 @@ func (p ClusterPredicate) Update(obj event.TypedUpdateEvent[*clusterv1.Cluster])
 	// if sharding is used, cluster sharding annotation must be copied over ClusterSummary
 	if !reflect.DeepEqual(oldCluster.Annotations, newCluster.Annotations) {
 		log.V(logs.LogVerbose).Info(
-			"Cluster annotations changed. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.",
+			"Cluster annotations changed.",
 		)
 		return true
 	}
@@ -91,7 +91,7 @@ func (p ClusterPredicate) Update(obj event.TypedUpdateEvent[*clusterv1.Cluster])
 		newCluster.Spec.Paused != nil && !*newCluster.Spec.Paused {
 
 		log.V(logs.LogVerbose).Info(
-			"Cluster was unpaused. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+			"Cluster was unpaused.")
 		return true
 	}
 
@@ -99,8 +99,7 @@ func (p ClusterPredicate) Update(obj event.TypedUpdateEvent[*clusterv1.Cluster])
 		conditions.IsTrue(newCluster, clusterv1.ClusterControlPlaneInitializedCondition) {
 
 		log.V(logs.LogVerbose).Info(
-			"Cluster ControlPlaneInitialized was set." +
-				"Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+			"Cluster ControlPlaneInitialized was set.")
 		return true
 	}
 
@@ -108,8 +107,7 @@ func (p ClusterPredicate) Update(obj event.TypedUpdateEvent[*clusterv1.Cluster])
 		ptr.Deref(newCluster.Status.Initialization.InfrastructureProvisioned, false) {
 
 		log.V(logs.LogVerbose).Info(
-			"Cluster Initialization.InfrastructureProvisioned changed." +
-				"Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+			"Cluster Initialization.InfrastructureProvisioned changed.")
 		return true
 	}
 
@@ -117,23 +115,20 @@ func (p ClusterPredicate) Update(obj event.TypedUpdateEvent[*clusterv1.Cluster])
 		ptr.Deref(newCluster.Status.Initialization.ControlPlaneInitialized, false) {
 
 		log.V(logs.LogVerbose).Info(
-			"Cluster Initialization.ControlPlaneInitialized changed. " +
-				"Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+			"Cluster Initialization.ControlPlaneInitialized changed.")
 		return true
 	}
 
 	if oldCluster.Status.Phase != string(clusterv1.ClusterPhaseDeleting) &&
 		newCluster.Status.Phase == string(clusterv1.ClusterPhaseDeleting) {
 
-		log.V(logs.LogVerbose).Info(
-			"Cluster is beng deleted. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+		log.V(logs.LogVerbose).Info("Cluster is beng deleted.")
 		return true
 	}
 
 	// otherwise, return false
 	log.V(logs.LogVerbose).Info(
-		`Cluster did not match expected conditions. \
-				Will not attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.`)
+		`Cluster did not match expected conditions.`)
 	return false
 }
 
@@ -143,7 +138,7 @@ func (p ClusterPredicate) Delete(obj event.TypedDeleteEvent[*clusterv1.Cluster])
 		"cluster", obj.Object.GetName(),
 	)
 	log.V(logs.LogVerbose).Info(
-		"Cluster deleted.  Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+		"Cluster deleted.")
 	return true
 }
 
@@ -178,20 +173,20 @@ func SveltosClusterPredicates(logger logr.Logger) predicate.Funcs {
 			// return true if Cluster.Spec.Paused has changed from true to false
 			if oldCluster.Spec.Paused && !newCluster.Spec.Paused {
 				log.V(logs.LogVerbose).Info(
-					"Cluster was unpaused. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+					"Cluster was unpaused.")
 				return true
 			}
 
 			if oldCluster.Status.Ready != newCluster.Status.Ready {
 				log.V(logs.LogVerbose).Info(
-					"Cluster Status.Ready changed. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+					"Cluster Status.Ready changed.")
 				return true
 			}
 
 			// a label change migth change which clusters match which clusterprofile
 			if !reflect.DeepEqual(oldCluster.Labels, newCluster.Labels) {
 				log.V(logs.LogVerbose).Info(
-					"Cluster labels changed. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.",
+					"Cluster labels changed.",
 				)
 				return true
 			}
@@ -199,7 +194,14 @@ func SveltosClusterPredicates(logger logr.Logger) predicate.Funcs {
 			// if sharding is used, cluster sharding annotation must be copied over ClusterSummary
 			if !reflect.DeepEqual(oldCluster.Annotations, newCluster.Annotations) {
 				log.V(logs.LogVerbose).Info(
-					"Cluster annotations changed. Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.",
+					"Cluster annotations changed.",
+				)
+				return true
+			}
+
+			if pullmode.IsAgentTimeoutError(oldCluster) && !pullmode.IsAgentTimeoutError(newCluster) {
+				log.V(logs.LogVerbose).Info(
+					"Agent was unhealthy and it is not healthy. .",
 				)
 				return true
 			}
@@ -220,7 +222,7 @@ func SveltosClusterPredicates(logger logr.Logger) predicate.Funcs {
 			// Only need to trigger a reconcile if the Cluster.Spec.Paused is false
 			if !cluster.Spec.Paused {
 				log.V(logs.LogVerbose).Info(
-					"Cluster is not paused.  Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.",
+					"Cluster is not paused.",
 				)
 				return true
 			}
@@ -235,7 +237,7 @@ func SveltosClusterPredicates(logger logr.Logger) predicate.Funcs {
 				"cluster", e.Object.GetName(),
 			)
 			log.V(logs.LogVerbose).Info(
-				"Cluster deleted.  Will attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.")
+				"Cluster deleted.")
 			return true
 		},
 		GenericFunc: func(e event.GenericEvent) bool {
@@ -244,8 +246,7 @@ func SveltosClusterPredicates(logger logr.Logger) predicate.Funcs {
 				"cluster", e.Object.GetName(),
 			)
 			log.V(logs.LogVerbose).Info(
-				`Cluster did not match expected conditions. \
-				Will not attempt to reconcile associated (Cluster)Profiles/(Cluster)Set.`)
+				`Cluster did not match expected conditions.`)
 			return false
 		},
 	}
