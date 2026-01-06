@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	"github.com/projectsveltos/libsveltos/lib/predicates"
+	"github.com/projectsveltos/libsveltos/lib/pullmode"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
@@ -202,6 +203,28 @@ var _ = Describe("ClusterProfile Predicates: SvelotsClusterPredicates", func() {
 				Ready: false,
 			},
 		}
+
+		e := event.UpdateEvent{
+			ObjectNew: cluster,
+			ObjectOld: oldCluster,
+		}
+
+		result := clusterPredicate.Update(e)
+		Expect(result).To(BeTrue())
+	})
+	It("Update reprocesses when agent in sveltos Cluster goes from healthy to healthy", func() {
+		clusterPredicate := predicates.SveltosClusterPredicates(logger)
+
+		failureErr := pullmode.AgentHeartbeatTimeoutError{}
+		failureMsg := failureErr.Error()
+
+		oldCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cluster.Name,
+				Namespace: cluster.Namespace,
+			},
+		}
+		oldCluster.Status.FailureMessage = &failureMsg
 
 		e := event.UpdateEvent{
 			ObjectNew: cluster,
