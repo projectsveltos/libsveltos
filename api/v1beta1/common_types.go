@@ -84,7 +84,7 @@ func (cs *Selector) ToSelector() (labels.Selector, error) {
 	return metav1.LabelSelectorAsSelector(&cs.LabelSelector)
 }
 
-// +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;Removing;Removed
+// +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;FailedNonRetriable;Removing;Removed
 type SveltosFeatureStatus string
 
 const (
@@ -99,6 +99,10 @@ const (
 	// SveltosStatusFailed indicates that configuring sveltos feature
 	// in the workload cluster failed
 	SveltosStatusFailed = SveltosFeatureStatus("Failed")
+
+	// SveltosStatusFailedNonRetriable indicates that configuring sveltos feature
+	// in the workload cluster failed with a non retriable error
+	SveltosStatusFailedNonRetriable = SveltosFeatureStatus("FailedNonRetriable")
 
 	// SveltosStatusRemoving indicates that sveltos feature is being
 	// removed
