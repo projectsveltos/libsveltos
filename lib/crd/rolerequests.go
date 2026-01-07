@@ -224,6 +224,7 @@ spec:
                       - Provisioning
                       - Provisioned
                       - Failed
+                      - FailedNonRetriable
                       - Removing
                       - Removed
                       type: string
