@@ -340,27 +340,6 @@ func isCAPIClusterReady(capiCluster *clusterv1.Cluster) bool {
 	return false
 }
 
-// GetMachinesForCluster find all Machines for a given CAPI Cluster.
-func GetMachinesForCluster(
-	ctx context.Context, c client.Client,
-	cluster *corev1.ObjectReference, logger logr.Logger,
-) (*clusterv1.MachineList, error) {
-
-	listOptions := []client.ListOption{
-		client.InNamespace(cluster.Namespace),
-		client.MatchingLabels{clusterv1.ClusterNameLabel: cluster.Name},
-	}
-	var machineList clusterv1.MachineList
-	if err := c.List(ctx, &machineList, listOptions...); err != nil {
-		logger.Error(err, fmt.Sprintf("unable to list Machines for CAPI Cluster %s/%s",
-			cluster.Namespace, cluster.Name))
-		return nil, err
-	}
-	logger.V(logs.LogDebug).Info(fmt.Sprintf("Found %d machine", len(machineList.Items)))
-
-	return &machineList, nil
-}
-
 // CreateKubeconfig creates a temporary file with the Kubeconfig to access CAPI cluster
 func CreateKubeconfig(logger logr.Logger, kubeconfigContent []byte) (fileName string, closer func(), err error) {
 	var tmpfile *os.File
