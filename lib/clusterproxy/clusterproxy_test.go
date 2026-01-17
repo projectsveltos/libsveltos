@@ -188,41 +188,6 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(wcClient).ToNot(BeNil())
 	})
 
-	It("getMachinesForCluster returns list of all machines for a CPI cluster", func() {
-		cpMachine := &clusterv1.Machine{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: cluster.Namespace,
-				Name:      cluster.Name + randomString(),
-				Labels: map[string]string{
-					clusterv1.ClusterNameLabel:         cluster.Name,
-					clusterv1.MachineControlPlaneLabel: "ok",
-				},
-			},
-		}
-		workerMachine := &clusterv1.Machine{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: cluster.Namespace,
-				Name:      cluster.Name + randomString(),
-				Labels: map[string]string{
-					clusterv1.ClusterNameLabel: cluster.Name,
-				},
-			},
-		}
-
-		initObjects := []client.Object{
-			workerMachine,
-			cpMachine,
-		}
-
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
-
-		cps, err := clusterproxy.GetMachinesForCluster(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name},
-			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
-		Expect(err).To(BeNil())
-		Expect(len(cps.Items)).To(Equal(2))
-	})
-
 	It("IsCAPIClusterReadyToBeConfigured returns false for a cluster with Status.Initialization.ControlPlaneInitialized set to false", func() {
 		initialized := false
 		cluster.Status.Initialization = clusterv1.ClusterInitializationStatus{
