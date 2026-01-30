@@ -864,6 +864,20 @@ func (in *ConfigurationGroupSpec) DeepCopyInto(out *ConfigurationGroupSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.PreDeleteChecks != nil {
+		in, out := &in.PreDeleteChecks, &out.PreDeleteChecks
+		*out = make([]ValidateHealth, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.PostDeleteChecks != nil {
+		in, out := &in.PostDeleteChecks, &out.PostDeleteChecks
+		*out = make([]ValidateHealth, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.DeployedGroupVersionKind != nil {
 		in, out := &in.DeployedGroupVersionKind, &out.DeployedGroupVersionKind
 		*out = make([]string, len(*in))

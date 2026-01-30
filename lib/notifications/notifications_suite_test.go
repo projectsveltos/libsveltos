@@ -30,7 +30,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/cluster-api/util"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
@@ -58,6 +60,8 @@ func TestExecutor(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	By("bootstrapping test environment")
+
+	ctrl.SetLogger(klog.Background())
 
 	var err error
 	scheme, err = setupScheme()
