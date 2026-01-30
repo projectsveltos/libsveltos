@@ -87,7 +87,9 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 
 		setters := make([]pullmode.Option, 0)
 		validations := getValidations()
-		setters = append(setters, pullmode.WithValidateHealths(validations))
+		preDeleteChecks := getValidations()
+		setters = append(setters, pullmode.WithValidateHealths(validations),
+			pullmode.WithPreDeleteChecks(preDeleteChecks))
 		Expect(pullmode.RecordResourcesForDeployment(context.TODO(), k8sClient, clusterNamespace, clusterName,
 			requestorKind, requestorName, requestorFeature, resources, logger, setters...)).To(Succeed())
 
@@ -109,6 +111,7 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		configurationGroups := &libsveltosv1beta1.ConfigurationGroupList{}
 		Expect(k8sClient.List(context.TODO(), configurationGroups, listOptions...)).To(Succeed())
 		Expect(len(configurationGroups.Items[0].Spec.ConfigurationItems)).To(Equal(len(resources)))
+		Expect(len(configurationGroups.Items[0].Spec.PreDeleteChecks)).To(Equal(len(preDeleteChecks)))
 
 		// Verify all configurationBundles referenced by ConfigurationGroup exists
 		for i := range configurationGroups.Items[0].Spec.ConfigurationItems {

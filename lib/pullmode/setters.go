@@ -37,6 +37,8 @@ type Options struct {
 	MaxConsecutiveFailures *uint
 	LeavePolicies          bool
 	ValidateHealths        []libsveltosv1beta1.ValidateHealth
+	PreDeleteChecks        []libsveltosv1beta1.ValidateHealth
+	PostDeleteChecks       []libsveltosv1beta1.ValidateHealth
 	DeployedGVKs           []string
 	Annotations            map[string]string
 	RequestorHash          []byte
@@ -78,6 +80,18 @@ func WithDriftDetectionPatches(driftExclusions []libsveltosv1beta1.DriftExclusio
 func WithValidateHealths(validateHealths []libsveltosv1beta1.ValidateHealth) Option {
 	return func(args *Options) {
 		args.ValidateHealths = validateHealths
+	}
+}
+
+func WithPreDeleteChecks(preDeleteChecks []libsveltosv1beta1.ValidateHealth) Option {
+	return func(args *Options) {
+		args.PreDeleteChecks = preDeleteChecks
+	}
+}
+
+func WithPostDeleteChecks(postDeleteChecks []libsveltosv1beta1.ValidateHealth) Option {
+	return func(args *Options) {
+		args.PostDeleteChecks = postDeleteChecks
 	}
 }
 
@@ -160,6 +174,8 @@ func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Op
 	confGroup.Spec.DriftExclusions = c.DriftExclusion
 
 	confGroup.Spec.ValidateHealths = c.ValidateHealths
+	confGroup.Spec.PreDeleteChecks = c.PreDeleteChecks
+	confGroup.Spec.PostDeleteChecks = c.PostDeleteChecks
 
 	if c.DryRun {
 		confGroup.Spec.DryRun = true

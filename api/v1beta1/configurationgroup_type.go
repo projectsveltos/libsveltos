@@ -173,6 +173,20 @@ type ConfigurationGroupSpec struct {
 	// +optional
 	ValidateHealths []ValidateHealth `json:"validateHealths,omitempty"`
 
+	// PreDeleteChecks is a slice of Lua functions to run against
+	// the managed cluster *before* Sveltos starts deleting resources.
+	// If any of these fail, the deletion process is halted.
+	// +listType=atomic
+	// +optional
+	PreDeleteChecks []ValidateHealth `json:"preDeleteChecks,omitempty"`
+
+	// PostDeleteChecks is a slice of Lua functions to run against
+	// the managed cluster *after* Sveltos has deleted all resources.
+	// This ensures that the environment has reached the desired clean state.
+	// +listType=atomic
+	// +optional
+	PostDeleteChecks []ValidateHealth `json:"postDeleteChecks,omitempty"`
+
 	// DeployedGroupVersionKind contains all GroupVersionKinds deployed in either
 	// the workload cluster or the management cluster because of this feature.
 	// Each element has format kind.version.group
