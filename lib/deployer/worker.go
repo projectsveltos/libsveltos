@@ -221,6 +221,9 @@ func storeResult(d *deployer, key string, err error, handlerOptions Options,
 	handler RequestHandler, metricHandler MetricHandler, logger logr.Logger) {
 
 	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	l := logger.WithValues("key", key)
 
 	// Remove from inProgress
 	for i := range d.inProgress {
@@ -232,16 +235,14 @@ func storeResult(d *deployer, key string, err error, handlerOptions Options,
 		break
 	}
 
-	l := logger.WithValues("key", key)
-
 	if err != nil {
-		l.V(logs.LogDebug).Info(fmt.Sprintf("added to result with err %s", err.Error()))
+		l.V(logs.LogDebug).Info(fmt.Sprintf("got result with error %s", err.Error()))
 	} else {
-		l.V(logs.LogDebug).Info("added to result")
+		l.V(logs.LogDebug).Info("got result with no error")
 	}
-	d.results[key] = err
 
 	// if key is in dirty, remove from there and push to jobQueue
+	// do not store result.
 	for i := range d.dirty {
 		if d.dirty[i] != key {
 			continue
@@ -256,12 +257,12 @@ func storeResult(d *deployer, key string, err error, handlerOptions Options,
 			})
 		l.V(logs.LogVerbose).Info("remove from dirty")
 		d.dirty = removeFromSlice(d.dirty, i)
-		l.V(logs.LogVerbose).Info("remove result")
+		l.V(logs.LogDebug).Info("found in dirty. Ignore result")
 		delete(d.results, key)
-		break
+		return
 	}
 
-	d.mu.Unlock()
+	d.results[key] = err
 }
 
 // getRequestStatus gets requests status.

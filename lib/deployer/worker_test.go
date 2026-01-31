@@ -136,7 +136,7 @@ var _ = Describe("Worker", func() {
 		Expect(len(d.GetInProgress())).To(Equal(0))
 	})
 
-	It("storeResult saves results and removes key from dirty and adds to jobQueue", func() {
+	It("storeResult ignores result and removes key from dirty and adds to jobQueue", func() {
 		c := fake.NewClientBuilder().WithObjects(nil...).Build()
 		d := deployer.GetClient(context.TODO(), textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
 		defer d.ClearInternalStruct()
