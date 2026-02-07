@@ -50,6 +50,14 @@ type HealthCheckSpec struct {
 	// +kubebuilder:default:=false
 	// +optional
 	CollectResources bool `json:"collectResources,omitempty"`
+
+	// EvaluateIndependently indicates whether matching resources can be evaluated
+	// in smaller batches to save memory.
+	// Set this to true if the Lua script evaluates each resource independently.
+	// Set this to false if the Lua script needs to compare all selected resources
+	// +kubebuilder:default:=true
+	// +optional
+	EvaluateIndependently bool `json:"evaluateIndependently,omitempty"`
 }
 
 //+kubebuilder:object:root=true
