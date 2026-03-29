@@ -37,6 +37,7 @@ import (
 
 var _ = Describe("License", func() {
 	var logger logr.Logger
+	const kubeSystem = "kube-system"
 
 	BeforeEach(func() {
 		logger = textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
@@ -57,8 +58,14 @@ data:
 		u, err := k8s_utils.GetUnstructured([]byte(secret))
 		Expect(err).To(BeNil())
 
+		ns := &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: kubeSystem,
+			},
+		}
+
 		initObjects := []client.Object{
-			u,
+			u, ns,
 		}
 
 		c := fake.NewClientBuilder().WithObjects(initObjects...).Build()
@@ -66,7 +73,8 @@ data:
 		publicKey, err := license.GetPublicKey()
 		Expect(err).To(BeNil())
 
-		licenseVerificationResult := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		licenseVerificationResult, err := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		Expect(err).To(BeNil())
 		Expect(licenseVerificationResult.RawError).To(BeNil())
 		Expect(licenseVerificationResult.IsExpired).To(BeTrue())
 	})
@@ -86,8 +94,14 @@ data:
 		u, err := k8s_utils.GetUnstructured([]byte(secret))
 		Expect(err).To(BeNil())
 
+		ns := &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: kubeSystem,
+			},
+		}
+
 		initObjects := []client.Object{
-			u,
+			u, ns,
 		}
 
 		c := fake.NewClientBuilder().WithObjects(initObjects...).Build()
@@ -95,7 +109,8 @@ data:
 		publicKey, err := license.GetPublicKey()
 		Expect(err).To(BeNil())
 
-		licenseVerificationResult := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		licenseVerificationResult, err := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		Expect(err).To(BeNil())
 		Expect(licenseVerificationResult.RawError).To(BeNil())
 		Expect(licenseVerificationResult.IsExpired).To(BeFalse())
 		Expect(licenseVerificationResult.IsInGracePeriod).To(BeFalse())
@@ -138,7 +153,8 @@ data:
 		publicKey, err := license.GetPublicKey()
 		Expect(err).To(BeNil())
 
-		licenseVerificationResult := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		licenseVerificationResult, err := license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		Expect(err).To(BeNil())
 		Expect(licenseVerificationResult.RawError).To(BeNil())
 		Expect(licenseVerificationResult.IsExpired).To(BeFalse())
 		Expect(licenseVerificationResult.IsInGracePeriod).To(BeFalse())
@@ -151,7 +167,8 @@ data:
 		currentNs.UID = "000cbaab-1234-4932-a111-8c5cff6c9752"
 		Expect(c.Update(context.TODO(), currentNs)).To(Succeed())
 
-		licenseVerificationResult = license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		licenseVerificationResult, err = license.VerifyLicenseSecret(context.TODO(), c, publicKey, logger)
+		Expect(err).To(BeNil())
 		Expect(licenseVerificationResult.RawError).ToNot(BeNil())
 		Expect(licenseVerificationResult.RawError.Error()).To(ContainSubstring("License is not valid for this cluster (fingerprint mismatch)"))
 	})
