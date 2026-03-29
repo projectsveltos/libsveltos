@@ -131,7 +131,7 @@ type LicenseVerificationResult struct {
 // The RawError field will contain any technical errors encountered during the process.
 // Requires permission to read Secret in projectsveltos namespace.
 func VerifyLicenseSecret(ctx context.Context, c client.Client,
-	publicKey *rsa.PublicKey, logger logr.Logger) (LicenseVerificationResult, error) {
+	publicKey *rsa.PublicKey, logger logr.Logger) LicenseVerificationResult {
 
 	secretNsName := types.NamespacedName{
 		Namespace: "projectsveltos",
@@ -152,7 +152,7 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client,
 			result.Message = fmt.Sprintf("Failed to get license secret '%s': %v", secretNsName.String(), err)
 		}
 		logger.V(logs.LogInfo).Info(fmt.Sprintf("%s: %v", result.Message, err))
-		return result, err
+		return result
 	}
 
 	payloadData, ok := licenseSecret.Data[licenseKey]
@@ -162,7 +162,7 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client,
 		result.Message = fmt.Sprintf("License secret '%s' is missing the %q key", secretNsName.String(), licenseKey)
 		result.RawError = errors.New(result.Message)
 		logger.V(logs.LogInfo).Info(result.Message)
-		return result, nil
+		return result
 	}
 
 	signatureData, ok := licenseSecret.Data[signatureKey]
@@ -172,7 +172,7 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client,
 		result.Message = fmt.Sprintf("License secret '%s' is missing the %q key", secretNsName.String(), signatureKey)
 		result.RawError = errors.New(result.Message)
 		logger.V(logs.LogInfo).Info(result.Message)
-		return result, nil
+		return result
 	}
 
 	// Verify the digital signature
@@ -185,7 +185,7 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client,
 			secretNsName.String(), err)
 		result.RawError = err
 		logger.V(logs.LogInfo).Info(result.Message, "error", err)
-		return result, nil
+		return result
 	}
 
 	logger.V(logs.LogDebug).Info("Digital signature successfully verified for license from secret")
@@ -198,7 +198,7 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client,
 		result.Message = fmt.Sprintf("Failed to unmarshal verified license payload from secret %q: %v", secretNsName.String(), err)
 		result.RawError = err
 		logger.V(logs.LogInfo).Info(fmt.Sprintf("%s: %v", err, result.Message))
-		return result, nil
+		return result
 	}
 	result.Payload = &verifiedPayload
 
@@ -246,29 +246,11 @@ func verifyExpirationDate(verifiedPayload *LicensePayload, result LicenseVerific
 }
 
 func verifyClusterFingerprint(ctx context.Context, c client.Client, verifiedPayload *LicensePayload,
-	result LicenseVerificationResult, logger logr.Logger) (LicenseVerificationResult, error) {
-
-	clusterFingerprint, err := isClusterFingerprintValid(ctx, c, verifiedPayload.ClusterFingerprint, logger)
-	if err != nil {
-		// If cluster fingerprint is invalid, it overrides previous valid status
-		result.IsValid = false
-		result.IsExpired = true // Treat fingerprint mismatch as enforced expiration
-		result.IsInGracePeriod = false
-		result.IsEnforced = true
-		result.Message = "License is not valid for this cluster (failed to verify fingerprint)."
-		// Clear RawError if it was nil, or wrap original error if present.
-		if result.RawError == nil {
-			result.RawError = errors.New(result.Message)
-		} else {
-			result.RawError = fmt.Errorf("%s: %w", result.Message, result.RawError)
-		}
-		logger.V(logs.LogInfo).Error(err, "failed to verify cluster fingerprint")
-		return result, err
-	}
+	result LicenseVerificationResult, logger logr.Logger) LicenseVerificationResult {
 
 	// --- Cluster Fingerprint Validation ---
 	if result.IsValid && verifiedPayload.ClusterFingerprint != "" &&
-		!clusterFingerprint {
+		!isClusterFingerprintValid(ctx, c, verifiedPayload.ClusterFingerprint, logger) {
 		// If cluster fingerprint is invalid, it overrides previous valid status
 		result.IsValid = false
 		result.IsExpired = true // Treat fingerprint mismatch as enforced expiration
@@ -284,20 +266,20 @@ func verifyClusterFingerprint(ctx context.Context, c client.Client, verifiedPayl
 		logger.V(logs.LogInfo).Info(fmt.Sprintf("%s: %v", result.RawError, result.Message))
 	}
 
-	return result, nil
+	return result
 }
 
 func isClusterFingerprintValid(ctx context.Context, c client.Client, clusterFingerprint string,
-	logger logr.Logger) (bool, error) {
+	logger logr.Logger) bool {
 
 	ns := &corev1.Namespace{}
 	err := c.Get(ctx, types.NamespacedName{Name: "kube-system"}, ns)
 	if err != nil {
 		logger.V(logs.LogInfo).Info("failed to get kube-system namespace: %v", err)
-		return false, err
+		return false
 	}
 
-	return ns.UID == types.UID(clusterFingerprint), nil
+	return ns.UID == types.UID(clusterFingerprint)
 }
 
 func GetPublicKey() (*rsa.PublicKey, error) {
