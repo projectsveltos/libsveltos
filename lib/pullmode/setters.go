@@ -246,18 +246,13 @@ func WithReleaseInfo(namespace, name, repoURL, chartVersion, icon string,
 }
 
 func WithResourceInfo(kind, namespace, name string,
-	tier int32) BundleOption {
+	tier int32, skipNamespaceCreation bool) BundleOption {
 
 	return func(args *BundleOptions) {
 		args.ReferencedObjectKind = kind
 		args.ReferencedObjectNamespace = namespace
 		args.ReferencedObjectName = name
 		args.ReferencedTier = tier
-	}
-}
-
-func WithSkipNamespaceCreation(skipNamespaceCreation bool) BundleOption {
-	return func(args *BundleOptions) {
 		args.SkipNamespaceCreation = skipNamespaceCreation
 	}
 }
