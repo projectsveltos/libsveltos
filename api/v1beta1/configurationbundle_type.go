@@ -101,6 +101,16 @@ type ConfigurationBundleSpec struct {
 	// referenced by PolicyRefs/KustomizationRef which contributed to this ConfigurationBundle.
 	// +optional
 	ReferenceTier int32 `json:"referenceTier,omitempty"`
+
+	// SkipNamespaceCreation indicates whether Sveltos should skip creating the namespace
+	// for namespaced resources defined in this PolicyRef.
+	// This field is ignored for cluster-scoped resources.
+	// By default, Sveltos attempts to get or create the target namespace if it does not exist.
+	// Setting this to true avoids those calls, which is necessary when Sveltos lacks
+	// permissions to manage namespaces at the cluster level.
+	// +kubebuilder:default:=false
+	// +optional
+	SkipNamespaceCreation bool `json:"skipNamespaceCreation,omitempty"`
 }
 
 type ConfigurationBundleStatus struct {

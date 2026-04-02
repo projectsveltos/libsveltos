@@ -220,6 +220,7 @@ type BundleOptions struct {
 	ReferencedObjectNamespace string
 	ReferencedObjectName      string
 	ReferencedTier            int32
+	SkipNamespaceCreation     bool
 }
 
 type BundleOption func(*BundleOptions)
@@ -255,6 +256,12 @@ func WithResourceInfo(kind, namespace, name string,
 	}
 }
 
+func WithSkipNamespaceCreation(skipNamespaceCreation bool) BundleOption {
+	return func(args *BundleOptions) {
+		args.SkipNamespaceCreation = skipNamespaceCreation
+	}
+}
+
 func applyBundleSetters(confBundle *libsveltosv1beta1.ConfigurationBundle, setters ...BundleOption,
 ) *libsveltosv1beta1.ConfigurationBundle {
 
@@ -281,6 +288,7 @@ func applyBundleSetters(confBundle *libsveltosv1beta1.ConfigurationBundle, sette
 	confBundle.Spec.ReferencedObjectNamespace = c.ReferencedObjectNamespace
 	confBundle.Spec.ReferencedObjectName = c.ReferencedObjectName
 	confBundle.Spec.ReferenceTier = c.ReferencedTier
+	confBundle.Spec.SkipNamespaceCreation = c.SkipNamespaceCreation
 
 	return confBundle
 }
