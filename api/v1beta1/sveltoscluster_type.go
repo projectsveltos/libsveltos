@@ -94,6 +94,14 @@ type TokenRequestRenewalOption struct {
 	// If not specified, sveltos will try to deduce it from current kubeconfig
 	// +optional
 	SAName string `json:"saName,omitempty"`
+
+	// KubeconfigKeyName is the name of the key in the Secret where the renewed
+	// kubeconfig will be stored.
+	// If nil, Sveltos defaults to "re-kubeconfig" and updates SveltosCluster.Spec.KubeconfigKeyName.
+	// If set, Sveltos writes to this key. To prevent GitOps drift, set this to the
+	// same value as SveltosCluster.Spec.KubeconfigKeyName.
+	// +optional
+	KubeconfigKeyName *string `json:"kubeconfigKeyName,omitempty"`
 }
 
 // SveltosClusterSpec defines the desired state of SveltosCluster
