@@ -220,7 +220,7 @@ func verifyExpirationDate(verifiedPayload *LicensePayload, result LicenseVerific
 		result.IsValid = true
 		result.Message = fmt.Sprintf("License is valid (expires %s).",
 			verifiedPayload.ExpirationDate.Format(time.RFC3339))
-		logger.V(logs.LogInfo).Info(result.Message)
+		logger.V(logs.LogDebug).Info(result.Message)
 	} else if now.After(verifiedPayload.ExpirationDate) && now.Before(enforcementDate) {
 		daysLeftInGrace := enforcementDate.Sub(now).Hours() / 24
 		result.IsExpired = true
