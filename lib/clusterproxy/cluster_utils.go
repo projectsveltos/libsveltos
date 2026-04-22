@@ -617,8 +617,21 @@ func isCAPIPresent(ctx context.Context, c client.Client, logger logr.Logger) (bo
 			}
 			return false, err
 		}
+
+		present := false
+		for _, version := range clusterCRD.Spec.Versions {
+			if version.Name == clusterv1.GroupVersion.Version && version.Served {
+				present = true
+				break
+			}
+		}
 		atomic.StoreInt32(&checkedCAPIPresence, 1)
-		atomic.StoreInt32(&capiPresent, 1)
+		if present {
+			atomic.StoreInt32(&capiPresent, 1)
+		} else {
+			logger.V(logs.LogDebug).Info("clusterCRD CRD present but v1beta2 not served")
+			atomic.StoreInt32(&capiPresent, 0)
+		}
 	}
 
 	present := atomic.LoadInt32(&capiPresent)
