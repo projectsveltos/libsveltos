@@ -36,6 +36,7 @@ type Options struct {
 	ContinueOnError        bool
 	MaxConsecutiveFailures *uint
 	LeavePolicies          bool
+	PreDeployChecks        []libsveltosv1beta1.ValidateHealth
 	ValidateHealths        []libsveltosv1beta1.ValidateHealth
 	PreDeleteChecks        []libsveltosv1beta1.ValidateHealth
 	PostDeleteChecks       []libsveltosv1beta1.ValidateHealth
@@ -74,6 +75,12 @@ func WithDriftDetection() Option {
 func WithDriftDetectionPatches(driftExclusions []libsveltosv1beta1.DriftExclusion) Option {
 	return func(args *Options) {
 		args.DriftExclusion = driftExclusions
+	}
+}
+
+func WithPreDeployChecks(preDeployChecks []libsveltosv1beta1.ValidateHealth) Option {
+	return func(args *Options) {
+		args.PreDeployChecks = preDeployChecks
 	}
 }
 
@@ -176,6 +183,7 @@ func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Op
 	confGroup.Spec.ValidateHealths = c.ValidateHealths
 	confGroup.Spec.PreDeleteChecks = c.PreDeleteChecks
 	confGroup.Spec.PostDeleteChecks = c.PostDeleteChecks
+	confGroup.Spec.PreDeployChecks = c.PreDeployChecks
 
 	if c.DryRun {
 		confGroup.Spec.DryRun = true

@@ -857,6 +857,13 @@ func (in *ConfigurationGroupSpec) DeepCopyInto(out *ConfigurationGroupSpec) {
 		*out = new(uint)
 		**out = **in
 	}
+	if in.PreDeployChecks != nil {
+		in, out := &in.PreDeployChecks, &out.PreDeployChecks
+		*out = make([]ValidateHealth, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.ValidateHealths != nil {
 		in, out := &in.ValidateHealths, &out.ValidateHealths
 		*out = make([]ValidateHealth, len(*in))
