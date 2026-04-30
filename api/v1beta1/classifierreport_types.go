@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 type ClusterType string
@@ -114,5 +115,11 @@ type ClassifierReportList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&ClassifierReport{}, &ClassifierReportList{})
+	SchemeBuilder.Register(func(scheme *runtime.Scheme) error {
+		scheme.AddKnownTypes(GroupVersion,
+			&ClassifierReport{},
+			&ClassifierReportList{},
+		)
+		return nil
+	})
 }

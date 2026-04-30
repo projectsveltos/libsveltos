@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -242,5 +243,11 @@ type SveltosClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&SveltosCluster{}, &SveltosClusterList{})
+	SchemeBuilder.Register(func(scheme *runtime.Scheme) error {
+		scheme.AddKnownTypes(GroupVersion,
+			&SveltosCluster{},
+			&SveltosClusterList{},
+		)
+		return nil
+	})
 }

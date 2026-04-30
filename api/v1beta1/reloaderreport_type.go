@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -128,5 +129,11 @@ type ReloaderReportList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&ReloaderReport{}, &ReloaderReportList{})
+	SchemeBuilder.Register(func(scheme *runtime.Scheme) error {
+		scheme.AddKnownTypes(GroupVersion,
+			&ReloaderReport{},
+			&ReloaderReportList{},
+		)
+		return nil
+	})
 }

@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -113,5 +114,11 @@ type EventSourceList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&EventSource{}, &EventSourceList{})
+	SchemeBuilder.Register(func(scheme *runtime.Scheme) error {
+		scheme.AddKnownTypes(GroupVersion,
+			&EventSource{},
+			&EventSourceList{},
+		)
+		return nil
+	})
 }
