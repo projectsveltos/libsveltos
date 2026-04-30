@@ -19,6 +19,7 @@ package v1beta1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -295,5 +296,11 @@ type ClusterHealthCheckList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&ClusterHealthCheck{}, &ClusterHealthCheckList{})
+	SchemeBuilder.Register(func(scheme *runtime.Scheme) error {
+		scheme.AddKnownTypes(GroupVersion,
+			&ClusterHealthCheck{},
+			&ClusterHealthCheckList{},
+		)
+		return nil
+	})
 }

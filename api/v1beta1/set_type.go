@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -52,5 +53,11 @@ type SetList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Set{}, &SetList{})
+	SchemeBuilder.Register(func(scheme *runtime.Scheme) error {
+		scheme.AddKnownTypes(GroupVersion,
+			&Set{},
+			&SetList{},
+		)
+		return nil
+	})
 }
