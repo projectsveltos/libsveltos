@@ -25,15 +25,16 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
+	"github.com/projectsveltos/libsveltos/lib/randutils"
 )
 
 const (
@@ -160,7 +161,13 @@ func createConfigurationBundle(ctx context.Context, c client.Client, namespace, 
 
 	err = c.Create(ctx, bundle)
 	if err != nil {
-		return nil, err
+		if !apierrors.IsAlreadyExists(err) {
+			return nil, err
+		}
+		// Bundle already exists (e.g. a previous partial cycle created it but never committed).
+		// Fall back to update so the content and annotations are reconciled.
+		return updateConfigurationBundle(ctx, c, namespace, name, requestorName, index,
+			resources, skipTracking, isStaged, logger, setters...)
 	}
 
 	// For staged ConfigurationBundle also stores current hash
@@ -453,7 +460,7 @@ func deleteStaleConfigurationBundles(ctx context.Context, c client.Client,
 	for i := range currentBundles.Items {
 		currentBundle := &currentBundles.Items[i]
 		if _, ok := bundleMap[currentBundle.Name]; !ok {
-			if err := c.Delete(ctx, currentBundle); err != nil {
+			if err := c.Delete(ctx, currentBundle); err != nil && !apierrors.IsNotFound(err) {
 				logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to delete stale configurationBundle: %v", err))
 				return err
 			}
@@ -557,7 +564,7 @@ func getInstantiatedObjectName(objects []client.Object) (name string, currentObj
 		// no configurationBundle exist yet. Return random name.
 		prefix := "config-"
 		const nameLength = 20
-		name = prefix + util.RandomString(nameLength)
+		name = prefix + randutils.RandomString(nameLength)
 		currentObject = nil
 		err = nil
 	case 1:
