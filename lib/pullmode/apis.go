@@ -76,6 +76,27 @@ func IsActionNotSetToDeploy(err error) bool {
 	return errors.As(err, &genErr)
 }
 
+type ActionNotSetToRemoveError struct {
+	Message string
+}
+
+func (e *ActionNotSetToRemoveError) Error() string {
+	return e.Message
+}
+
+// NewActionNotSetToRemove creates a new ActionNotSetToRemove
+func NewActionNotSetToRemove(msg string) *ActionNotSetToRemoveError {
+	return &ActionNotSetToRemoveError{
+		Message: msg,
+	}
+}
+
+// IsActionNotSetToRemove checks if an error is a ActionNotSetToRemove
+func IsActionNotSetToRemove(err error) bool {
+	var genErr *ActionNotSetToRemoveError
+	return errors.As(err, &genErr)
+}
+
 // GetClusterLabels returns a map of labels used to filter ConfigurationGroups for a specific cluster.
 // It takes the cluster namespace and cluster name as input.
 func GetClusterLabels(clusterNamespace, clusterName string) map[string]string {
@@ -456,7 +477,7 @@ func GetRemoveStatus(ctx context.Context, c client.Client,
 	}
 
 	if currentCG.Spec.Action != libsveltosv1beta1.ActionRemove {
-		return &currentCG.Status, fmt.Errorf("ConfigurationGroup action not set to remove")
+		return &currentCG.Status, NewActionNotSetToRemove("ConfigurationGroup action not set to remove")
 	}
 
 	return &currentCG.Status, nil
