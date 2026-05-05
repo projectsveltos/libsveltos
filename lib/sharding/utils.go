@@ -106,6 +106,29 @@ func RegisterClusterShard(ctx context.Context, c client.Client, component libsve
 	return false, nil
 }
 
+// UnregisterClusterShard removes the cluster entry from the shard-tracking ConfigMap.
+// Call this when a cluster is fully deleted so stale entries do not accumulate.
+func UnregisterClusterShard(ctx context.Context, c client.Client, component libsveltosv1beta1.Component,
+	feature, clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType) error {
+
+	cm, err := getConfigMap(ctx, c, component, feature)
+	if err != nil {
+		return err
+	}
+
+	if cm.Data == nil {
+		return nil
+	}
+
+	clusterId := fmt.Sprintf("%s-%s-%s", clusterType, clusterNamespace, clusterName)
+	if _, ok := cm.Data[clusterId]; !ok {
+		return nil
+	}
+
+	delete(cm.Data, clusterId)
+	return updateConfigMap(ctx, c, cm)
+}
+
 const (
 	configMapName      = "clustersharding"
 	configMapNamespace = "projectsveltos"
