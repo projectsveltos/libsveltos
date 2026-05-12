@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -98,6 +99,9 @@ func (k *CustomPatchPostRenderer) Run(renderedManifests *bytes.Buffer) (modified
 
 	// Add patches.
 	for _, m := range k.Patches {
+		if err := validatePatch(m); err != nil {
+			return nil, err
+		}
 		cfg.Patches = append(cfg.Patches, kustomizetypes.Patch{
 			Patch:  m.Patch,
 			Target: adaptSelector(m.Target),
@@ -124,6 +128,37 @@ func (k *CustomPatchPostRenderer) Run(renderedManifests *bytes.Buffer) (modified
 	}
 
 	return bytes.NewBuffer(yaml), nil
+}
+
+// validatePatch catches SM patches that lack metadata.name before kustomize does,
+// returning a clear error instead of kustomize's opaque "unable to parse SM or JSON patch" message.
+// A strategic merge patch is identified by having apiVersion/kind at the top level; if it
+// also has a target selector with a name pattern, metadata.name must be present in the patch
+// body so kustomize can identify the resource. JSON patches (lists starting with '-') are exempt.
+func validatePatch(p sveltosv1beta1.Patch) error {
+	trimmed := strings.TrimSpace(p.Patch)
+	if strings.HasPrefix(trimmed, "[") || strings.HasPrefix(trimmed, "- ") {
+		return nil // JSON patch, no metadata.name required
+	}
+
+	rn, err := kyaml.Parse(trimmed)
+	if err != nil {
+		return nil // not parseable as YAML; let kustomize report the error
+	}
+
+	meta, err := rn.GetMeta()
+	if err != nil || meta.Kind == "" {
+		return nil // not a Kubernetes resource shape; let kustomize handle it
+	}
+
+	if meta.Name == "" {
+		return fmt.Errorf(
+			"strategic merge patch for %s/%s requires metadata.name in the patch body; "+
+				"use a JSON patch (- op: ...) to match resources by regex name selector",
+			meta.APIVersion, meta.Kind)
+	}
+
+	return nil
 }
 
 // getMatchingPatches returns patches that match the given object
@@ -245,101 +280,126 @@ func patchMatchesObject(target *sveltosv1beta1.PatchSelector,
 	return true, nil
 }
 
-// filterApplicablePatches removes patches where operation is 'remove' and the target path doesn't exist
+// filterApplicablePatches removes 'remove' operations from JSON patches where the target
+// path does not exist in the object, preventing errors on no-op removals. SM patches are
+// passed through unchanged. For multi-operation JSON patches, only the remove operations
+// targeting missing paths are stripped; the rest are kept.
 func (k *CustomPatchPostRenderer) filterApplicablePatches(obj *unstructured.Unstructured,
 	patches []sveltosv1beta1.Patch) []sveltosv1beta1.Patch {
 
 	var applicable []sveltosv1beta1.Patch
 
 	for _, patch := range patches {
-		// Parse the patch to get operation and path
-		op, path := extractOpAndPath(patch.Patch)
-
-		// Only filter if operation is 'remove' and path doesn't exist
-		if op == "remove" && path != "" && !pathExistsInObject(obj, path) {
-			// Path doesn't exist, skip this remove operation
-			continue
+		filtered, keep := filterPatchOperations(patch, obj)
+		if keep {
+			applicable = append(applicable, filtered)
 		}
-
-		applicable = append(applicable, patch)
 	}
 
 	return applicable
 }
 
-// extractOpAndPath extracts the operation and path from a patch string
-// Example: "- op: remove\n  path: /spec/template/spec/nodeSelector" -> ("remove", "/spec/template/spec/nodeSelector")
-func extractOpAndPath(patchStr string) (op, path string) {
-	// We only expect one YAML list item, so we can treat the whole string as one block of fields.
-	// However, if the input is truly multiline, splitting is fine.
-	lines := strings.Split(patchStr, "\n")
-
-	// Combine all lines into a single, space-separated string for simpler parsing.
-	// This allows us to search for "op:" and "path:" anywhere, regardless of line breaks.
-	singleLinePatch := strings.Join(lines, " ")
-
-	// --- Extraction Logic for 'op' ---
-	opIndex := strings.Index(singleLinePatch, "op:")
-	if opIndex != -1 {
-		// Find the start of the value: "op:" is 3 characters long
-		opValueString := singleLinePatch[opIndex+3:]
-
-		// Find the end of the value. Assume the value ends at the start of the next key
-		// (like "path:") or the end of the string.
-		// We'll use TrimSpace for simplicity, as op values are usually single words.
-		op = strings.TrimSpace(opValueString)
-
-		// In case the path key follows immediately on the same line,
-		// trim everything after "path:" or "Path:" from the 'op' value.
-		// This handles cases like "remove path: /foo"
-		if idx := strings.Index(op, "path:"); idx != -1 {
-			op = op[:idx]
-		}
-
-		op = strings.TrimSpace(op)
-		op = strings.Trim(op, `"'`)
+// filterPatchOperations filters out individual 'remove' operations where the JSON Pointer
+// path does not exist in the object. Returns the (possibly modified) patch and whether it
+// should be kept at all. SM patches are always kept unchanged.
+func filterPatchOperations(patch sveltosv1beta1.Patch, obj *unstructured.Unstructured) (sveltosv1beta1.Patch, bool) {
+	if !isJSONPatch(patch.Patch) {
+		return patch, true
 	}
 
-	// --- Extraction Logic for 'path' ---
-	pathIndex := strings.Index(singleLinePatch, "path:")
-	if pathIndex != -1 {
-		// Find the start of the value: "path:" is 5 characters long
-		pathValueString := singleLinePatch[pathIndex+5:]
-
-		// Trim the value of path
-		path = strings.TrimSpace(pathValueString)
-
-		// If the 'op' key follows immediately on the same line, trim everything after "op:".
-		// This handles cases like "/foo op: remove"
-		if idx := strings.Index(path, "op:"); idx != -1 {
-			path = path[:idx]
-		}
-
-		path = strings.TrimSpace(path)
-		path = strings.Trim(path, `"'`)
+	ops, err := parseJSONPatchOps(patch.Patch)
+	if err != nil {
+		return patch, true // unparseable; let kustomize report the error
 	}
 
-	return op, path
+	var keepOps []map[string]interface{}
+	for _, op := range ops {
+		opStr, _ := op["op"].(string)
+		pathStr, _ := op["path"].(string)
+		if opStr == "remove" && pathStr != "" && !pathExistsInObject(obj, pathStr) {
+			continue
+		}
+		keepOps = append(keepOps, op)
+	}
+
+	if len(keepOps) == 0 {
+		return patch, false
+	}
+
+	if len(keepOps) == len(ops) {
+		return patch, true
+	}
+
+	rebuilt, err := rebuildJSONPatch(keepOps)
+	if err != nil {
+		return patch, true
+	}
+
+	return sveltosv1beta1.Patch{Patch: rebuilt, Target: patch.Target}, true
 }
 
-// pathExistsInObject checks if a JSON path exists in the unstructured object
+// isJSONPatch reports whether a patch string is a JSON patch (RFC 6902), i.e. a YAML/JSON
+// sequence of {op, path, ...} objects, as opposed to a strategic merge patch.
+func isJSONPatch(patchStr string) bool {
+	trimmed := strings.TrimSpace(patchStr)
+	return strings.HasPrefix(trimmed, "[") || strings.HasPrefix(trimmed, "- ")
+}
+
+// parseJSONPatchOps parses a JSON patch (in YAML or JSON format) into a slice of operation maps.
+func parseJSONPatchOps(patchStr string) ([]map[string]interface{}, error) {
+	decoder := uyaml.NewYAMLToJSONDecoder(bytes.NewBufferString(patchStr))
+	var ops []map[string]interface{}
+	if err := decoder.Decode(&ops); err != nil {
+		return nil, err
+	}
+	return ops, nil
+}
+
+// rebuildJSONPatch serializes a slice of operation maps back to a JSON patch string.
+// JSON is used (rather than YAML) because it is valid YAML and avoids re-encoding issues.
+func rebuildJSONPatch(ops []map[string]interface{}) (string, error) {
+	data, err := json.Marshal(ops)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// decodeJSONPointerToken decodes a single RFC 6902 JSON Pointer token:
+// ~1 → / and ~0 → ~ (in that order, per the spec).
+func decodeJSONPointerToken(token string) string {
+	token = strings.ReplaceAll(token, "~1", "/")
+	token = strings.ReplaceAll(token, "~0", "~")
+	return token
+}
+
+// pathExistsInObject checks whether the JSON Pointer path exists in the unstructured object.
+// It decodes JSON Pointer escape sequences (~1 → /, ~0 → ~) and handles array segments.
 func pathExistsInObject(obj *unstructured.Unstructured, jsonPath string) bool {
 	keys := strings.Split(strings.Trim(jsonPath, "/"), "/")
-	current := obj.Object
+	var current interface{} = obj.Object
 
 	for _, key := range keys {
 		if key == "" {
 			continue
 		}
+		key = decodeJSONPointerToken(key)
 
-		val, found := current[key]
-		if !found {
+		switch v := current.(type) {
+		case map[string]interface{}:
+			val, found := v[key]
+			if !found {
+				return false
+			}
+			current = val
+		case []interface{}:
+			idx, err := strconv.Atoi(key)
+			if err != nil || idx < 0 || idx >= len(v) {
+				return false
+			}
+			current = v[idx]
+		default:
 			return false
-		}
-
-		// Navigate deeper if it's a nested object
-		if nested, ok := val.(map[string]interface{}); ok {
-			current = nested
 		}
 	}
 

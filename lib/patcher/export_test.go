@@ -18,4 +18,9 @@ package patcher
 
 var (
 	ParseYAMLToUnstructured = parseYAMLToUnstructured
+	PathExistsInObject      = pathExistsInObject
+	FilterPatchOperations   = filterPatchOperations
+	IsJSONPatch             = isJSONPatch
+	ValidatePatch           = validatePatch
+	DecodeJSONPointerToken  = decodeJSONPointerToken
 )
