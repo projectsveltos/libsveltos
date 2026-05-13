@@ -46,7 +46,7 @@ spec:
       name: Age
       type: date
     - description: Cluster Shard
-      jsonPath: .metadata.annotations['sharding.projectsveltos.io/key']
+      jsonPath: .metadata.annotations['sharding\.projectsveltos\.io/key']
       name: Shard
       type: string
     name: v1beta1
