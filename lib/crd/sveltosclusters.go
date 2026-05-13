@@ -45,6 +45,10 @@ spec:
       jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - description: Cluster Shard
+      jsonPath: .metadata.annotations['sharding.projectsveltos.io/key']
+      name: Shard
+      type: string
     name: v1beta1
     schema:
       openAPIV3Schema:
