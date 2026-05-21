@@ -38,11 +38,10 @@ const (
 
 	ClassifierReportKind = "ClassifierReport"
 
-	// This is the namespace/name of the secret containing the kubeconfig
+	// This is the name of the secret containing the kubeconfig
 	// to send ClassifierReport to management cluster when classifier agent
 	// is configured to send ClassifierReports
-	ClassifierSecretName      = "classifier-agent"
-	ClassifierSecretNamespace = "projectsveltos"
+	ClassifierSecretName = "classifier-agent"
 )
 
 // ReportPhase describes the state of a classifierReport/healthReport/eventReport/reloaderReport.

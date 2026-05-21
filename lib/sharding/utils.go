@@ -76,9 +76,9 @@ func IsShardAMatch(shardKey string, cluster client.Object) bool {
 // returns a bool indicating whether the cluster:shard pair has changed and an error
 // if any occurred
 func RegisterClusterShard(ctx context.Context, c client.Client, component libsveltosv1beta1.Component,
-	feature, shard, clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType) (bool, error) {
+	sveltosNamespace, feature, shard, clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType) (bool, error) {
 
-	cm, err := getConfigMap(ctx, c, component, feature)
+	cm, err := getConfigMap(ctx, c, component, sveltosNamespace, feature)
 	if err != nil {
 		return false, err
 	}
@@ -109,9 +109,9 @@ func RegisterClusterShard(ctx context.Context, c client.Client, component libsve
 // UnregisterClusterShard removes the cluster entry from the shard-tracking ConfigMap.
 // Call this when a cluster is fully deleted so stale entries do not accumulate.
 func UnregisterClusterShard(ctx context.Context, c client.Client, component libsveltosv1beta1.Component,
-	feature, clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType) error {
+	sveltosNamespace, feature, clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType) error {
 
-	cm, err := getConfigMap(ctx, c, component, feature)
+	cm, err := getConfigMap(ctx, c, component, sveltosNamespace, feature)
 	if err != nil {
 		return err
 	}
@@ -130,8 +130,7 @@ func UnregisterClusterShard(ctx context.Context, c client.Client, component libs
 }
 
 const (
-	configMapName      = "clustersharding"
-	configMapNamespace = "projectsveltos"
+	configMapName = "clustersharding"
 )
 
 func getConfigMapName(component libsveltosv1beta1.Component, feature string) string {
@@ -141,15 +140,15 @@ func getConfigMapName(component libsveltosv1beta1.Component, feature string) str
 }
 
 func getConfigMap(ctx context.Context, c client.Client, component libsveltosv1beta1.Component,
-	feature string) (*corev1.ConfigMap, error) {
+	sveltosNamespace, feature string) (*corev1.ConfigMap, error) {
 
 	cm := &corev1.ConfigMap{}
 	name := getConfigMapName(component, feature)
 
-	err := c.Get(ctx, types.NamespacedName{Namespace: configMapNamespace, Name: name}, cm)
+	err := c.Get(ctx, types.NamespacedName{Namespace: sveltosNamespace, Name: name}, cm)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return createConfigMap(ctx, c, component, feature)
+			return createConfigMap(ctx, c, component, sveltosNamespace, feature)
 		}
 	}
 
@@ -157,12 +156,12 @@ func getConfigMap(ctx context.Context, c client.Client, component libsveltosv1be
 }
 
 func createConfigMap(ctx context.Context, c client.Client, component libsveltosv1beta1.Component,
-	feature string) (*corev1.ConfigMap, error) {
+	sveltosNamespace, feature string) (*corev1.ConfigMap, error) {
 
 	name := getConfigMapName(component, feature)
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: configMapNamespace,
+			Namespace: sveltosNamespace,
 			Name:      name,
 		},
 	}
