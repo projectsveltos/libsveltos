@@ -130,11 +130,11 @@ type LicenseVerificationResult struct {
 // and various booleans indicating its validity status, along with a human-readable message.
 // The RawError field will contain any technical errors encountered during the process.
 // Requires permission to read Secret in projectsveltos namespace.
-func VerifyLicenseSecret(ctx context.Context, c client.Client,
+func VerifyLicenseSecret(ctx context.Context, c client.Client, sveltosNamespace string,
 	publicKey *rsa.PublicKey, logger logr.Logger) LicenseVerificationResult {
 
 	secretNsName := types.NamespacedName{
-		Namespace: "projectsveltos",
+		Namespace: sveltosNamespace,
 		Name:      "sveltos-license",
 	}
 

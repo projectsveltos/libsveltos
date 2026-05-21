@@ -62,7 +62,6 @@ const (
 )
 
 const (
-	configMapNamespace          = "projectsveltos"
 	sveltosAgentConfigMapName   = "sveltos-agent-version"
 	driftDetectionConfigMapName = "drift-detection-version"
 	configMapKey                = "version"
@@ -81,10 +80,11 @@ const (
 //   - version (string): Version to compare against the sveltos-agent version
 //   - isAgentInMgmtMode indicates whether agents are in the management cluster (true) or managed clusters (false)
 
-func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, version, clusterNamespace, clusterName string,
+func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client,
+	sveltosNamespace, version, clusterNamespace, clusterName string,
 	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) bool {
 
-	cmInfo := getSveltosAgentConfigMapInfo(clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
+	cmInfo := getSveltosAgentConfigMapInfo(sveltosNamespace, clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
 
 	// ConfigMap is stored in either the management cluster or the managed cluster.
 	// If agents are in the management cluster, the ConfigMap is in the management cluster.
@@ -129,10 +129,11 @@ func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client, versi
 //   - version (string): Version to compare against the sveltos-agent version
 //   - isAgentInMgmtMode indicates whether agents are in the management cluster (true) or managed clusters (false)
 
-func IsDriftDetectionVersionCompatible(ctx context.Context, c client.Client, version, clusterNamespace, clusterName string,
+func IsDriftDetectionVersionCompatible(ctx context.Context, c client.Client,
+	sveltosNamespace, version, clusterNamespace, clusterName string,
 	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) bool {
 
-	cmInfo := getDriftDetectionConfigMapInfo(clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
+	cmInfo := getDriftDetectionConfigMapInfo(sveltosNamespace, clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
 
 	// ConfigMap is stored in either the management cluster or the managed cluster.
 	// If agents are in the management cluster, the ConfigMap is in the management cluster.
@@ -174,13 +175,14 @@ func IsDriftDetectionVersionCompatible(ctx context.Context, c client.Client, ver
 //   - clusterNamespace, clusterName, clusterType identify the managed cluster
 //   - version (string): Version to compare against the sveltos-agent version
 //   - isAgentInMgmtMode indicates whether agents are in the management cluster (true) or managed clusters (false)
-func StoreSveltosAgentVersion(ctx context.Context, c client.Client, version, clusterNamespace, clusterName string,
+func StoreSveltosAgentVersion(ctx context.Context, c client.Client,
+	sveltosNamespace, version, clusterNamespace, clusterName string,
 	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) error {
 
 	lbls := getLabels(clusterName, clusterType)
 	lbls[agentTypeLabel] = sveltosAgentType
 
-	cmInfo := getSveltosAgentConfigMapInfo(clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
+	cmInfo := getSveltosAgentConfigMapInfo(sveltosNamespace, clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
 	cm, err := getConfigMap(ctx, c, cmInfo, logger)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -204,13 +206,14 @@ func StoreSveltosAgentVersion(ctx context.Context, c client.Client, version, clu
 //   - clusterNamespace, clusterName, clusterType identify the managed cluster
 //   - version (string): Version to compare against the sveltos-agent version
 //   - isAgentInMgmtMode indicates whether agents are in the management cluster (true) or managed clusters (false)
-func StoreDriftDetectionVersion(ctx context.Context, c client.Client, version, clusterNamespace, clusterName string,
+func StoreDriftDetectionVersion(ctx context.Context, c client.Client,
+	sveltosNamespace, version, clusterNamespace, clusterName string,
 	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) error {
 
 	lbls := getLabels(clusterName, clusterType)
 	lbls[agentTypeLabel] = driftDetectionType
 
-	cmInfo := getDriftDetectionConfigMapInfo(clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
+	cmInfo := getDriftDetectionConfigMapInfo(sveltosNamespace, clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
 	cm, err := getConfigMap(ctx, c, cmInfo, logger)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -278,8 +281,8 @@ func generateName(agentType, clusterName string, clusterTpe libsveltosv1beta1.Cl
 	return fmt.Sprintf("dd-%s-%s", strings.ToLower(string(clusterTpe)), clusterName)
 }
 
-func getSveltosAgentConfigMapInfo(clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType,
-	isAgentInMgmtMode bool) types.NamespacedName {
+func getSveltosAgentConfigMapInfo(sveltosNamespace, clusterNamespace, clusterName string,
+	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool) types.NamespacedName {
 
 	var namespace, name string
 	if isAgentInMgmtMode {
@@ -287,14 +290,14 @@ func getSveltosAgentConfigMapInfo(clusterNamespace, clusterName string, clusterT
 		namespace = clusterNamespace
 	} else {
 		name = sveltosAgentConfigMapName
-		namespace = configMapNamespace
+		namespace = sveltosNamespace
 	}
 
 	return types.NamespacedName{Namespace: namespace, Name: name}
 }
 
-func getDriftDetectionConfigMapInfo(clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType,
-	isAgentInMgmtMode bool) types.NamespacedName {
+func getDriftDetectionConfigMapInfo(sveltosNamespace, clusterNamespace, clusterName string,
+	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool) types.NamespacedName {
 
 	var namespace, name string
 	if isAgentInMgmtMode {
@@ -302,7 +305,7 @@ func getDriftDetectionConfigMapInfo(clusterNamespace, clusterName string, cluste
 		namespace = clusterNamespace
 	} else {
 		name = driftDetectionConfigMapName
-		namespace = configMapNamespace
+		namespace = sveltosNamespace
 	}
 
 	return types.NamespacedName{Namespace: namespace, Name: name}

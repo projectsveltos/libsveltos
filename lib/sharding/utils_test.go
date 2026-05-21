@@ -26,44 +26,45 @@ var _ = Describe("Sharding", func() {
 		}
 
 		shard := randomString()
+		sveltosNamespace := randomString()
 		// First time, add entry and return false since cluster:shard was never changed
 		shardChanged, err := sharding.RegisterClusterShard(context.TODO(), c, libsveltosv1beta1.ComponentAddonManager,
-			"helm", shard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
+			sveltosNamespace, "helm", shard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(shardChanged).To(BeFalse())
 
 		// return false since cluster:shard was never changed
 		shardChanged, err = sharding.RegisterClusterShard(context.TODO(), c, libsveltosv1beta1.ComponentAddonManager,
-			"helm", shard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
+			sveltosNamespace, "helm", shard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(shardChanged).To(BeFalse())
 
 		// return true since cluster:shard has changed
 		newShard := randomString()
 		shardChanged, err = sharding.RegisterClusterShard(context.TODO(), c, libsveltosv1beta1.ComponentAddonManager,
-			"helm", newShard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
+			sveltosNamespace, "helm", newShard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(shardChanged).To(BeTrue())
 
 		// return false since cluster:shard has not changed (and previous step updated configMap)
 		shardChanged, err = sharding.RegisterClusterShard(context.TODO(), c, libsveltosv1beta1.ComponentAddonManager,
-			"helm", newShard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
+			sveltosNamespace, "helm", newShard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
 		Expect(err).To(BeNil())
 		Expect(shardChanged).To(BeFalse())
 
 		// register capi cluster with same namespace/name of sveltoscluster used so far
 		shardChanged, err = sharding.RegisterClusterShard(context.TODO(), c, libsveltosv1beta1.ComponentAddonManager,
-			"helm", newShard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
+			sveltosNamespace, "helm", newShard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
 		Expect(err).To(BeNil())
 		Expect(shardChanged).To(BeFalse())
 
 		shardChanged, err = sharding.RegisterClusterShard(context.TODO(), c, libsveltosv1beta1.ComponentAddonManager,
-			"helm", newShard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
+			sveltosNamespace, "helm", newShard, cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
 		Expect(err).To(BeNil())
 		Expect(shardChanged).To(BeFalse())
 
 		shardChanged, err = sharding.RegisterClusterShard(context.TODO(), c, libsveltosv1beta1.ComponentAddonManager,
-			"helm", randomString(), cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
+			sveltosNamespace, "helm", randomString(), cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
 		Expect(err).To(BeNil())
 		Expect(shardChanged).To(BeTrue())
 	})
