@@ -304,6 +304,44 @@ const (
 	FeatureKustomize = FeatureID("Kustomize")
 )
 
+// MetricSource identifies a Prometheus-compatible metrics endpoint.
+// The endpoint must be reachable from wherever the check runs:
+// in pull mode the agent runs inside the managed cluster, so a plain
+// Kubernetes Service URL is sufficient (e.g. http://prometheus.monitoring.svc:9090);
+// in push mode the addon-controller runs on the management cluster, so the
+// endpoint must be reachable from outside the managed cluster.
+type MetricSource struct {
+	// URL is the base HTTP(S) address of the Prometheus-compatible endpoint
+	// (e.g. http://prometheus.monitoring.svc:9090).
+	// +kubebuilder:validation:MinLength=1
+	URL string `json:"url"`
+
+	// Path is the HTTP path for Prometheus instant queries.
+	// Defaults to /api/v1/query when empty.
+	// +optional
+	Path string `json:"path,omitempty"`
+
+	// SecretRef optionally references a Secret on the managed cluster containing
+	// credentials to authenticate against the endpoint.
+	// The Secret namespace and name must both be specified.
+	// Supported keys: "token" (bearer token), "username" and "password" (basic auth).
+	// +optional
+	SecretRef *corev1.SecretReference `json:"secretRef,omitempty"`
+}
+
+// MetricQuery binds a PromQL instant-query result to a name the evaluation
+// script can reference via the metrics table (e.g. metrics["errorRate"]).
+type MetricQuery struct {
+	// Name is the key under which the scalar result is available in the script.
+	// Must be unique within the ValidateHealth entry.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// Query is a PromQL instant-query expression.
+	// +kubebuilder:validation:MinLength=1
+	Query string `json:"query"`
+}
+
 type ValidateHealth struct {
 	// Name is the name of this check
 	Name string `json:"name"`
@@ -319,14 +357,19 @@ type ValidateHealth struct {
 	FeatureID FeatureID `json:"featureID"`
 
 	// Group of the resource to fetch in the managed Cluster.
-	Group string `json:"group"`
+	// Required when Kind is set. Leave empty for metric-only checks.
+	// +optional
+	Group string `json:"group,omitempty"`
 
 	// Version of the resource to fetch in the managed Cluster.
-	Version string `json:"version"`
+	// Required when Kind is set. Leave empty for metric-only checks.
+	// +optional
+	Version string `json:"version,omitempty"`
 
 	// Kind of the resource to fetch in the managed Cluster.
-	// +kubebuilder:validation:MinLength=1
-	Kind string `json:"kind"`
+	// Leave empty for metric-only checks.
+	// +optional
+	Kind string `json:"kind,omitempty"`
 
 	// LabelFilters allows to filter resources based on current labels.
 	// +optional
@@ -336,6 +379,18 @@ type ValidateHealth struct {
 	// Empty for resources scoped at cluster level.
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
+
+	// MetricSource identifies the Prometheus-compatible endpoint to query.
+	// Required when MetricQueries is set.
+	// +optional
+	MetricSource *MetricSource `json:"metricSource,omitempty"`
+
+	// MetricQueries lists the PromQL instant queries to execute against
+	// MetricSource. Results are injected into the evaluation script as a
+	// "metrics" map keyed by each query's Name field, value is the scalar
+	// float result. Scripts access results via metrics["<name>"].
+	// +optional
+	MetricQueries []MetricQuery `json:"metricQueries,omitempty"`
 
 	// Script is a text containing a lua script.
 	// Must return struct with field "health"
