@@ -156,12 +156,16 @@ type MachingClusterStatus struct {
 
 // ClassifierStatus defines the observed state of Classifier
 type ClassifierStatus struct {
-	// MatchingClusterRefs reference all the cluster-api Cluster currently matching
-	// Classifier
+	// Deprecated: MachingClusterStatuses is deprecated and will be removed in a future release.
+	// Per-cluster matching and label-management status is now stored in the Status of the
+	// corresponding ClassifierReport instance (one per classifier/cluster pair).
+	// +optional
 	MachingClusterStatuses []MachingClusterStatus `json:"machingClusterStatuses,omitempty"`
 
-	// ClusterInfo reference all the cluster-api Cluster where Classifier
-	// has been/is being deployed
+	// Deprecated: ClusterInfo is deprecated and will be removed in a future release.
+	// Per-cluster deployment tracking (hash, status, failure message) is now stored in the
+	// Status of the corresponding ClassifierReport instance (one per classifier/cluster pair).
+	// +optional
 	ClusterInfo []ClusterInfo `json:"clusterInfo,omitempty"`
 }
 

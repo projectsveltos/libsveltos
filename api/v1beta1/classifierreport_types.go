@@ -88,6 +88,27 @@ type ClassifierReportStatus struct {
 	// Phase represents the current phase of report.
 	// +optional
 	Phase *ReportPhase `json:"phase,omitempty"`
+
+	// ManagedLabels lists the labels this Classifier instance is managing on the cluster.
+	// +optional
+	ManagedLabels []string `json:"managedLabels,omitempty"`
+
+	// UnManagedLabels lists labels this Classifier instance would like to manage but cannot
+	// because a different Classifier instance is already managing them.
+	// +optional
+	UnManagedLabels []UnManagedLabel `json:"unmanagedLabels,omitempty"`
+
+	// Hash is the hash of the Classifier that was last successfully deployed to the cluster.
+	// +optional
+	Hash []byte `json:"hash,omitempty"`
+
+	// DeploymentStatus is the current deployment status of the Classifier on the cluster.
+	// +optional
+	DeploymentStatus *SveltosFeatureStatus `json:"deploymentStatus,omitempty"`
+
+	// FailureMessage provides more information when DeploymentStatus is Failed.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true

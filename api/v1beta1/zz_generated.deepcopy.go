@@ -21,7 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -310,6 +310,33 @@ func (in *ClassifierReportStatus) DeepCopyInto(out *ClassifierReportStatus) {
 	if in.Phase != nil {
 		in, out := &in.Phase, &out.Phase
 		*out = new(ReportPhase)
+		**out = **in
+	}
+	if in.ManagedLabels != nil {
+		in, out := &in.ManagedLabels, &out.ManagedLabels
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.UnManagedLabels != nil {
+		in, out := &in.UnManagedLabels, &out.UnManagedLabels
+		*out = make([]UnManagedLabel, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Hash != nil {
+		in, out := &in.Hash, &out.Hash
+		*out = make([]byte, len(*in))
+		copy(*out, *in)
+	}
+	if in.DeploymentStatus != nil {
+		in, out := &in.DeploymentStatus, &out.DeploymentStatus
+		*out = new(SveltosFeatureStatus)
+		**out = **in
+	}
+	if in.FailureMessage != nil {
+		in, out := &in.FailureMessage, &out.FailureMessage
+		*out = new(string)
 		**out = **in
 	}
 }
