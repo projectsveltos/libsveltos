@@ -30,4 +30,10 @@ type Cluster struct {
 	ClusterSummaries        int    `json:"clusterSummaries"`
 	EventTriggers           int    `json:"eventTriggers,omitempty"`
 	ClusterHealthChecks     int    `json:"clusterHealthChecks,omitempty"`
+	ClusterPromotions       int    `json:"clusterPromotions,omitempty"`
+
+	// Management cluster information
+	ManagementClusterProvider string `json:"managementClusterProvider,omitempty"`
+	KubernetesVersion         string `json:"kubernetesVersion,omitempty"`
+	ManagementClusterNodes    int    `json:"managementClusterNodes,omitempty"`
 }
