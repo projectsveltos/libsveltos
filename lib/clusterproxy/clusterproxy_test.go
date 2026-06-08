@@ -43,6 +43,14 @@ import (
 
 const (
 	upstreamClusterNamePrefix = "upstream-cluster"
+	secretDataKey             = "value"
+	capiClusterKind           = "Cluster"
+	dcLabelKey                = "dc"
+	engLabelValue             = "eng"
+	envLabelKey               = "env"
+	qaLabelValue              = "qa"
+	zoneLabelKey              = "zone"
+	westLabelValue            = "west"
 )
 
 func setupScheme() (*runtime.Scheme, error) {
@@ -82,7 +90,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      upstreamClusterNamePrefix + randomString(),
 				Namespace: namespace,
 				Labels: map[string]string{
-					"dc": "eng",
+					dcLabelKey: engLabelValue,
 				},
 			},
 		}
@@ -92,7 +100,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      upstreamClusterNamePrefix + randomString(),
 				Namespace: namespace,
 				Labels: map[string]string{
-					"dc": "eng",
+					dcLabelKey: engLabelValue,
 				},
 			},
 		}
@@ -129,7 +137,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      cluster.Name + clusterproxy.CapiKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"value": randomData,
+				secretDataKey: randomData,
 			},
 		}
 
@@ -169,7 +177,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      cluster.Name + clusterproxy.CapiKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"value": testEnv.Kubeconfig,
+				secretDataKey: testEnv.Kubeconfig,
 			},
 		}
 
@@ -201,7 +209,7 @@ var _ = Describe("clusterproxy ", func() {
 		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
 
 		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
-			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name, Kind: "Cluster"},
+			&corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name, Kind: capiClusterKind},
 			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
 		Expect(err).To(BeNil())
 		Expect(ready).To(Equal(false))
@@ -343,7 +351,7 @@ var _ = Describe("clusterproxy ", func() {
 				Name:      sveltosClusterWithOverride.Spec.KubeconfigName,
 			},
 			Data: map[string][]byte{
-				"value": []byte(randomString()),
+				secretDataKey: []byte(randomString()),
 				sveltosClusterWithOverride.Spec.KubeconfigKeyName: randomData,
 			},
 		}
@@ -391,7 +399,7 @@ var _ = Describe("clusterproxy ", func() {
 
 	It("getSveltosSecretData returns default secret data (single key)", func() {
 		randomData := []byte(randomString())
-		key := "value"
+		key := secretDataKey
 		secret := corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: sveltosCluster.Namespace,

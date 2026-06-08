@@ -29,6 +29,10 @@ import (
 	"github.com/projectsveltos/libsveltos/lib/cel"
 )
 
+const (
+	v1Version = "v1"
+)
+
 var _ = Describe("utils ", func() {
 	var logger logr.Logger
 
@@ -40,7 +44,7 @@ var _ = Describe("utils ", func() {
 		obj := &unstructured.Unstructured{}
 		obj.SetGroupVersionKind(schema.GroupVersionKind{
 			Group:   "apps",
-			Version: "v1",
+			Version: v1Version,
 			Kind:    "Deployment",
 		})
 		obj.SetName("test-deployment")
@@ -73,7 +77,7 @@ var _ = Describe("utils ", func() {
 		obj := &unstructured.Unstructured{}
 		obj.SetGroupVersionKind(schema.GroupVersionKind{
 			Group:   "",
-			Version: "v1",
+			Version: v1Version,
 			Kind:    "ConfigMap",
 		})
 		obj.SetName("my-config")

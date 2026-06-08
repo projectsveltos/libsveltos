@@ -33,6 +33,11 @@ import (
 	"github.com/projectsveltos/libsveltos/lib/notifications"
 )
 
+const (
+	secretKind   = "Secret"
+	v1APIVersion = "v1"
+)
+
 var _ = Describe("Notification", func() {
 	It("getSmtpInfo get smtp information from Secret", func() {
 		smtpRecipients := fmt.Sprintf("%s@a.com,%s@b.com", randomString(), randomString())
@@ -72,8 +77,8 @@ var _ = Describe("Notification", func() {
 			Name: randomString(),
 			Type: libsveltosv1beta1.NotificationTypeSMTP,
 			NotificationRef: &corev1.ObjectReference{
-				Kind:       "Secret",
-				APIVersion: "v1",
+				Kind:       secretKind,
+				APIVersion: v1APIVersion,
 				Namespace:  secret.Namespace,
 				Name:       secret.Name,
 			},
@@ -116,8 +121,8 @@ var _ = Describe("Notification", func() {
 			Name: randomString(),
 			Type: libsveltosv1beta1.NotificationTypeSMTP,
 			NotificationRef: &corev1.ObjectReference{
-				Kind:       "Secret",
-				APIVersion: "v1",
+				Kind:       secretKind,
+				APIVersion: v1APIVersion,
 				Namespace:  secret.Namespace,
 				Name:       secret.Name,
 			},
@@ -170,8 +175,8 @@ var _ = Describe("Notification", func() {
 			Name: randomString(),
 			Type: libsveltosv1beta1.NotificationTypeSMTP,
 			NotificationRef: &corev1.ObjectReference{
-				Kind:       "Secret",
-				APIVersion: "v1",
+				Kind:       secretKind,
+				APIVersion: v1APIVersion,
 				Namespace:  secret.Namespace,
 				Name:       secret.Name,
 			},
@@ -260,8 +265,8 @@ var _ = Describe("Notification", func() {
 			Name: randomString(),
 			Type: libsveltosv1beta1.NotificationTypeSMTP,
 			NotificationRef: &corev1.ObjectReference{
-				Kind:       "Secret",
-				APIVersion: "v1",
+				Kind:       secretKind,
+				APIVersion: v1APIVersion,
 				Namespace:  secret.Namespace,
 				Name:       secret.Name,
 			},

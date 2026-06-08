@@ -372,6 +372,11 @@ data:
       csi-node-driver-registrar:
         tag: v2.10.1
         image: csi-node-driver-registrar`
+
+	specReplicasPath = "spec/replicas"
+	deploymentKind   = "Deployment"
+	appsGroup        = "apps"
+	v1Version        = "v1"
 )
 
 var _ = Describe("Applier utils", func() {
@@ -463,14 +468,14 @@ type: ExternalName
 	It("transformDriftExclusionsToPatches transforms DriftExclusions to Patches", func() {
 		driftExclusions := []libsveltosv1beta1.DriftExclusion{
 			{
-				Paths: []string{"spec/replicas"},
+				Paths: []string{specReplicasPath},
 			},
 			{
 				Paths: []string{"spec/template/spec/containers[*]image"},
 				Target: &libsveltosv1beta1.PatchSelector{
-					Kind:    "Deployment",
-					Group:   "apps",
-					Version: "v1",
+					Kind:    deploymentKind,
+					Group:   appsGroup,
+					Version: v1Version,
 				},
 			},
 		}
@@ -498,9 +503,9 @@ type: ExternalName
 			{
 				Paths: []string{"spec/replicas", "metadata/labels"},
 				Target: &libsveltosv1beta1.PatchSelector{
-					Kind:    "Deployment",
-					Group:   "apps",
-					Version: "v1",
+					Kind:    deploymentKind,
+					Group:   appsGroup,
+					Version: v1Version,
 				},
 			},
 			{
@@ -508,7 +513,7 @@ type: ExternalName
 				Target: &libsveltosv1beta1.PatchSelector{
 					Kind:    "Pod",
 					Group:   "",
-					Version: "v1",
+					Version: v1Version,
 				},
 			},
 		}

@@ -39,6 +39,8 @@ const (
 	serviceAccountNamespaceLabel = "projectsveltos.io/role-service-account-namespace"
 
 	key = "kubeconfig"
+
+	roleRequestLabelOK = "ok"
 )
 
 // Platform admin can create RoleRequests to grant other admins
@@ -142,7 +144,7 @@ func DeleteSecret(ctx context.Context, c client.Client,
 func ListSecretForOwner(ctx context.Context, c client.Client, owner client.Object) ([]corev1.Secret, error) {
 	listOption := []client.ListOption{
 		client.MatchingLabels{
-			libsveltosv1beta1.RoleRequestLabel: "ok",
+			libsveltosv1beta1.RoleRequestLabel: roleRequestLabelOK,
 		},
 	}
 
@@ -168,7 +170,7 @@ func ListSecretForOwner(ctx context.Context, c client.Client, owner client.Objec
 func ListSecrets(ctx context.Context, c client.Client) ([]corev1.Secret, error) {
 	listOption := []client.ListOption{
 		client.MatchingLabels{
-			libsveltosv1beta1.RoleRequestLabel: "ok",
+			libsveltosv1beta1.RoleRequestLabel: roleRequestLabelOK,
 		},
 	}
 
@@ -258,7 +260,7 @@ func createSecret(ctx context.Context, c client.Client,
 				clusterNameLabel:                   clusterName,
 				serviceAccountNameLabel:            serviceAccountName,
 				serviceAccountNamespaceLabel:       serviceAccountNamespace,
-				libsveltosv1beta1.RoleRequestLabel: "ok",
+				libsveltosv1beta1.RoleRequestLabel: roleRequestLabelOK,
 			},
 		},
 		Data: map[string][]byte{
