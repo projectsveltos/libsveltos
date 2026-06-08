@@ -28,6 +28,36 @@ import (
 	"github.com/projectsveltos/libsveltos/lib/patcher"
 )
 
+const (
+	apiVersionKey     = "apiVersion"
+	kindKey           = "kind"
+	metadataKey       = "metadata"
+	nameKey           = "name"
+	namespaceKey      = "namespace"
+	labelsKey         = "labels"
+	specKey           = "spec"
+	containersKey     = "containers"
+	imageKey          = "image"
+	podKind           = "Pod"
+	pvcKind           = "PersistentVolumeClaim"
+	mypodName         = "mypod"
+	mycontainerName   = "mycontainer"
+	myimageName       = "myimage"
+	thanosNamePattern = "data-thanos-.*"
+	thanosRulerName   = "data-thanos-ruler-0"
+	monitoringNs      = "monitoring"
+	veleroExclude     = "true"
+	veleroLabel       = "velero.io/exclude-from-backup"
+	v1Version         = "v1"
+
+	removePatchVelero = `- op: remove
+  path: /metadata/labels/velero.io~1exclude-from-backup`
+
+	addPatchVelero = `- op: add
+  path: /metadata/labels/velero.io~1exclude-from-backup
+  value: "true"`
+)
+
 var (
 	podYAML = `apiVersion: v1
 kind: Pod
@@ -59,20 +89,20 @@ var _ = Describe("pathExistsInObject", func() {
 	BeforeEach(func() {
 		obj = &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "v1",
-				"kind":       "Pod",
-				"metadata": map[string]interface{}{
-					"name": "mypod",
-					"labels": map[string]interface{}{
-						"velero.io/exclude-from-backup": "true",
-						"env":                           "prod",
+				apiVersionKey: v1Version,
+				kindKey:       podKind,
+				metadataKey: map[string]interface{}{
+					nameKey: mypodName,
+					labelsKey: map[string]interface{}{
+						veleroLabel: veleroExclude,
+						"env":       "prod",
 					},
 				},
-				"spec": map[string]interface{}{
-					"containers": []interface{}{
+				specKey: map[string]interface{}{
+					containersKey: []interface{}{
 						map[string]interface{}{
-							"name":  "mycontainer",
-							"image": "myimage",
+							nameKey:  mycontainerName,
+							imageKey: myimageName,
 						},
 					},
 				},
@@ -115,13 +145,13 @@ var _ = Describe("filterPatchOperations", func() {
 	BeforeEach(func() {
 		obj = &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "v1",
-				"kind":       "Pod",
-				"metadata": map[string]interface{}{
-					"name": "mypod",
-					"labels": map[string]interface{}{
-						"velero.io/exclude-from-backup": "true",
-						"existing-label":                "value",
+				apiVersionKey: v1Version,
+				kindKey:       podKind,
+				metadataKey: map[string]interface{}{
+					nameKey: mypodName,
+					labelsKey: map[string]interface{}{
+						veleroLabel:      veleroExclude,
+						"existing-label": "value",
 					},
 				},
 			},
@@ -201,8 +231,7 @@ metadata:
 
 	It("keeps a remove op for a ~1-encoded path that exists", func() {
 		p := sveltosv1beta1.Patch{
-			Patch: `- op: remove
-  path: /metadata/labels/velero.io~1exclude-from-backup`,
+			Patch: removePatchVelero,
 		}
 		_, keep := patcher.FilterPatchOperations(p, obj)
 		Expect(keep).To(BeTrue())
@@ -221,13 +250,11 @@ metadata:
 var _ = Describe("validatePatch", func() {
 	It("accepts a JSON patch without metadata.name", func() {
 		p := sveltosv1beta1.Patch{
-			Patch: `- op: add
-  path: /metadata/labels/velero.io~1exclude-from-backup
-  value: "true"`,
+			Patch: addPatchVelero,
 			Target: &sveltosv1beta1.PatchSelector{
-				Kind:    "PersistentVolumeClaim",
-				Version: "v1",
-				Name:    "data-thanos-.*",
+				Kind:    pvcKind,
+				Version: v1Version,
+				Name:    thanosNamePattern,
 			},
 		}
 		Expect(patcher.ValidatePatch(p)).To(Succeed())
@@ -253,9 +280,9 @@ metadata:
   labels:
     velero.io/exclude-from-backup: "true"`,
 			Target: &sveltosv1beta1.PatchSelector{
-				Kind:    "PersistentVolumeClaim",
-				Version: "v1",
-				Name:    "data-thanos-.*",
+				Kind:    pvcKind,
+				Version: v1Version,
+				Name:    thanosNamePattern,
 			},
 		}
 		err := patcher.ValidatePatch(p)
@@ -281,13 +308,13 @@ metadata:
   name: patch
   labels:
     test: value`,
-					Target: &sveltosv1beta1.PatchSelector{Kind: "Pod"},
+					Target: &sveltosv1beta1.PatchSelector{Kind: podKind},
 				},
 				{
 					Patch: `- op: add
   path: /metadata/labels/environment
   value: production`,
-					Target: &sveltosv1beta1.PatchSelector{Kind: "Pod"},
+					Target: &sveltosv1beta1.PatchSelector{Kind: podKind},
 				},
 			},
 		}
@@ -297,16 +324,16 @@ metadata:
 		unstructuredObjs = []*unstructured.Unstructured{
 			{
 				Object: map[string]interface{}{
-					"apiVersion": "v1",
-					"kind":       "Pod",
-					"metadata": map[string]interface{}{
-						"name": "mypod",
+					apiVersionKey: v1Version,
+					kindKey:       podKind,
+					metadataKey: map[string]interface{}{
+						nameKey: mypodName,
 					},
-					"spec": map[string]interface{}{
-						"containers": []interface{}{
+					specKey: map[string]interface{}{
+						containersKey: []interface{}{
 							map[string]interface{}{
-								"name":  "mycontainer",
-								"image": "myimage",
+								nameKey:  mycontainerName,
+								imageKey: myimageName,
 							},
 						},
 					},
@@ -328,9 +355,9 @@ metadata:
 
 			// Validate the output object
 			obj := parsedObjects[0]
-			Expect(obj.GetAPIVersion()).To(Equal("v1"))
-			Expect(obj.GetKind()).To(Equal("Pod"))
-			Expect(obj.GetName()).To(Equal("mypod"))
+			Expect(obj.GetAPIVersion()).To(Equal(v1Version))
+			Expect(obj.GetKind()).To(Equal(podKind))
+			Expect(obj.GetName()).To(Equal(mypodName))
 			Expect(obj.GetLabels()["test"]).To(Equal("value"))
 			Expect(obj.GetLabels()["environment"]).To(Equal("production"))
 		})
@@ -345,9 +372,9 @@ metadata:
 
 			// Validate the output object
 			obj := outputObjects[0]
-			Expect(obj.GetAPIVersion()).To(Equal("v1"))
-			Expect(obj.GetKind()).To(Equal("Pod"))
-			Expect(obj.GetName()).To(Equal("mypod"))
+			Expect(obj.GetAPIVersion()).To(Equal(v1Version))
+			Expect(obj.GetKind()).To(Equal(podKind))
+			Expect(obj.GetName()).To(Equal(mypodName))
 			Expect(obj.GetLabels()["test"]).To(Equal("value"))
 			Expect(obj.GetLabels()["environment"]).To(Equal("production"))
 		})
@@ -355,27 +382,25 @@ metadata:
 		It("adds a label whose key contains a slash (RFC 6902 ~1 encoding)", func() {
 			pvc := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": "v1",
-					"kind":       "PersistentVolumeClaim",
-					"metadata": map[string]interface{}{
-						"name":      "data-thanos-ruler-0",
-						"namespace": "monitoring",
-						"labels":    map[string]interface{}{},
+					apiVersionKey: v1Version,
+					kindKey:       pvcKind,
+					metadataKey: map[string]interface{}{
+						nameKey:      thanosRulerName,
+						namespaceKey: monitoringNs,
+						"labels":     map[string]interface{}{},
 					},
-					"spec": map[string]interface{}{},
+					specKey: map[string]interface{}{},
 				},
 			}
 
 			r := &patcher.CustomPatchPostRenderer{
 				Patches: []sveltosv1beta1.Patch{
 					{
-						Patch: `- op: add
-  path: /metadata/labels/velero.io~1exclude-from-backup
-  value: "true"`,
+						Patch: addPatchVelero,
 						Target: &sveltosv1beta1.PatchSelector{
-							Version: "v1",
-							Kind:    "PersistentVolumeClaim",
-							Name:    "data-thanos-.*",
+							Version: v1Version,
+							Kind:    pvcKind,
+							Name:    thanosNamePattern,
 						},
 					},
 				},
@@ -384,35 +409,34 @@ metadata:
 			result, err := r.RunUnstructured([]*unstructured.Unstructured{pvc})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(result).To(HaveLen(1))
-			Expect(result[0].GetLabels()).To(HaveKey("velero.io/exclude-from-backup"))
-			Expect(result[0].GetLabels()["velero.io/exclude-from-backup"]).To(Equal("true"))
+			Expect(result[0].GetLabels()).To(HaveKey(veleroLabel))
+			Expect(result[0].GetLabels()[veleroLabel]).To(Equal(veleroExclude))
 		})
 
 		It("removes a label whose key contains a slash (RFC 6902 ~1 encoding)", func() {
 			pvc := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": "v1",
-					"kind":       "PersistentVolumeClaim",
-					"metadata": map[string]interface{}{
-						"name":      "data-thanos-ruler-0",
-						"namespace": "monitoring",
-						"labels": map[string]interface{}{
-							"velero.io/exclude-from-backup": "true",
+					apiVersionKey: v1Version,
+					kindKey:       pvcKind,
+					metadataKey: map[string]interface{}{
+						nameKey:      thanosRulerName,
+						namespaceKey: monitoringNs,
+						labelsKey: map[string]interface{}{
+							veleroLabel: veleroExclude,
 						},
 					},
-					"spec": map[string]interface{}{},
+					specKey: map[string]interface{}{},
 				},
 			}
 
 			r := &patcher.CustomPatchPostRenderer{
 				Patches: []sveltosv1beta1.Patch{
 					{
-						Patch: `- op: remove
-  path: /metadata/labels/velero.io~1exclude-from-backup`,
+						Patch: removePatchVelero,
 						Target: &sveltosv1beta1.PatchSelector{
-							Version: "v1",
-							Kind:    "PersistentVolumeClaim",
-							Name:    "data-thanos-.*",
+							Version: v1Version,
+							Kind:    pvcKind,
+							Name:    thanosNamePattern,
 						},
 					},
 				},
@@ -421,7 +445,7 @@ metadata:
 			result, err := r.RunUnstructured([]*unstructured.Unstructured{pvc})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(result).To(HaveLen(1))
-			Expect(result[0].GetLabels()).ToNot(HaveKey("velero.io/exclude-from-backup"))
+			Expect(result[0].GetLabels()).ToNot(HaveKey(veleroLabel))
 		})
 
 		It("with multiple resources correctly apply patches to unstructured objects and return modified objects", func() {
@@ -452,9 +476,9 @@ metadata:
 
 			// Validate the output object
 			obj := outputObjects[2]
-			Expect(obj.GetAPIVersion()).To(Equal("v1"))
-			Expect(obj.GetKind()).To(Equal("Pod"))
-			Expect(obj.GetName()).To(Equal("mypod"))
+			Expect(obj.GetAPIVersion()).To(Equal(v1Version))
+			Expect(obj.GetKind()).To(Equal(podKind))
+			Expect(obj.GetName()).To(Equal(mypodName))
 			Expect(obj.GetLabels()["test"]).To(Equal("value"))
 			Expect(obj.GetLabels()["environment"]).To(Equal("production"))
 		})

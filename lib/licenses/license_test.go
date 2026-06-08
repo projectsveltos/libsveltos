@@ -36,6 +36,10 @@ import (
 	license "github.com/projectsveltos/libsveltos/lib/licenses"
 )
 
+const (
+	kubeSystemNamespace = "kube-system"
+)
+
 var _ = Describe("License", func() {
 	var logger logr.Logger
 
@@ -115,7 +119,7 @@ data:
 	It("Verifies Cluster Fingerprint", func() {
 		ns := &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "kube-system",
+				Name: kubeSystemNamespace,
 				UID:  "000cbaab-0898-4932-a066-8c5cff6c9752",
 			},
 		}
@@ -154,7 +158,7 @@ data:
 		Expect(licenseVerificationResult.Payload.MaxClusters).To(Equal(1))
 
 		currentNs := &corev1.Namespace{}
-		Expect(c.Get(context.TODO(), types.NamespacedName{Name: "kube-system"}, currentNs)).To(Succeed())
+		Expect(c.Get(context.TODO(), types.NamespacedName{Name: kubeSystemNamespace}, currentNs)).To(Succeed())
 		currentNs.UID = "000cbaab-1234-4932-a111-8c5cff6c9752"
 		Expect(c.Update(context.TODO(), currentNs)).To(Succeed())
 

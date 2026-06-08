@@ -18,6 +18,10 @@ import (
 	"github.com/projectsveltos/libsveltos/lib/roles"
 )
 
+const (
+	roleRequestLabelOK = "ok"
+)
+
 var _ = Describe("Roles", func() {
 	It("GetKubeconfig returns nil when secret does not exist", func() {
 		clusterNamespace := randomString()
@@ -389,7 +393,7 @@ var _ = Describe("Roles", func() {
 				Namespace: randomString(),
 				Name:      randomString(),
 				Labels: map[string]string{
-					libsveltosv1beta1.RoleRequestLabel: "ok",
+					libsveltosv1beta1.RoleRequestLabel: roleRequestLabelOK,
 				},
 				OwnerReferences: []metav1.OwnerReference{
 					{APIVersion: roleRequest1.APIVersion, Kind: libsveltosv1beta1.RoleRequestKind, Name: roleRequest1.Name},
@@ -412,7 +416,7 @@ var _ = Describe("Roles", func() {
 				Namespace: randomString(),
 				Name:      randomString(),
 				Labels: map[string]string{
-					libsveltosv1beta1.RoleRequestLabel: "ok",
+					libsveltosv1beta1.RoleRequestLabel: roleRequestLabelOK,
 				},
 			},
 		}
@@ -443,7 +447,7 @@ var _ = Describe("Roles", func() {
 							Name:       randomString()},
 					},
 					Labels: map[string]string{
-						libsveltosv1beta1.RoleRequestLabel: "ok",
+						libsveltosv1beta1.RoleRequestLabel: roleRequestLabelOK,
 					},
 				},
 			}

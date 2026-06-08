@@ -121,7 +121,7 @@ var _ = Describe("Cluster utils", func() {
 				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"value": randomData,
+				secretDataKey: randomData,
 			},
 		}
 
@@ -131,7 +131,7 @@ var _ = Describe("Cluster utils", func() {
 				Name:      cluster.Name + clusterproxy.CapiKubeconfigSecretNamePostfix,
 			},
 			Data: map[string][]byte{
-				"value": randomData,
+				secretDataKey: randomData,
 			},
 		}
 
@@ -197,7 +197,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster1.Namespace, Name: cluster1.Name,
-			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+			Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String(),
 		}))
 
 		matches, err = clusterproxy.GetListOfClusters(context.TODO(), c, cluster1.Namespace, "",
@@ -206,7 +206,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster1.Namespace, Name: cluster1.Name,
-			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+			Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String(),
 		}))
 
 		matches, err = clusterproxy.GetListOfClusters(context.TODO(), c, cluster1.Namespace, onboardAnnotation,
@@ -215,7 +215,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster1.Namespace, Name: cluster1.Name,
-			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+			Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String(),
 		}))
 	})
 
@@ -268,7 +268,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster1.Namespace, Name: cluster1.Name,
-			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+			Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String(),
 		}))
 
 		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, "", onboardAnnotation, shardKey,
@@ -277,7 +277,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster1.Namespace, Name: cluster1.Name,
-			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+			Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String(),
 		}))
 
 		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, "", "", "",
@@ -286,7 +286,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster3.Namespace, Name: cluster3.Name,
-			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+			Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String(),
 		}))
 
 		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, cluster1.Namespace, "",
@@ -295,7 +295,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster1.Namespace, Name: cluster1.Name,
-			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+			Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String(),
 		}))
 
 		matches, err = clusterproxy.GetListOfClustersForShardKey(context.TODO(), c, cluster1.Namespace,
@@ -304,7 +304,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(1))
 		Expect(matches).To(ContainElement(corev1.ObjectReference{
 			Namespace: cluster1.Namespace, Name: cluster1.Name,
-			Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String(),
+			Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String(),
 		}))
 	})
 
@@ -359,22 +359,22 @@ var _ = Describe("Cluster utils", func() {
 			LabelSelector: metav1.LabelSelector{
 				MatchExpressions: []metav1.LabelSelectorRequirement{
 					{
-						Key:      "env",
+						Key:      envLabelKey,
 						Operator: metav1.LabelSelectorOpIn,
-						Values:   []string{"qa"},
+						Values:   []string{qaLabelValue},
 					},
 					{
-						Key:      "zone",
+						Key:      zoneLabelKey,
 						Operator: metav1.LabelSelectorOpIn,
-						Values:   []string{"west"},
+						Values:   []string{westLabelValue},
 					},
 				},
 			},
 		}
 
 		currentLabels := map[string]string{
-			"env":  "qa",
-			"zone": "west",
+			envLabelKey:  qaLabelValue,
+			zoneLabelKey: westLabelValue,
 		}
 
 		sveltosCluster := &libsveltosv1beta1.SveltosCluster{
@@ -414,7 +414,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(2))
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name,
-				Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String()}))
+				Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String()}))
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
 				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
@@ -498,7 +498,7 @@ var _ = Describe("Cluster utils", func() {
 		Expect(len(matches)).To(Equal(2))
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: cluster.Namespace, Name: cluster.Name,
-				Kind: "Cluster", APIVersion: clusterv1.GroupVersion.String()}))
+				Kind: capiClusterKind, APIVersion: clusterv1.GroupVersion.String()}))
 		Expect(matches).To(ContainElement(
 			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
 				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))

@@ -33,6 +33,12 @@ import (
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
+const (
+	pausedAnnotationValue = "true"
+	departmentLabelKey    = "department"
+	engLabelValue         = "eng"
+)
+
 var _ = Describe("ClusterProfile Predicates: SvelotsClusterPredicates", func() {
 	var logger logr.Logger
 	var cluster *libsveltosv1beta1.SveltosCluster
@@ -63,7 +69,7 @@ var _ = Describe("ClusterProfile Predicates: SvelotsClusterPredicates", func() {
 		clusterPredicate := predicates.SveltosClusterPredicates(logger)
 
 		cluster.Spec.Paused = true
-		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: "true"}
+		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: pausedAnnotationValue}
 
 		e := event.CreateEvent{
 			Object: cluster,
@@ -94,7 +100,7 @@ var _ = Describe("ClusterProfile Predicates: SvelotsClusterPredicates", func() {
 			},
 		}
 		oldCluster.Spec.Paused = true
-		oldCluster.Annotations = map[string]string{clusterv1.PausedAnnotation: "true"}
+		oldCluster.Annotations = map[string]string{clusterv1.PausedAnnotation: pausedAnnotationValue}
 
 		e := event.UpdateEvent{
 			ObjectNew: cluster,
@@ -108,7 +114,7 @@ var _ = Describe("ClusterProfile Predicates: SvelotsClusterPredicates", func() {
 		clusterPredicate := predicates.SveltosClusterPredicates(logger)
 
 		cluster.Spec.Paused = true
-		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: "true"}
+		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: pausedAnnotationValue}
 		oldCluster := &libsveltosv1beta1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      cluster.Name,
@@ -149,7 +155,7 @@ var _ = Describe("ClusterProfile Predicates: SvelotsClusterPredicates", func() {
 	It("Update reprocesses when sveltos Cluster labels change", func() {
 		clusterPredicate := predicates.SveltosClusterPredicates(logger)
 
-		cluster.Labels = map[string]string{"department": "eng"}
+		cluster.Labels = map[string]string{departmentLabelKey: engLabelValue}
 
 		oldCluster := &libsveltosv1beta1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -264,7 +270,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 
 		paused := true
 		cluster.Spec.Paused = &paused
-		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: "true"}
+		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: pausedAnnotationValue}
 
 		result := clusterPredicate.Create(event.TypedCreateEvent[*clusterv1.Cluster]{Object: cluster})
 		Expect(result).To(BeFalse())
@@ -290,7 +296,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 
 		paused = true
 		oldCluster.Spec.Paused = &paused
-		oldCluster.Annotations = map[string]string{clusterv1.PausedAnnotation: "true"}
+		oldCluster.Annotations = map[string]string{clusterv1.PausedAnnotation: pausedAnnotationValue}
 
 		result := clusterPredicate.Update(event.TypedUpdateEvent[*clusterv1.Cluster]{ObjectNew: cluster, ObjectOld: oldCluster})
 		Expect(result).To(BeTrue())
@@ -300,7 +306,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 
 		paused := true
 		cluster.Spec.Paused = &paused
-		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: "true"}
+		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: pausedAnnotationValue}
 		oldCluster := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      cluster.Name,
@@ -335,7 +341,7 @@ var _ = Describe("ClusterProfile Predicates: ClusterPredicates", func() {
 	It("Update reprocesses when v1Cluster labels change", func() {
 		clusterPredicate := predicates.ClusterPredicate{Logger: logger}
 
-		cluster.Labels = map[string]string{"department": "eng"}
+		cluster.Labels = map[string]string{departmentLabelKey: engLabelValue}
 
 		oldCluster := &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{

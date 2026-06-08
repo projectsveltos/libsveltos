@@ -59,6 +59,8 @@ metadata:
   name: deploy-resources
   namespace: default
   uid: ef15985d-045b-496c-92d9-e31e99dc13ee`
+
+	clusterProfileKind = "ClusterProfile"
 )
 
 var _ = Describe("Client", func() {
@@ -86,7 +88,7 @@ var _ = Describe("Client", func() {
 					},
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							Kind:       "ClusterProfile",
+							Kind:       clusterProfileKind,
 							APIVersion: "config.projectsveltos.io/v1beta1",
 							Name:       cp.GetName(),
 							UID:        cp.GetUID(),
@@ -145,7 +147,7 @@ var _ = Describe("Client", func() {
 						deployer.ReferenceNameAnnotation:      configMapName,
 						deployer.ReferenceNamespaceAnnotation: configMapNs,
 						deployer.PolicyHash:                   policyHash,
-						deployer.OwnerKind:                    "ClusterProfile",
+						deployer.OwnerKind:                    clusterProfileKind,
 						deployer.OwnerName:                    cp.GetName(),
 					},
 				},
@@ -208,7 +210,7 @@ var _ = Describe("Client", func() {
 						deployer.ReferenceNameAnnotation:      configMapName,
 						deployer.ReferenceNamespaceAnnotation: configMapNs,
 						deployer.PolicyHash:                   policyHash,
-						deployer.OwnerKind:                    "ClusterProfile",
+						deployer.OwnerKind:                    clusterProfileKind,
 						deployer.OwnerName:                    cp.GetName(),
 					},
 				},
