@@ -174,13 +174,16 @@ func GetUnstructured(section []byte, logger logr.Logger) ([]*unstructured.Unstru
 	return policies, nil
 }
 
+var (
+	reCommentLine = regexp.MustCompile(`(?m)^\s*#([^#].*?)$`)
+	reEmptyLine   = regexp.MustCompile(`(?m)^\s*$`)
+)
+
 // removeCommentsAndEmptyLines removes any line containing just YAML comments
 // and any empty lines
 func removeCommentsAndEmptyLines(text string) string {
-	commentLine := regexp.MustCompile(`(?m)^\s*#([^#].*?)$`)
-	result := commentLine.ReplaceAllString(text, "")
-	emptyLine := regexp.MustCompile(`(?m)^\s*$`)
-	result = emptyLine.ReplaceAllString(result, "")
+	result := reCommentLine.ReplaceAllString(text, "")
+	result = reEmptyLine.ReplaceAllString(result, "")
 	return result
 }
 
