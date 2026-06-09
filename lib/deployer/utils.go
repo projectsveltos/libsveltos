@@ -228,6 +228,9 @@ func ValidateObjectForUpdate(ctx context.Context, dr dynamic.ResourceInterface,
 // getReferenceInfo extracts the kind, namespace, and name from object annotations
 // and falls back to labels if the annotations are missing or the annotation map is nil.
 func getReferenceInfo(object *unstructured.Unstructured) (kind, namespace, name string, tier int32) {
+	const defaultTier = 100
+	tier = int32(defaultTier)
+
 	// 1. Attempt to get info from Annotations
 	annotations := object.GetAnnotations()
 	if annotations != nil {
@@ -235,8 +238,6 @@ func getReferenceInfo(object *unstructured.Unstructured) (kind, namespace, name 
 		namespace = annotations[ReferenceNamespaceAnnotation]
 		name = annotations[ReferenceNameAnnotation]
 
-		const defaultTier = 100
-		tier := int32(defaultTier)
 		tierStr, tierOk := annotations[ReferenceTierAnnotation]
 		if tierOk {
 			tier64, err := strconv.ParseInt(tierStr, 10, 32)
