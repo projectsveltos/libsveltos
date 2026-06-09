@@ -116,7 +116,7 @@ type ClusterInfo struct {
 	// Cluster references the Cluster
 	Cluster corev1.ObjectReference `json:"cluster"`
 
-	// Hash represents the hash of the Classifier currently deployed
+	// Hash represents the hash of the resource currently deployed
 	// in the Cluster
 	Hash []byte `json:"hash"`
 
