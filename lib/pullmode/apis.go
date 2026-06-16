@@ -307,6 +307,8 @@ func CommitStagedResourcesForDeployment(ctx context.Context, c client.Client,
 		return err
 	}
 
+	manager.clearBundles(clusterNamespace, clusterName, requestorName, requestorFeature)
+
 	// If ConfigurationGroup is updated, we might have stale configurationBundles. Contininuing
 	// on the ClusterSummary example, previously ClusterSummary was referencing ConfigMap1 now it
 	// references ConfigMap2. So find and delete all stale ConfigurationBundles.
