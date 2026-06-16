@@ -43,7 +43,7 @@ const (
 )
 
 //nolint:lll // kubebuilder marker
-// +kubebuilder:validation:Enum:=AddonManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager;ShardController;UIBackend;SveltosAgent;ConversionWebhook;Techsupport;MCPServer
+// +kubebuilder:validation:Enum:=AddonManager;Classifier;ClassifierAgent;SveltosClusterManager;DriftDetectionManager;AccessManager;HealthCheckManager;EventManager;ShardController;UIBackend;SveltosAgent;ConversionWebhook;Techsupport;MCPServer;ClusterInventory
 
 type Component string
 
@@ -86,6 +86,9 @@ const (
 
 	// ComponentMCPServer is the MCP Server pod
 	ComponentMCPServer = Component("MCPServer")
+
+	// ComponentClusterInventory is the ClusterInventory controller pod
+	ComponentClusterInventory = Component("ClusterInventory")
 )
 
 // ComponentConfiguration is the debugging configuration to be applied to a Sveltos component.
