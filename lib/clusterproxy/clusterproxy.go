@@ -117,12 +117,22 @@ func GetCAPISecretData(ctx context.Context, logger logr.Logger, c client.Client,
 func GetSveltosKubernetesRestConfig(ctx context.Context, logger logr.Logger, c client.Client,
 	clusterNamespace, clusterName string) (*rest.Config, error) {
 
-	pullMode, err := isSveltosClusterInPullMode(ctx, c, clusterNamespace, clusterName, logger)
-	if err != nil {
+	cluster := &libsveltosv1beta1.SveltosCluster{}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: clusterNamespace, Name: clusterName}, cluster); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("SveltosCluster does not exist")
+			return nil, errors.Wrap(err,
+				fmt.Sprintf("SveltosCluster %s/%s does not exist", clusterNamespace, clusterName))
+		}
 		return nil, err
 	}
 
-	if pullMode {
+	if cluster.Spec.WorkloadIdentity != nil {
+		return getWorkloadIdentityRestConfig(ctx, c, clusterNamespace, clusterName,
+			cluster.Spec.WorkloadIdentity, logger)
+	}
+
+	if cluster.Spec.PullMode {
 		return nil, nil
 	}
 
