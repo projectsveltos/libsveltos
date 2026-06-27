@@ -215,4 +215,34 @@ var _ = Describe("CRD", func() {
 
 		Expect(string(yaml)).To(Equal(string(currentFile)))
 	})
+
+	It("Gets the SveltosLicense CustomResourceDefinition", func() {
+		yaml := crd.GetSveltosLicenseCRDYAML()
+
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_sveltoslicenses.lib.projectsveltos.io.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the ManagementClusterClassifier CustomResourceDefinition", func() {
+		yaml := crd.GetManagementClusterClassifierCRDYAML()
+
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_managementclusterclassifiers.lib.projectsveltos.io.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
+
+	It("Gets the ManagementClusterClassifierReport CustomResourceDefinition", func() {
+		yaml := crd.GetManagementClusterClassifierReportCRDYAML()
+
+		filename := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_managementclusterclassifierreports.lib.projectsveltos.io.yaml"
+		currentFile, err := os.ReadFile(filename)
+		Expect(err).To(BeNil())
+
+		Expect(string(yaml)).To(Equal(string(currentFile)))
+	})
 })

@@ -148,4 +148,10 @@ func main() {
 
 	sveltosLicenseFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_sveltoslicenses.lib.projectsveltos.io.yaml"
 	generate(sveltosLicenseFile, "sveltoslicenses", "SveltosLicense")
+
+	managementclusterclassifierFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_managementclusterclassifiers.lib.projectsveltos.io.yaml"
+	generate(managementclusterclassifierFile, "managementclusterclassifiers", "ManagementClusterClassifier")
+
+	managementclusterclassifierreportsFile := "../../manifests/apiextensions.k8s.io_v1_customresourcedefinition_managementclusterclassifierreports.lib.projectsveltos.io.yaml"
+	generate(managementclusterclassifierreportsFile, "managementclusterclassifierreports", "ManagementClusterClassifierReport")
 }

@@ -97,3 +97,11 @@ func GetConfigurationGroupCRDYAML() []byte {
 func GetSveltosLicenseCRDYAML() []byte {
 	return SveltosLicenseCRD
 }
+
+func GetManagementClusterClassifierCRDYAML() []byte {
+	return ManagementClusterClassifierCRD
+}
+
+func GetManagementClusterClassifierReportCRDYAML() []byte {
+	return ManagementClusterClassifierReportCRD
+}
