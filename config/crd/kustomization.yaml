@@ -22,6 +22,8 @@ resources:
 - bases/lib.projectsveltos.io_configurationbundles.yaml
 - bases/lib.projectsveltos.io_configurationgroups.yaml
 - bases/lib.projectsveltos.io_sveltoslicenses.yaml
+- bases/lib.projectsveltos.io_managementclusterclassifiers.yaml
+- bases/lib.projectsveltos.io_managementclusterclassifierreports.yaml
 
 patches:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
