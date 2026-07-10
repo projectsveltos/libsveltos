@@ -21,7 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -1289,6 +1289,11 @@ func (in *EventReportStatus) DeepCopyInto(out *EventReportStatus) {
 	if in.Phase != nil {
 		in, out := &in.Phase, &out.Phase
 		*out = new(ReportPhase)
+		**out = **in
+	}
+	if in.FailureMessage != nil {
+		in, out := &in.FailureMessage, &out.FailureMessage
+		*out = new(string)
 		**out = **in
 	}
 }

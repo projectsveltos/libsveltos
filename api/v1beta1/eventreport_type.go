@@ -94,6 +94,11 @@ type EventReportStatus struct {
 	// Phase represents the current phase of report.
 	// +optional
 	Phase *ReportPhase `json:"phase,omitempty"`
+
+	// FailureMessage reports the error hit while generating ClusterProfile(s) from this
+	// EventReport, if any. Set when processing fails; cleared on success.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
