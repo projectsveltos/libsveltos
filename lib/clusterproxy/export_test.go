@@ -20,6 +20,8 @@ import (
 	"time"
 
 	"k8s.io/client-go/rest"
+
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
 const (
@@ -32,11 +34,19 @@ var (
 	IsSveltosClusterInPullMode = isSveltosClusterInPullMode
 )
 
-// StoreTestWiCache inserts a pre-built entry into the workload identity cache.
+// StoreTestWiCache inserts a pre-built entry into the workload identity cache, hashed from wi
+// so it is only treated as valid for that exact WorkloadIdentityConfig.
 // For use in tests only.
-func StoreTestWiCache(namespace, name string, cfg *rest.Config, expiresAt time.Time) {
-	wiCache.Store(wiCacheKey(namespace, name), cachedRestConfig{config: cfg, expiresAt: expiresAt})
+func StoreTestWiCache(namespace, name string, cfg *rest.Config, expiresAt time.Time,
+	wi *libsveltosv1beta1.WorkloadIdentityConfig) {
+
+	specHash, _ := workloadIdentityConfigHash(wi)
+	wiCache.Store(wiCacheKey(namespace, name), cachedRestConfig{config: cfg, expiresAt: expiresAt, specHash: specHash})
 }
+
+// WorkloadIdentityConfigHashForTest calls the internal workloadIdentityConfigHash function.
+// For use in tests only.
+var WorkloadIdentityConfigHashForTest = workloadIdentityConfigHash
 
 // LoadTestWiCache returns the cached rest.Config and expiry for the given cluster.
 // For use in tests only.

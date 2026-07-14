@@ -35,6 +35,10 @@ import (
 const (
 	wiTestCachedEndpoint = "https://cached.example.com"
 	wiTestCASecretName   = "my-ca"
+	wiTestEndpoint       = "https://example.com"
+	wiTestGCPProjectID   = "proj"
+	wiTestGCPCluster     = "cluster"
+	wiTestGCPLocation    = "us-central1"
 )
 
 var _ = Describe("WorkloadIdentity cache", func() {
@@ -48,8 +52,12 @@ var _ = Describe("WorkloadIdentity cache", func() {
 	})
 
 	It("EvictWorkloadIdentityCache removes the entry", func() {
-		cfg := &rest.Config{Host: "https://example.com"}
-		clusterproxy.StoreTestWiCache(ns, name, cfg, time.Now().Add(time.Hour))
+		cfg := &rest.Config{Host: wiTestEndpoint}
+		wi := &libsveltosv1beta1.WorkloadIdentityConfig{
+			Provider: libsveltosv1beta1.WorkloadIdentityProviderGCP,
+			Endpoint: wiTestEndpoint,
+		}
+		clusterproxy.StoreTestWiCache(ns, name, cfg, time.Now().Add(time.Hour), wi)
 
 		_, _, ok := clusterproxy.LoadTestWiCache(ns, name)
 		Expect(ok).To(BeTrue())
@@ -61,18 +69,19 @@ var _ = Describe("WorkloadIdentity cache", func() {
 	})
 
 	It("GetSveltosKubernetesRestConfig returns cached config when not near expiry", func() {
-		cached := &rest.Config{Host: wiTestCachedEndpoint}
-		clusterproxy.StoreTestWiCache(ns, name, cached, time.Now().Add(time.Hour))
-
 		wi := &libsveltosv1beta1.WorkloadIdentityConfig{
 			Provider: libsveltosv1beta1.WorkloadIdentityProviderGCP,
 			Endpoint: wiTestCachedEndpoint,
 			GCP: &libsveltosv1beta1.GCPWorkloadIdentityConfig{
-				ProjectID:   "proj",
-				ClusterName: "cluster",
-				Location:    "us-central1",
+				ProjectID:   wiTestGCPProjectID,
+				ClusterName: wiTestGCPCluster,
+				Location:    wiTestGCPLocation,
 			},
 		}
+
+		cached := &rest.Config{Host: wiTestCachedEndpoint}
+		clusterproxy.StoreTestWiCache(ns, name, cached, time.Now().Add(time.Hour), wi)
+
 		sveltosCluster := &libsveltosv1beta1.SveltosCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: ns,
@@ -89,6 +98,72 @@ var _ = Describe("WorkloadIdentity cache", func() {
 		got, err := clusterproxy.GetSveltosKubernetesRestConfig(ctx, logger, c, ns, name)
 		Expect(err).To(BeNil())
 		Expect(got).To(Equal(cached))
+	})
+
+	It("GetSveltosKubernetesRestConfig does not reuse a cached config once workloadIdentity spec changes", func() {
+		oldWi := &libsveltosv1beta1.WorkloadIdentityConfig{
+			Provider: libsveltosv1beta1.WorkloadIdentityProviderGCP,
+			Endpoint: wiTestCachedEndpoint,
+			GCP: &libsveltosv1beta1.GCPWorkloadIdentityConfig{
+				ProjectID:   wiTestGCPProjectID,
+				ClusterName: wiTestGCPCluster,
+				Location:    wiTestGCPLocation,
+			},
+		}
+		cached := &rest.Config{Host: wiTestCachedEndpoint}
+		clusterproxy.StoreTestWiCache(ns, name, cached, time.Now().Add(time.Hour), oldWi)
+
+		// Same cluster, but the CA secret reference was added/changed: this must be treated
+		// as a different spec, not the one the cached entry was built from.
+		newWi := oldWi.DeepCopy()
+		newWi.CASecretRef = &corev1.LocalObjectReference{Name: wiTestCASecretName}
+
+		sveltosCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      name,
+			},
+			Spec: libsveltosv1beta1.SveltosClusterSpec{
+				WorkloadIdentity: newWi,
+			},
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sveltosCluster).Build()
+		logger := logr.Discard()
+
+		// The stale cached config must not be returned. Without real cloud credentials in this
+		// test environment the slow path is expected to fail obtaining a token, which is itself
+		// proof the fast path was correctly bypassed.
+		got, err := clusterproxy.GetSveltosKubernetesRestConfig(ctx, logger, c, ns, name)
+		Expect(err).ToNot(BeNil())
+		Expect(got).ToNot(Equal(cached))
+	})
+})
+
+var _ = Describe("workloadIdentityConfigHash", func() {
+	It("returns the same hash for equal configs and a different hash when the spec changes", func() {
+		wi := &libsveltosv1beta1.WorkloadIdentityConfig{
+			Provider: libsveltosv1beta1.WorkloadIdentityProviderGCP,
+			Endpoint: wiTestCachedEndpoint,
+			GCP: &libsveltosv1beta1.GCPWorkloadIdentityConfig{
+				ProjectID:   wiTestGCPProjectID,
+				ClusterName: wiTestGCPCluster,
+				Location:    wiTestGCPLocation,
+			},
+		}
+
+		h1, err := clusterproxy.WorkloadIdentityConfigHashForTest(wi)
+		Expect(err).To(BeNil())
+
+		h2, err := clusterproxy.WorkloadIdentityConfigHashForTest(wi.DeepCopy())
+		Expect(err).To(BeNil())
+		Expect(h1).To(Equal(h2))
+
+		withCA := wi.DeepCopy()
+		withCA.CASecretRef = &corev1.LocalObjectReference{Name: wiTestCASecretName}
+		h3, err := clusterproxy.WorkloadIdentityConfigHashForTest(withCA)
+		Expect(err).To(BeNil())
+		Expect(h3).ToNot(Equal(h1))
 	})
 })
 

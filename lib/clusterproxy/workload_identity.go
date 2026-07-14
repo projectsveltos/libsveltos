@@ -18,7 +18,9 @@ package clusterproxy
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -66,6 +68,10 @@ const (
 type cachedRestConfig struct {
 	config    *rest.Config
 	expiresAt time.Time
+	// specHash is the hash of the WorkloadIdentityConfig this entry was built from.
+	// A mismatch means spec.workloadIdentity changed since this entry was cached, so
+	// it must not be reused even though it has not expired yet.
+	specHash string
 }
 
 var (
@@ -84,6 +90,20 @@ func wiCacheKey(namespace, name string) string {
 	return namespace + "/" + name
 }
 
+// workloadIdentityConfigHash returns a stable hash of a WorkloadIdentityConfig, used to
+// detect when spec.workloadIdentity changes (provider, endpoint, cloud-specific fields,
+// or which CA Secret is referenced) so a stale cached rest.Config is not reused.
+// It does not detect the referenced CA Secret's content changing while keeping the same
+// name; that is a narrower, separate problem left for a follow-up.
+func workloadIdentityConfigHash(wi *libsveltosv1beta1.WorkloadIdentityConfig) (string, error) {
+	data, err := json.Marshal(wi)
+	if err != nil {
+		return "", err
+	}
+	hash := sha256.Sum256(data)
+	return fmt.Sprintf("%x", hash), nil
+}
+
 // getWorkloadIdentityRestConfig returns a rest.Config for a SveltosCluster that
 // uses cloud provider workload identity. Results are cached and proactively
 // refreshed when they approach expiry; concurrent calls for the same cluster are
@@ -98,10 +118,15 @@ func getWorkloadIdentityRestConfig(
 
 	key := wiCacheKey(clusterNamespace, clusterName)
 
-	// Fast path: valid cached entry.
+	specHash, err := workloadIdentityConfigHash(wi)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to hash workload identity config")
+	}
+
+	// Fast path: valid cached entry for the current spec.
 	if v, ok := wiCache.Load(key); ok {
 		entry := v.(cachedRestConfig)
-		if time.Until(entry.expiresAt) > wiRefreshThreshold {
+		if entry.specHash == specHash && time.Until(entry.expiresAt) > wiRefreshThreshold {
 			return entry.config, nil
 		}
 	}
@@ -133,7 +158,7 @@ func getWorkloadIdentityRestConfig(
 			return nil, err
 		}
 
-		wiCache.Store(key, cachedRestConfig{config: cfg, expiresAt: expiresAt})
+		wiCache.Store(key, cachedRestConfig{config: cfg, expiresAt: expiresAt, specHash: specHash})
 		return result{cfg: cfg}, nil
 	})
 	if err != nil {
