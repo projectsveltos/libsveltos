@@ -28,6 +28,8 @@ var (
 	UpdateConfigurationGroup    = updateConfigurationGroup
 	ReconcileConfigurationGroup = reconcileConfigurationGroup
 	GetConfigurationGroups      = getConfigurationGroups
+
+	ApplyBundleSetters = applyBundleSetters
 )
 
 const (

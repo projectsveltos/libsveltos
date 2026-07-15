@@ -1,5 +1,6 @@
 [![CI](https://github.com/projectsveltos/libsveltos/actions/workflows/main.yaml/badge.svg)](https://github.com/projectsveltos/libsveltos/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/projectsveltos/libsveltos)](https://goreportcard.com/report/github.com/projectsveltos/libsveltos)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/projectsveltos/libsveltos/badge)](https://scorecard.dev/viewer/?uri=github.com/projectsveltos/libsveltos)
+[![CodeQL](https://github.com/projectsveltos/libsveltos/actions/workflows/codeql.yaml/badge.svg)](https://github.com/projectsveltos/libsveltos/actions/workflows/codeql.yaml)
 [![Release](https://img.shields.io/github/v/release/projectsveltos/libsveltos)](https://github.com/projectsveltos/libsveltos/releases)
 [![License](https://img.shields.io/badge/license-Apache-blue.svg)](LICENSE)
 [![Slack](https://img.shields.io/badge/join%20slack-%23projectsveltos-brighteen)](https://join.slack.com/t/projectsveltos/shared_invite/zt-1hraownbr-W8NTs6LTimxLPB8Erj8Q6Q)
@@ -22,7 +23,7 @@
 ## What this repository is
 Libraries containing all pieces common across different repositories
 
-## Contributing 
+## Contributing
 
 ❤️ Your contributions are always welcome! If you want to contribute, have questions, noticed any bug or want to get the latest project news, you can connect with us in the following ways:
 

@@ -229,6 +229,7 @@ type BundleOptions struct {
 	ReferencedObjectName      string
 	ReferencedTier            int32
 	SkipNamespaceCreation     bool
+	Force                     bool
 }
 
 type BundleOption func(*BundleOptions)
@@ -254,7 +255,7 @@ func WithReleaseInfo(namespace, name, repoURL, chartVersion, icon string,
 }
 
 func WithResourceInfo(kind, namespace, name string,
-	tier int32, skipNamespaceCreation bool) BundleOption {
+	tier int32, skipNamespaceCreation, force bool) BundleOption {
 
 	return func(args *BundleOptions) {
 		args.ReferencedObjectKind = kind
@@ -262,6 +263,7 @@ func WithResourceInfo(kind, namespace, name string,
 		args.ReferencedObjectName = name
 		args.ReferencedTier = tier
 		args.SkipNamespaceCreation = skipNamespaceCreation
+		args.Force = force
 	}
 }
 
@@ -292,6 +294,7 @@ func applyBundleSetters(confBundle *libsveltosv1beta1.ConfigurationBundle, sette
 	confBundle.Spec.ReferencedObjectName = c.ReferencedObjectName
 	confBundle.Spec.ReferenceTier = c.ReferencedTier
 	confBundle.Spec.SkipNamespaceCreation = c.SkipNamespaceCreation
+	confBundle.Spec.Force = c.Force
 
 	return confBundle
 }

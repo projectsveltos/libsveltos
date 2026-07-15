@@ -378,6 +378,35 @@ var _ = Describe("Utils for pullmode APIs", func() {
 	})
 })
 
+var _ = Describe("applyBundleSetters", func() {
+	It("WithResourceInfo sets Force on the ConfigurationBundle", func() {
+		bundle := &libsveltosv1beta1.ConfigurationBundle{}
+
+		kind := randomString()
+		namespace := randomString()
+		name := randomString()
+		var tier int32 = 100
+
+		pullmode.ApplyBundleSetters(bundle, pullmode.WithResourceInfo(kind, namespace, name, tier, true, true))
+
+		Expect(bundle.Spec.ReferencedObjectKind).To(Equal(kind))
+		Expect(bundle.Spec.ReferencedObjectNamespace).To(Equal(namespace))
+		Expect(bundle.Spec.ReferencedObjectName).To(Equal(name))
+		Expect(bundle.Spec.ReferenceTier).To(Equal(tier))
+		Expect(bundle.Spec.SkipNamespaceCreation).To(BeTrue())
+		Expect(bundle.Spec.Force).To(BeTrue())
+	})
+
+	It("WithResourceInfo defaults Force to false", func() {
+		bundle := &libsveltosv1beta1.ConfigurationBundle{}
+
+		pullmode.ApplyBundleSetters(bundle,
+			pullmode.WithResourceInfo(randomString(), randomString(), randomString(), 100, false, false))
+
+		Expect(bundle.Spec.Force).To(BeFalse())
+	})
+})
+
 func getResources() []unstructured.Unstructured {
 	namespace := `  apiVersion: v1
   kind: Namespace

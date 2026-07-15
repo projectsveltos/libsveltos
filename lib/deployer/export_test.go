@@ -30,6 +30,8 @@ var (
 	CanDelete            = canDelete
 
 	DeployResourceSummaryInstance = deployResourceSummaryInstance
+
+	RequiresRecreate = requiresRecreate
 )
 
 func (d *deployer) SetInProgress(inProgress []string) {
