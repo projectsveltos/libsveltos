@@ -28,6 +28,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -39,6 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
@@ -53,7 +55,56 @@ import (
 
 const (
 	ReasonLabel = "projectsveltos.io/reason"
+
+	recreateDeletePollInterval = 2 * time.Second
+	recreateDeletePollTimeout  = time.Minute
 )
+
+// requiresRecreate returns true if err indicates the API server rejected the request
+// because of an invalid combination of fields (eg a Deployment with strategy.rollingUpdate
+// set while strategy.type is Recreate) or a field enforced as immutable. Either case can
+// only be resolved by deleting and recreating the object; a normal server-side apply patch
+// cannot clear a field it does not own or change a value the server refuses outright.
+func requiresRecreate(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if apierrors.IsInvalid(err) {
+		return true
+	}
+
+	for i := range immutableFieldErrorPatterns {
+		if immutableFieldErrorPatterns[i].MatchString(err.Error()) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// recreateResource deletes object and waits for it to be gone, so a subsequent create
+// does not race against a still-terminating object (eg one with finalizers).
+func recreateResource(ctx context.Context, dr dynamic.ResourceInterface, object *unstructured.Unstructured) error {
+	propagationPolicy := metav1.DeletePropagationBackground
+	err := dr.Delete(ctx, object.GetName(), metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to delete %s %s for recreate: %w",
+			object.GetObjectKind().GroupVersionKind().Kind, object.GetName(), err)
+	}
+
+	return wait.PollUntilContextTimeout(ctx, recreateDeletePollInterval, recreateDeletePollTimeout, true,
+		func(ctx context.Context) (bool, error) {
+			_, getErr := dr.Get(ctx, object.GetName(), metav1.GetOptions{})
+			if apierrors.IsNotFound(getErr) {
+				return true, nil
+			}
+			if getErr != nil {
+				return false, getErr
+			}
+			return false, nil
+		})
+}
 
 // CreateNamespace creates a namespace if it does not exist already
 // No action in DryRun mode.
@@ -177,6 +228,13 @@ func GetUnstructured(section []byte, logger logr.Logger) ([]*unstructured.Unstru
 var (
 	reCommentLine = regexp.MustCompile(`(?m)^\s*#([^#].*?)$`)
 	reEmptyLine   = regexp.MustCompile(`(?m)^\s*$`)
+
+	// immutableFieldErrorPatterns matches error messages returned by custom admission webhooks
+	// and Kubernetes CEL validation rules that enforce field immutability.
+	immutableFieldErrorPatterns = []*regexp.Regexp{
+		regexp.MustCompile(`.*is\simmutable.*`),
+		regexp.MustCompile(`.*immutable\sfield.*`),
+	}
 )
 
 // removeCommentsAndEmptyLines removes any line containing just YAML comments
@@ -443,7 +501,11 @@ func removeDriftExclusionsFields(ctx context.Context, dr dynamic.ResourceInterfa
 
 // UpdateResource creates or updates a resource in a Cluster.
 // No action in DryRun mode.
-func UpdateResource(ctx context.Context, dr dynamic.ResourceInterface, isDriftDetection, isDryRun bool,
+// When forceRecreate is true, and the apply is rejected with an error that only a
+// delete+recreate can resolve (see requiresRecreate), the object is deleted and recreated
+// instead of returning the error. This never applies to CustomResourceDefinitions, since
+// deleting one cascades to every instance of it.
+func UpdateResource(ctx context.Context, dr dynamic.ResourceInterface, isDriftDetection, isDryRun, forceRecreate bool,
 	driftExclusions []libsveltosv1beta1.DriftExclusion, object *unstructured.Unstructured, subresources []string,
 	logger logr.Logger) (*unstructured.Unstructured, error) {
 
@@ -503,6 +565,14 @@ func UpdateResource(ctx context.Context, dr dynamic.ResourceInterface, isDriftDe
 			}
 			return nil
 		})
+
+		if err != nil && !isDryRun && forceRecreate && requiresRecreate(err) {
+			l.V(logs.LogInfo).Info(fmt.Sprintf("apply rejected (%v), recreating resource", err))
+			if recreateErr := recreateResource(ctx, dr, object); recreateErr != nil {
+				return nil, recreateErr
+			}
+			updatedObject, err = dr.Patch(ctx, object.GetName(), types.ApplyPatchType, data, options)
+		}
 	}
 	if err != nil {
 		return nil, err

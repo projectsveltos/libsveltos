@@ -112,6 +112,14 @@ type ConfigurationBundleSpec struct {
 	// +kubebuilder:default:=false
 	// +optional
 	SkipNamespaceCreation bool `json:"skipNamespaceCreation,omitempty"`
+
+	// Force indicates whether Sveltos should delete and recreate a resource defined in this
+	// PolicyRef/KustomizationRef when an update is rejected with an error that only a
+	// delete+recreate can resolve (eg an invalid combination of fields, or a field enforced
+	// as immutable). By default, such errors are surfaced instead of recreating the resource.
+	// +kubebuilder:default:=false
+	// +optional
+	Force bool `json:"force,omitempty"`
 }
 
 type ConfigurationBundleStatus struct {

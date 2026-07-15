@@ -17,14 +17,22 @@ limitations under the License.
 package deployer_test
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2/textlogger"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/deployer"
+	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 )
 
 const (
@@ -677,5 +685,128 @@ status:
 		Expect(err).To(BeNil())
 		Expect(len(result)).To(Equal(1))
 		Expect(result[0].GetKind()).To(Equal("Service"))
+	})
+})
+
+var _ = Describe("requiresRecreate", func() {
+	It("returns true for Invalid errors", func() {
+		err := apierrors.NewInvalid(
+			schema.GroupKind{Group: appsGroup, Kind: "Deployment"}, "foo", nil)
+		Expect(deployer.RequiresRecreate(err)).To(BeTrue())
+	})
+
+	It("returns true for immutable field error text", func() {
+		Expect(deployer.RequiresRecreate(fmt.Errorf("the field xyz is immutable"))).To(BeTrue())
+		Expect(deployer.RequiresRecreate(fmt.Errorf("update rejected: immutable field detected"))).To(BeTrue())
+	})
+
+	It("returns false for unrelated errors", func() {
+		Expect(deployer.RequiresRecreate(apierrors.NewNotFound(
+			schema.GroupResource{Group: appsGroup, Resource: "deployments"}, "foo"))).To(BeFalse())
+		Expect(deployer.RequiresRecreate(fmt.Errorf("connection refused"))).To(BeFalse())
+	})
+
+	It("returns false for nil", func() {
+		Expect(deployer.RequiresRecreate(nil)).To(BeFalse())
+	})
+})
+
+const (
+	deploymentNoStrategyTemplate = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: %s
+  template:
+    metadata:
+      labels:
+        app: %s
+    spec:
+      containers:
+      - name: main
+        image: nginx:latest`
+
+	deploymentRecreateStrategyTemplate = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: %s
+  template:
+    metadata:
+      labels:
+        app: %s
+    spec:
+      containers:
+      - name: main
+        image: nginx:latest`
+)
+
+var _ = Describe("UpdateResource force recreate", func() {
+	It("recreates a Deployment when a strategy change is rejected by the API server and forceRecreate is set", func() {
+		name := randomString()
+		nsName := randomString()
+
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: nsName}}
+		Expect(testEnv.Create(context.TODO(), ns)).To(Succeed())
+		Expect(waitForObject(context.TODO(), testEnv.Client, ns)).To(Succeed())
+
+		logger := textlogger.NewLogger(textlogger.NewConfig())
+
+		initialYAML := fmt.Sprintf(deploymentNoStrategyTemplate, name, nsName, name, name)
+		initialObj, err := k8s_utils.GetUnstructured([]byte(initialYAML))
+		Expect(err).To(BeNil())
+
+		dr, err := k8s_utils.GetDynamicResourceInterface(testEnv.Config, initialObj.GroupVersionKind(), nsName)
+		Expect(err).To(BeNil())
+
+		// Deployed the same way Sveltos would have before strategy was added: no strategy set,
+		// so the API server defaults it to RollingUpdate with an explicit rollingUpdate value.
+		_, err = deployer.UpdateResource(context.TODO(), dr, false, false, false,
+			nil, initialObj, nil, logger)
+		Expect(err).To(BeNil())
+
+		Eventually(func() bool {
+			current, getErr := dr.Get(context.TODO(), name, metav1.GetOptions{})
+			if getErr != nil {
+				return false
+			}
+			_, found, _ := unstructured.NestedMap(current.Object, "spec", "strategy", "rollingUpdate")
+			return found
+		}, time.Minute, 5*time.Second).Should(BeTrue())
+
+		recreateYAML := fmt.Sprintf(deploymentRecreateStrategyTemplate, name, nsName, name, name)
+		recreateObj, err := k8s_utils.GetUnstructured([]byte(recreateYAML))
+		Expect(err).To(BeNil())
+
+		// Without forceRecreate, the leftover rollingUpdate value conflicts with the new
+		// strategy.type and the API server rejects the apply.
+		_, err = deployer.UpdateResource(context.TODO(), dr, false, false, false,
+			nil, recreateObj, nil, logger)
+		Expect(err).ToNot(BeNil())
+		Expect(err.Error()).To(ContainSubstring("rollingUpdate"))
+
+		// With forceRecreate, the object is deleted and recreated to match the new manifest.
+		updated, err := deployer.UpdateResource(context.TODO(), dr, false, false, true,
+			nil, recreateObj, nil, logger)
+		Expect(err).To(BeNil())
+		Expect(updated).ToNot(BeNil())
+
+		strategyType, _, _ := unstructured.NestedString(updated.Object, "spec", "strategy", "type")
+		Expect(strategyType).To(Equal("Recreate"))
+
+		_, found, _ := unstructured.NestedMap(updated.Object, "spec", "strategy", "rollingUpdate")
+		Expect(found).To(BeFalse())
 	})
 })
