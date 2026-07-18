@@ -339,6 +339,7 @@ type SveltosClusterStatus struct {
 //+kubebuilder:resource:path=sveltosclusters,scope=Namespaced
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready",description="Indicates whether cluster is ready to be managed by sveltos"
+//+kubebuilder:printcolumn:name="ConnectionStatus",type="string",JSONPath=".status.connectionStatus",priority=1,description="Whether connection is healthy"
 //+kubebuilder:printcolumn:name="Version",type="string",JSONPath=".status.version",description="Kubernetes version associated with this Cluster"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of SveltosCluster"
 //+kubebuilder:printcolumn:name="Shard",type="string",JSONPath=".metadata.annotations['sharding\\.projectsveltos\\.io/key']",description="Cluster Shard"
