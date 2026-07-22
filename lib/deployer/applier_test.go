@@ -711,6 +711,26 @@ var _ = Describe("requiresRecreate", func() {
 	})
 })
 
+var _ = Describe("GenerateErrorResourceReport", func() {
+	It("returns a ResourceReport with Error action and the error message", func() {
+		resource := &libsveltosv1beta1.Resource{
+			Name:      randomString(),
+			Namespace: randomString(),
+			Kind:      "StatefulSet",
+			Group:     appsGroup,
+			Version:   "v1",
+		}
+		applyErr := fmt.Errorf("StatefulSet.apps %q is invalid: spec: Forbidden: updates to statefulset spec "+
+			"for fields other than 'replicas' are forbidden", resource.Name)
+
+		report := deployer.GenerateErrorResourceReport(resource, applyErr)
+
+		Expect(report.Resource).To(Equal(*resource))
+		Expect(report.Action).To(Equal(string(libsveltosv1beta1.ErrorResourceAction)))
+		Expect(report.Message).To(Equal(applyErr.Error()))
+	})
+})
+
 const (
 	deploymentNoStrategyTemplate = `apiVersion: apps/v1
 kind: Deployment

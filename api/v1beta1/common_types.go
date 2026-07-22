@@ -491,7 +491,7 @@ type ResourceReport struct {
 	Resource Resource `json:"resource"`
 
 	// Action represent the type of operation on the Kubernetes resource.
-	// +kubebuilder:validation:Enum=No Action;Create;Update;Delete;Conflict
+	// +kubebuilder:validation:Enum=No Action;Create;Update;Delete;Conflict;Error
 	Action string `json:"action,omitempty"`
 
 	// Message is for any message that needs to added to better
@@ -509,4 +509,5 @@ const (
 	UpdateResourceAction   ResourceAction = "Update"
 	DeleteResourceAction   ResourceAction = "Delete"
 	ConflictResourceAction ResourceAction = "Conflict"
+	ErrorResourceAction    ResourceAction = "Error"
 )

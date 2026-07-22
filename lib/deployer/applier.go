@@ -464,6 +464,16 @@ func GenerateConflictResourceReport(ctx context.Context, dr dynamic.ResourceInte
 	return conflictReport
 }
 
+// GenerateErrorResourceReport returns a ResourceReport recording that a resource's apply failed,
+// so DryRun evaluations still surface which resource errored and why instead of omitting it entirely.
+func GenerateErrorResourceReport(resource *libsveltosv1beta1.Resource, err error) *libsveltosv1beta1.ResourceReport {
+	return &libsveltosv1beta1.ResourceReport{
+		Resource: *resource,
+		Action:   string(libsveltosv1beta1.ErrorResourceAction),
+		Message:  err.Error(),
+	}
+}
+
 func removeDriftExclusionsFields(ctx context.Context, dr dynamic.ResourceInterface, isDritfDetectionMode, isDryRun bool,
 	driftExclusions []libsveltosv1beta1.DriftExclusion, object *unstructured.Unstructured) (bool, error) {
 
