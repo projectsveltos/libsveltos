@@ -102,6 +102,28 @@ type LicensePayload struct {
 	ClusterFingerprint string `json:"clusterFingerprint,omitempty"`
 }
 
+// HasFeature reports whether feature is allowed by this license.
+//
+// An empty Features list means the license predates (or was issued without) per-feature
+// restriction: every feature is allowed, and callers should fall back to their own Plan/
+// MaxClusters-based checks. A non-empty Features list is an explicit allowlist — it must
+// contain feature — and this takes precedence over any other bypass (e.g. MaxClusters == 0
+// for unlimited clusters, or Plan tier): a license scoped to specific features stays scoped
+// to them regardless of what other entitlements it grants.
+func (lp *LicensePayload) HasFeature(feature Features) bool {
+	if len(lp.Features) == 0 {
+		return true
+	}
+
+	for i := range lp.Features {
+		if lp.Features[i] == feature {
+			return true
+		}
+	}
+
+	return false
+}
+
 // GetActualGracePeriod calculates the effective grace period duration.
 // It uses GracePeriodDays if set and positive, otherwise it uses the DefaultGracePeriod.
 func getActualGracePeriod(lp *LicensePayload) time.Duration {
