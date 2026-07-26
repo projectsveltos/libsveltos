@@ -88,8 +88,8 @@ metadata:
   namespace: %s
 type: Opaque
 data:
-  licenseData: eyJpZCI6IjY0MzNmYzk0LTE2MDYtNGZkOC04YTFkLThjYzg5NjRjOTk0MyIsImN1c3RvbWVyTmFtZSI6IkFjbWUgSW5jIiwiZmVhdHVyZXMiOlsiUHVsbE1vZGUiXSwiZXhwaXJhdGlvbkRhdGUiOiIyMDI2LTA3LTI1VDExOjU2OjQyLjcyNDIyM1oiLCJtYXhDbHVzdGVycyI6MSwiaXNzdWVkQXQiOiIyMDI1LTA3LTI1VDExOjU2OjQyLjcyNDIyM1oifQ==
-  licenseSignature: ghCbge6VIPr2O0Tvu8jMoEa7HeFBIWxBMOU6L1yq6p1vH7fRQBWGJSEYRH+byUlyXc3MU/mMfmRyphM+X8Birqr25JszIo7n8cps1Ec5FekHo7xBKwXnHp/HWOm6NMohtonCcjU76sd7QTsYbLHujC6NhEObjZzBxBN6TP+m0hYYTufh1gOYBH4BdVFNGlFkqslk1bL4pQo6573okkYilRg+WF+vOKdlidz+pruUcqGvByRsL3OcENN9NItSyP9S2Hkz7Wb0ENfaMhND5jqH8NIfsjNTTE8TeUtTphmUwiRyXV65Tkdv3nLA1ektoSS+fc318KEV0EjIwZPo5Yq7KZls9l7mBKZXj4YSy2Rhj6cD5NOMoAKdt5S82t2amQhWbShCCgWyDOmrBRXiyD9OK8y3TKQ6zQYGCwOYtpCZV+uD1WBdTwhrG0lnGZkfdzkkt4pftMx6YFGopFMLc5/REOPaSWtWGoR9/bwS4s0EWkDCyFrAatxtwhEbOV4pOx5uV2ap/j4v7Ag0PpHJnlnYkW/Z6q5VCov8U1I6OFaCcBoI1MDruubD0qiL2eE25kpTT//cWA/3qxEyh54UqQPeZo6Lno3dW3YlZr62uPXniOzHuOlGWikKK/Wly1gUHfjOUR2PyohC9u3BL9HAZp5IRz4/vXflVqAlv0yWaEbaXHQ=`,
+  licenseData: eyJpZCI6IjdmNDU0Mjk4LWUyYjItNDFhOC05MWRjLTc4ZjU5MjE4Nzk5MiIsImN1c3RvbWVyTmFtZSI6IkFjbWUgSW5jIiwiZmVhdHVyZXMiOlsiUHVsbE1vZGUiXSwicGxhbiI6IkVudGVycHJpc2UiLCJleHBpcmF0aW9uRGF0ZSI6IjIwMjctMDctMjZUMTM6NDc6MzEuODUyMjE2WiIsImdyYWNlUGVyaW9kRGF5cyI6NywibWF4Q2x1c3RlcnMiOjEsImlzc3VlZEF0IjoiMjAyNi0wNy0yNlQxMzo0NzozMS44NTIyMTZaIn0=
+  licenseSignature: BjYc6SDAcfrj4rBc4Fi0LfcdkU5qtAEojunwFV/0Llpsgx+IYi+XDyiq6VhZFDGl24tMcKOSHyPoTA3/5s5IIeZVpDRSd2+BXXFd9ccBScfyKRzDlO8Cg5rs0ejNwzrJKTNPxjorB7WxB3WK7ad6hbrmU6/PI6vdER7XjPsb3BuaDpzA5Z3wiuoyzB+BFJ9fbeVSDL2XxaZ+M/ifaM8/bGKsj7dUXwrP+ArNouObikxBsJsqZ9n1mgQx6WZm8fJOxct79Qmva1ys4O8QcP4MYY6rsbfag0xshpKKaZKMO10XugqtDYWz14pDV9vMKWEM0jMa4oHZmebMd4Wq+F/tB+GVIyYU8aWroYVKU5kkWFdFOcQozdNmyyLOn1umdJd2JouEWkcDHIRKfA1TpIfwaeKHB6JjW5WpKzbFfnrZUW9LWVOSegmv/HpgvXMiAXUyvVlhPHArPjBJyKhb5FNcb2kaYAk8ouFv/ydhFFcerTJMWp7bqkeLWlgMfUtw/oC0GKBLM090ovCkYAeaxjgWqm9sHVJCTFGeeqh2hff98UfAoQ5g9R9mP8e1rXNtWtdWK2UIaxcwymTKS7RNe2K3TpVORE4ESuOpSJMjUut7w2oAo1O7C2ZAlfoTi4JQmqBU9S+XG4AoEBkFPPbIlA8ak0xZU9Hh3Ony7WGr59tmkOU=`,
 			sveltosNamespace)
 
 		u, err := k8s_utils.GetUnstructured([]byte(secret))
@@ -133,8 +133,8 @@ metadata:
   namespace: %s
 type: Opaque
 data:
-  licenseData: eyJpZCI6IjI3NWU2MzUyLTFiYzUtNDUyOC04OTUwLWZhY2Q0MzdlMTI0YyIsImN1c3RvbWVyTmFtZSI6IkFjbWUgSW5jIiwiZmVhdHVyZXMiOlsiUHVsbE1vZGUiXSwiZXhwaXJhdGlvbkRhdGUiOiIyMDI2LTA3LTI1VDExOjU2OjE2Ljk4MzYxOVoiLCJtYXhDbHVzdGVycyI6MSwiaXNzdWVkQXQiOiIyMDI1LTA3LTI1VDExOjU2OjE2Ljk4MzYxOVoiLCJjbHVzdGVyRmluZ2VycHJpbnQiOiIwMDBjYmFhYi0wODk4LTQ5MzItYTA2Ni04YzVjZmY2Yzk3NTIifQ==
-  licenseSignature: U2LQnSviNdmc7z44DYedZCdg0IGUXvOzk+9rJWu4Rqtph/6e8qBdk2suy0QgftT+NJOB3hdzw1QHSYauw1AZ5EAPMcooSa6P0VVt/Fk9ceJgP+xS63SNogqbSaQadM1GoG5EzF5DpuNvNMxFLXJ9uXCOdt4N/G4k5O7oLTArnkp8cF0897SHnaeUuQBJzsswL4ZYbB3ikLRdXpr/ZW7+rmYc7Y/KpCcAb65LxPWCy28gJm1GP1olM9WkKuiR1z1jOLSgx0UhyATaDxNa60Jkk4RWaTlJMjXNxuEaZ7ptFlrcpV+d/3mSbWlNFKu5/u1iEMO9Jw4BHWKUvT8fpXw1FY07CRdcbHvtOn7Brm2SZCrTmzjFvS1STtgVLErd12f0dqpQ70XNz0q1BlHLVroyMzDFyksonne1KA9GhCNtjRzsXQzImdU/rJYv1bxoWK1c7hSJB4Bht4Gg75WVsjoLIhW0ME9b0E+j/LFukFIVeqb4j+QGDmDJhgvwLvxHl8XZqH/8kyn6rK29sro0Y7Kiqr3NkEsiwQSqj3Rf0nVyutpQBhW5aqEM5eyh1IY8nLYX7gGS3h7FfiPw61tj664w/PwTHIjwsvkpJ9hGbikadDBd3Ihj9Al9x5kCTkNmBpM07+UK3vK2HFYFDSZdAjWmMQx0O1suANKvl0kUu8ptYsw=`,
+  licenseData: eyJpZCI6ImRkY2JjNDVjLTI5NTgtNDM0Mi1hOWY5LTgzYzEzZmJjYjk5MyIsImN1c3RvbWVyTmFtZSI6IkFjbWUgSW5jIiwiZmVhdHVyZXMiOlsiUHVsbE1vZGUiXSwicGxhbiI6IkVudGVycHJpc2UiLCJleHBpcmF0aW9uRGF0ZSI6IjIwMjctMDctMjZUMTM6NTM6NDIuNjAzNjEyWiIsImdyYWNlUGVyaW9kRGF5cyI6NywibWF4Q2x1c3RlcnMiOjEsImlzc3VlZEF0IjoiMjAyNi0wNy0yNlQxMzo1Mzo0Mi42MDM2MTJaIiwiY2x1c3RlckZpbmdlcnByaW50IjoiMDAwY2JhYWItMDg5OC00OTMyLWEwNjYtOGM1Y2ZmNmM5NzUyIn0=
+  licenseSignature: BYUSUEDLPCKDB4U4KvcL2iVUl/WooEVFPUpglwvq83Ts0sRhUqTtcmxsPr8t4Z6Vp7xuXP3qvXd6ke+xUCq0JO/xfk1UCXuABkBki8gwrLL5EUyZpjtzr/ULQpkFFa0ElufBbkGHe5Bs/M6d2MuDLeY8l917aubE+dYyKTX7J0j1o8YZ/Ko327YHhwwjoP96YTALCCcu4LpxJ8WROrcoE3ngT/nWcfrpn/A5u7HI2/WPPMJpicIRxG3r3nPIyv3v71XrAaBi3CHpepoyJQmFoA4hLUn4KXfJWnB5DQ1FnHrf/KpMoVzVR2vGuWSo7Gh05KaSgdO1fjI+vs/iPhzCVErS5Lk6MmmSnpDJYSIl1T+XIQmOVhw7l+iyd5/AznKvBbYc5qCsz9F6zhLAck38U063iy+zUx+tt3o5kJLfWpHJMkcXJkA6XkxACGYrRILAB2HoPkUrkIj+J7sSHRprJj+vhEiU4gWVl/BNowWcFlPppKHQoNFanfdPwxELlOnn+6YjhFnaOUGUnbTyupjmYfuB8vPK9cHXuwMjGXjky2zMDvki+1DITc3YKzcpJlXrHkSyVEx+//wmHwq/yOAS8pBqqSWDKX+cfZtLpZHdl3NFmhO+FzBKvOejuw0eg+nSK/rnSXiyofLY6W7cgNTKemruF3hMjpNDZjklQrrOQVQ=`,
 			sveltosNamespace)
 
 		u, err := k8s_utils.GetUnstructured([]byte(secret))
@@ -165,5 +165,30 @@ data:
 		licenseVerificationResult = license.VerifyLicenseSecret(context.TODO(), c, sveltosNamespace, publicKey, logger)
 		Expect(licenseVerificationResult.RawError).ToNot(BeNil())
 		Expect(licenseVerificationResult.RawError.Error()).To(ContainSubstring("License is not valid for this cluster (fingerprint mismatch)"))
+	})
+})
+
+var _ = Describe("HasFeature", func() {
+	It("returns true for any feature when Features is empty", func() {
+		lp := &license.LicensePayload{}
+		Expect(lp.HasFeature(license.FeaturePullMode)).To(BeTrue())
+		Expect(lp.HasFeature(license.FeatureMCP)).To(BeTrue())
+		Expect(lp.HasFeature(license.FeaturePromotion)).To(BeTrue())
+	})
+
+	It("only allows features explicitly listed when Features is non-empty", func() {
+		lp := &license.LicensePayload{Features: []license.Features{license.FeaturePullMode}}
+		Expect(lp.HasFeature(license.FeaturePullMode)).To(BeTrue())
+		Expect(lp.HasFeature(license.FeatureMCP)).To(BeFalse())
+		Expect(lp.HasFeature(license.FeaturePromotion)).To(BeFalse())
+	})
+
+	It("allows multiple listed features", func() {
+		lp := &license.LicensePayload{
+			Features: []license.Features{license.FeatureMCP, license.FeaturePromotion},
+		}
+		Expect(lp.HasFeature(license.FeatureMCP)).To(BeTrue())
+		Expect(lp.HasFeature(license.FeaturePromotion)).To(BeTrue())
+		Expect(lp.HasFeature(license.FeaturePullMode)).To(BeFalse())
 	})
 })
