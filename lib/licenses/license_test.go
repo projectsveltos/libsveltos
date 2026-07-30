@@ -19,6 +19,7 @@ package license_test
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -38,6 +39,12 @@ import (
 
 const (
 	kubeSystemNamespace = "kube-system"
+
+	// validLicenseDataB64 / validLicenseSignatureB64 are the licenseData/licenseSignature
+	// values of a valid, non-expired license (Enterprise plan, PullMode feature, MaxClusters 1).
+	// Shared by multiple tests below so this fixture isn't duplicated further.
+	validLicenseDataB64      = "eyJpZCI6IjdmNDU0Mjk4LWUyYjItNDFhOC05MWRjLTc4ZjU5MjE4Nzk5MiIsImN1c3RvbWVyTmFtZSI6IkFjbWUgSW5jIiwiZmVhdHVyZXMiOlsiUHVsbE1vZGUiXSwicGxhbiI6IkVudGVycHJpc2UiLCJleHBpcmF0aW9uRGF0ZSI6IjIwMjctMDctMjZUMTM6NDc6MzEuODUyMjE2WiIsImdyYWNlUGVyaW9kRGF5cyI6NywibWF4Q2x1c3RlcnMiOjEsImlzc3VlZEF0IjoiMjAyNi0wNy0yNlQxMzo0NzozMS44NTIyMTZaIn0="
+	validLicenseSignatureB64 = "BjYc6SDAcfrj4rBc4Fi0LfcdkU5qtAEojunwFV/0Llpsgx+IYi+XDyiq6VhZFDGl24tMcKOSHyPoTA3/5s5IIeZVpDRSd2+BXXFd9ccBScfyKRzDlO8Cg5rs0ejNwzrJKTNPxjorB7WxB3WK7ad6hbrmU6/PI6vdER7XjPsb3BuaDpzA5Z3wiuoyzB+BFJ9fbeVSDL2XxaZ+M/ifaM8/bGKsj7dUXwrP+ArNouObikxBsJsqZ9n1mgQx6WZm8fJOxct79Qmva1ys4O8QcP4MYY6rsbfag0xshpKKaZKMO10XugqtDYWz14pDV9vMKWEM0jMa4oHZmebMd4Wq+F/tB+GVIyYU8aWroYVKU5kkWFdFOcQozdNmyyLOn1umdJd2JouEWkcDHIRKfA1TpIfwaeKHB6JjW5WpKzbFfnrZUW9LWVOSegmv/HpgvXMiAXUyvVlhPHArPjBJyKhb5FNcb2kaYAk8ouFv/ydhFFcerTJMWp7bqkeLWlgMfUtw/oC0GKBLM090ovCkYAeaxjgWqm9sHVJCTFGeeqh2hff98UfAoQ5g9R9mP8e1rXNtWtdWK2UIaxcwymTKS7RNe2K3TpVORE4ESuOpSJMjUut7w2oAo1O7C2ZAlfoTi4JQmqBU9S+XG4AoEBkFPPbIlA8ak0xZU9Hh3Ony7WGr59tmkOU="
 )
 
 var _ = Describe("License", func() {
@@ -88,9 +95,9 @@ metadata:
   namespace: %s
 type: Opaque
 data:
-  licenseData: eyJpZCI6IjdmNDU0Mjk4LWUyYjItNDFhOC05MWRjLTc4ZjU5MjE4Nzk5MiIsImN1c3RvbWVyTmFtZSI6IkFjbWUgSW5jIiwiZmVhdHVyZXMiOlsiUHVsbE1vZGUiXSwicGxhbiI6IkVudGVycHJpc2UiLCJleHBpcmF0aW9uRGF0ZSI6IjIwMjctMDctMjZUMTM6NDc6MzEuODUyMjE2WiIsImdyYWNlUGVyaW9kRGF5cyI6NywibWF4Q2x1c3RlcnMiOjEsImlzc3VlZEF0IjoiMjAyNi0wNy0yNlQxMzo0NzozMS44NTIyMTZaIn0=
-  licenseSignature: BjYc6SDAcfrj4rBc4Fi0LfcdkU5qtAEojunwFV/0Llpsgx+IYi+XDyiq6VhZFDGl24tMcKOSHyPoTA3/5s5IIeZVpDRSd2+BXXFd9ccBScfyKRzDlO8Cg5rs0ejNwzrJKTNPxjorB7WxB3WK7ad6hbrmU6/PI6vdER7XjPsb3BuaDpzA5Z3wiuoyzB+BFJ9fbeVSDL2XxaZ+M/ifaM8/bGKsj7dUXwrP+ArNouObikxBsJsqZ9n1mgQx6WZm8fJOxct79Qmva1ys4O8QcP4MYY6rsbfag0xshpKKaZKMO10XugqtDYWz14pDV9vMKWEM0jMa4oHZmebMd4Wq+F/tB+GVIyYU8aWroYVKU5kkWFdFOcQozdNmyyLOn1umdJd2JouEWkcDHIRKfA1TpIfwaeKHB6JjW5WpKzbFfnrZUW9LWVOSegmv/HpgvXMiAXUyvVlhPHArPjBJyKhb5FNcb2kaYAk8ouFv/ydhFFcerTJMWp7bqkeLWlgMfUtw/oC0GKBLM090ovCkYAeaxjgWqm9sHVJCTFGeeqh2hff98UfAoQ5g9R9mP8e1rXNtWtdWK2UIaxcwymTKS7RNe2K3TpVORE4ESuOpSJMjUut7w2oAo1O7C2ZAlfoTi4JQmqBU9S+XG4AoEBkFPPbIlA8ak0xZU9Hh3Ony7WGr59tmkOU=`,
-			sveltosNamespace)
+  licenseData: %s
+  licenseSignature: %s`,
+			sveltosNamespace, validLicenseDataB64, validLicenseSignatureB64)
 
 		u, err := k8s_utils.GetUnstructured([]byte(secret))
 		Expect(err).To(BeNil())
@@ -165,6 +172,55 @@ data:
 		licenseVerificationResult = license.VerifyLicenseSecret(context.TODO(), c, sveltosNamespace, publicKey, logger)
 		Expect(licenseVerificationResult.RawError).ToNot(BeNil())
 		Expect(licenseVerificationResult.RawError.Error()).To(ContainSubstring("License is not valid for this cluster (fingerprint mismatch)"))
+	})
+})
+
+var _ = Describe("VerifyLicensePayload", func() {
+	var logger logr.Logger
+
+	BeforeEach(func() {
+		logger = textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+	})
+
+	It("verifies a valid payload/signature pair without reading a Secret", func() {
+		payloadData, err := base64.StdEncoding.DecodeString(validLicenseDataB64)
+		Expect(err).To(BeNil())
+		signatureData, err := base64.StdEncoding.DecodeString(validLicenseSignatureB64)
+		Expect(err).To(BeNil())
+
+		publicKey, err := license.GetPublicKey()
+		Expect(err).To(BeNil())
+
+		result := license.VerifyLicensePayload(payloadData, signatureData, publicKey, logger)
+		Expect(result.RawError).To(BeNil())
+		Expect(result.IsExpired).To(BeFalse())
+		Expect(result.IsInGracePeriod).To(BeFalse())
+
+		Expect(result.Payload).ToNot(BeNil())
+		Expect(result.Payload.Features).To(ContainElements(license.FeaturePullMode))
+		Expect(result.Payload.MaxClusters).To(Equal(1))
+
+		Expect(result.PayloadData).To(Equal(payloadData))
+		Expect(result.SignatureData).To(Equal(signatureData))
+	})
+
+	It("rejects a payload that does not match the signature", func() {
+		payloadData, err := base64.StdEncoding.DecodeString(validLicenseDataB64)
+		Expect(err).To(BeNil())
+		signatureData, err := base64.StdEncoding.DecodeString(validLicenseSignatureB64)
+		Expect(err).To(BeNil())
+
+		// Tamper with the payload after it was signed.
+		payloadData = append(payloadData, []byte("tampered")...)
+
+		publicKey, err := license.GetPublicKey()
+		Expect(err).To(BeNil())
+
+		result := license.VerifyLicensePayload(payloadData, signatureData, publicKey, logger)
+		Expect(result.RawError).ToNot(BeNil())
+		Expect(result.Payload).To(BeNil())
+		Expect(result.IsExpired).To(BeTrue())
+		Expect(result.IsEnforced).To(BeTrue())
 	})
 })
 

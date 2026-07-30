@@ -42,6 +42,17 @@ const (
 	signatureKey = "licenseSignature"
 )
 
+const (
+	// LicensePayloadAnnotation is the annotation key under which a signed license's payload
+	// bytes (base64-encoded) can be relayed onto another object (e.g. SveltosCluster), for
+	// components that cannot reach the sveltos-license Secret directly.
+	LicensePayloadAnnotation = "license.projectsveltos.io/payload"
+
+	// LicenseSignatureAnnotation is the annotation key under which a signed license's
+	// signature bytes (base64-encoded) can be relayed alongside LicensePayloadAnnotation.
+	LicenseSignatureAnnotation = "license.projectsveltos.io/signature"
+)
+
 // Features is all features requiring a license
 // +kubebuilder:validation:Enum:=PullMode;MCP
 type Features string
@@ -139,6 +150,8 @@ func getActualGracePeriod(lp *LicensePayload) time.Duration {
 // LicenseVerificationResult encapsulates the outcome of the license verification.
 type LicenseVerificationResult struct {
 	Payload         *LicensePayload // The decoded license payload if found and unmarshaled
+	PayloadData     []byte          // The exact signed payload bytes, set once the signature has verified
+	SignatureData   []byte          // The signature bytes matching PayloadData
 	IsValid         bool            // True if license is fully valid
 	IsExpired       bool            // True if license is expired (either grace or enforced)
 	IsInGracePeriod bool            // True if license is expired but within grace period
@@ -197,40 +210,66 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client, sveltosNamespace 
 		return result
 	}
 
+	result = VerifyLicensePayload(payloadData, signatureData, publicKey, logger)
+	if result.Payload == nil {
+		// Signature verification or unmarshaling failed. Reword the generic message to
+		// mention the secret this payload came from.
+		result.Message = fmt.Sprintf("%s (secret %s)", result.Message, secretNsName.String())
+		return result
+	}
+
+	verifyClusterFingerprint(ctx, c, result.Payload, &result, logger)
+	return result
+}
+
+// VerifyLicensePayload verifies a license's digital signature against publicKey and, if valid,
+// unmarshals and checks its expiration. Unlike VerifyLicenseSecret, it does not read a Secret
+// and does not check the cluster fingerprint (that check needs a client into the specific
+// cluster the license is meant for) — callers that need fingerprint validation should use
+// VerifyLicenseSecret, or call verifyClusterFingerprint-equivalent logic themselves.
+// This is meant for components that receive the payload/signature bytes relayed from
+// elsewhere (e.g. via LicensePayloadAnnotation/LicenseSignatureAnnotation) rather than
+// reading the sveltos-license Secret directly.
+func VerifyLicensePayload(payloadData, signatureData []byte, publicKey *rsa.PublicKey,
+	logger logr.Logger) LicenseVerificationResult {
+
+	result := LicenseVerificationResult{}
+
 	// Verify the digital signature
 	hashedPayload := sha256.Sum256(payloadData)
-	err = rsa.VerifyPSS(publicKey, crypto.SHA256, hashedPayload[:], signatureData, nil)
+	err := rsa.VerifyPSS(publicKey, crypto.SHA256, hashedPayload[:], signatureData, nil)
 	if err != nil {
 		result.IsExpired = true
 		result.IsEnforced = true
-		result.Message = fmt.Sprintf("Digital signature verification failed for license from secret %s: %v",
-			secretNsName.String(), err)
+		result.Message = fmt.Sprintf("Digital signature verification failed for license: %v", err)
 		result.RawError = err
 		logger.V(logs.LogInfo).Info(result.Message, "error", err)
 		return result
 	}
 
-	logger.V(logs.LogDebug).Info("Digital signature successfully verified for license from secret")
+	logger.V(logs.LogDebug).Info("Digital signature successfully verified for license")
+
+	result.PayloadData = payloadData
+	result.SignatureData = signatureData
 
 	// Unmarshal the LicensePayload from the verified data
 	var verifiedPayload LicensePayload
 	if err := json.Unmarshal(payloadData, &verifiedPayload); err != nil {
 		result.IsExpired = true
 		result.IsEnforced = true
-		result.Message = fmt.Sprintf("Failed to unmarshal verified license payload from secret %q: %v", secretNsName.String(), err)
+		result.Message = fmt.Sprintf("Failed to unmarshal verified license payload: %v", err)
 		result.RawError = err
 		logger.V(logs.LogInfo).Info(fmt.Sprintf("%s: %v", err, result.Message))
 		return result
 	}
 	result.Payload = &verifiedPayload
 
-	result = verifyExpirationDate(&verifiedPayload, result, logger)
-
-	return verifyClusterFingerprint(ctx, c, &verifiedPayload, result, logger)
+	verifyExpirationDate(&verifiedPayload, &result, logger)
+	return result
 }
 
-func verifyExpirationDate(verifiedPayload *LicensePayload, result LicenseVerificationResult,
-	logger logr.Logger) LicenseVerificationResult {
+func verifyExpirationDate(verifiedPayload *LicensePayload, result *LicenseVerificationResult,
+	logger logr.Logger) {
 
 	// --- License Expiration and Grace Period Logic ---
 	now := time.Now()
@@ -263,12 +302,10 @@ func verifyExpirationDate(verifiedPayload *LicensePayload, result LicenseVerific
 			enforcementDate.Format(time.RFC3339))
 		logger.V(logs.LogInfo).Info(result.Message)
 	}
-
-	return result
 }
 
 func verifyClusterFingerprint(ctx context.Context, c client.Client, verifiedPayload *LicensePayload,
-	result LicenseVerificationResult, logger logr.Logger) LicenseVerificationResult {
+	result *LicenseVerificationResult, logger logr.Logger) {
 
 	// --- Cluster Fingerprint Validation ---
 	if result.IsValid && verifiedPayload.ClusterFingerprint != "" &&
@@ -287,8 +324,6 @@ func verifyClusterFingerprint(ctx context.Context, c client.Client, verifiedPayl
 		}
 		logger.V(logs.LogInfo).Info(fmt.Sprintf("%s: %v", result.RawError, result.Message))
 	}
-
-	return result
 }
 
 func isClusterFingerprintValid(ctx context.Context, c client.Client, clusterFingerprint string,
