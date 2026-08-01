@@ -269,7 +269,7 @@ spec:
                       type: array
                     featureID:
                       description: |-
-                        FeatureID is an indentifier of the feature (Helm/Kustomize/Resources)
+                        FeatureID is an identifier of the feature (Helm/Kustomize/Resources)
                         This field indicates when to run this check.
                         For instance:
                         - if set to Helm this check will be run after all helm
@@ -439,7 +439,7 @@ spec:
                       type: array
                     featureID:
                       description: |-
-                        FeatureID is an indentifier of the feature (Helm/Kustomize/Resources)
+                        FeatureID is an identifier of the feature (Helm/Kustomize/Resources)
                         This field indicates when to run this check.
                         For instance:
                         - if set to Helm this check will be run after all helm
@@ -609,7 +609,7 @@ spec:
                       type: array
                     featureID:
                       description: |-
-                        FeatureID is an indentifier of the feature (Helm/Kustomize/Resources)
+                        FeatureID is an identifier of the feature (Helm/Kustomize/Resources)
                         This field indicates when to run this check.
                         For instance:
                         - if set to Helm this check will be run after all helm
@@ -893,7 +893,7 @@ spec:
                       type: array
                     featureID:
                       description: |-
-                        FeatureID is an indentifier of the feature (Helm/Kustomize/Resources)
+                        FeatureID is an identifier of the feature (Helm/Kustomize/Resources)
                         This field indicates when to run this check.
                         For instance:
                         - if set to Helm this check will be run after all helm

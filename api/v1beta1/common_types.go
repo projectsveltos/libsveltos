@@ -346,7 +346,7 @@ type ValidateHealth struct {
 	// Name is the name of this check
 	Name string `json:"name"`
 
-	// FeatureID is an indentifier of the feature (Helm/Kustomize/Resources)
+	// FeatureID is an identifier of the feature (Helm/Kustomize/Resources)
 	// This field indicates when to run this check.
 	// For instance:
 	// - if set to Helm this check will be run after all helm
@@ -443,7 +443,7 @@ const (
 )
 
 type FeatureDeploymentInfo struct {
-	// FeatureID is an indentifier of the feature whose status is reported
+	// FeatureID is an identifier of the feature whose status is reported
 	FeatureID FeatureID `json:"featureID"`
 
 	// DeployedGroupVersionKind contains all GroupVersionKinds deployed in either
