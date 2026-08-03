@@ -66,6 +66,9 @@ const (
 
 	// FeaturePromotion is the ability to use Sveltos ClusterPromotion
 	FeaturePromotion = Features("Promotion")
+
+	// FeatureJobHealthCheck is the ability to use a Job as a ValidateHealth check
+	FeatureJobHealthCheck = Features("JobHealthCheck")
 )
 
 // +kubebuilder:validation:Enum:=Enterprise;EnterprisePlus

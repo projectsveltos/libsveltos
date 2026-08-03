@@ -342,6 +342,23 @@ type MetricQuery struct {
 	Query string `json:"query"`
 }
 
+// JobHealthCheck runs a Kubernetes Job in the managed cluster and treats the Job's
+// Complete/Failed condition as the health check result, instead of observing
+// declarative state already present in the cluster.
+type JobHealthCheck struct {
+	// JobRef references the Secret/ConfigMap containing the Job manifest to
+	// deploy in the managed Cluster as this check.
+	JobRef PolicyRef `json:"jobRef"`
+
+	// Timeout is how long to wait for the Job to reach Complete or Failed
+	// before treating the check as failed.
+	// +optional
+	Timeout *metav1.Duration `json:"timeout,omitempty"`
+}
+
+// +kubebuilder:validation:XValidation:rule="!has(self.jobCheck) || (!has(self.script) && !has(self.evaluateCEL))",message="jobCheck cannot be set together with script or evaluateCEL"
+//
+//nolint:lll // kubebuilder marker
 type ValidateHealth struct {
 	// Name is the name of this check
 	Name string `json:"name"`
@@ -408,6 +425,11 @@ type ValidateHealth struct {
 	//
 	// +optional
 	EvaluateCEL []CELRule `json:"evaluateCEL,omitempty"`
+
+	// JobCheck runs a Job in the managed cluster and uses its Complete/Failed
+	// outcome as the check result. Mutually exclusive with Script and EvaluateCEL.
+	// +optional
+	JobCheck *JobHealthCheck `json:"jobCheck,omitempty"`
 }
 
 // +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;FailedNonRetriable;Removing;Removed;AgentRemoving
