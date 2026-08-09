@@ -385,6 +385,8 @@ data:
 	deploymentKind   = "Deployment"
 	appsGroup        = "apps"
 	v1Version        = "v1"
+
+	forceRecreateAnnotationKey = "projectsveltos.io/forceRecreate"
 )
 
 var _ = Describe("Applier utils", func() {
@@ -711,6 +713,25 @@ var _ = Describe("requiresRecreate", func() {
 	})
 })
 
+var _ = Describe("HasForceRecreateAnnotation", func() {
+	It("returns true when the projectsveltos.io/forceRecreate annotation is set", func() {
+		resource := &unstructured.Unstructured{}
+		resource.SetAnnotations(map[string]string{forceRecreateAnnotationKey: ""})
+		Expect(deployer.HasForceRecreateAnnotation(resource)).To(BeTrue())
+	})
+
+	It("returns false when the annotation is not set", func() {
+		resource := &unstructured.Unstructured{}
+		resource.SetAnnotations(map[string]string{"foo": "bar"})
+		Expect(deployer.HasForceRecreateAnnotation(resource)).To(BeFalse())
+	})
+
+	It("returns false when there are no annotations", func() {
+		resource := &unstructured.Unstructured{}
+		Expect(deployer.HasForceRecreateAnnotation(resource)).To(BeFalse())
+	})
+})
+
 var _ = Describe("GenerateErrorResourceReport", func() {
 	It("returns a ResourceReport with Error action and the error message", func() {
 		resource := &libsveltosv1beta1.Resource{
@@ -828,5 +849,51 @@ var _ = Describe("UpdateResource force recreate", func() {
 
 		_, found, _ := unstructured.NestedMap(updated.Object, "spec", "strategy", "rollingUpdate")
 		Expect(found).To(BeFalse())
+	})
+
+	It("recreates a Deployment when forceRecreate is false but the object carries the forceRecreate annotation", func() {
+		name := randomString()
+		nsName := randomString()
+
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: nsName}}
+		Expect(testEnv.Create(context.TODO(), ns)).To(Succeed())
+		Expect(waitForObject(context.TODO(), testEnv.Client, ns)).To(Succeed())
+
+		logger := textlogger.NewLogger(textlogger.NewConfig())
+
+		initialYAML := fmt.Sprintf(deploymentNoStrategyTemplate, name, nsName, name, name)
+		initialObj, err := k8s_utils.GetUnstructured([]byte(initialYAML))
+		Expect(err).To(BeNil())
+
+		dr, err := k8s_utils.GetDynamicResourceInterface(testEnv.Config, initialObj.GroupVersionKind(), nsName)
+		Expect(err).To(BeNil())
+
+		_, err = deployer.UpdateResource(context.TODO(), dr, false, false, false,
+			nil, initialObj, nil, logger)
+		Expect(err).To(BeNil())
+
+		Eventually(func() bool {
+			current, getErr := dr.Get(context.TODO(), name, metav1.GetOptions{})
+			if getErr != nil {
+				return false
+			}
+			_, found, _ := unstructured.NestedMap(current.Object, "spec", "strategy", "rollingUpdate")
+			return found
+		}, time.Minute, 5*time.Second).Should(BeTrue())
+
+		recreateYAML := fmt.Sprintf(deploymentRecreateStrategyTemplate, name, nsName, name, name)
+		recreateObj, err := k8s_utils.GetUnstructured([]byte(recreateYAML))
+		Expect(err).To(BeNil())
+		recreateObj.SetAnnotations(map[string]string{forceRecreateAnnotationKey: ""})
+
+		// forceRecreate is false, but the resource-level annotation still triggers the
+		// delete+recreate path.
+		updated, err := deployer.UpdateResource(context.TODO(), dr, false, false, false,
+			nil, recreateObj, nil, logger)
+		Expect(err).To(BeNil())
+		Expect(updated).ToNot(BeNil())
+
+		strategyType, _, _ := unstructured.NestedString(updated.Object, "spec", "strategy", "type")
+		Expect(strategyType).To(Equal("Recreate"))
 	})
 })
