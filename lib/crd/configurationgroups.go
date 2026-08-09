@@ -322,7 +322,7 @@ spec:
                         timeout:
                           description: |-
                             Timeout is how long to wait for the Job to reach Complete or Failed
-                            before treating the check as failed.
+                            before treating the check as failed. Defaults to 5 minutes when unset.
                           type: string
                       required:
                       - jobRef
@@ -535,7 +535,7 @@ spec:
                         timeout:
                           description: |-
                             Timeout is how long to wait for the Job to reach Complete or Failed
-                            before treating the check as failed.
+                            before treating the check as failed. Defaults to 5 minutes when unset.
                           type: string
                       required:
                       - jobRef
@@ -748,7 +748,7 @@ spec:
                         timeout:
                           description: |-
                             Timeout is how long to wait for the Job to reach Complete or Failed
-                            before treating the check as failed.
+                            before treating the check as failed. Defaults to 5 minutes when unset.
                           type: string
                       required:
                       - jobRef
@@ -1075,7 +1075,7 @@ spec:
                         timeout:
                           description: |-
                             Timeout is how long to wait for the Job to reach Complete or Failed
-                            before treating the check as failed.
+                            before treating the check as failed. Defaults to 5 minutes when unset.
                           type: string
                       required:
                       - jobRef

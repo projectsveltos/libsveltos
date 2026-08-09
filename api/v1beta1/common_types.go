@@ -351,7 +351,7 @@ type JobHealthCheck struct {
 	JobRef PolicyRef `json:"jobRef"`
 
 	// Timeout is how long to wait for the Job to reach Complete or Failed
-	// before treating the check as failed.
+	// before treating the check as failed. Defaults to 5 minutes when unset.
 	// +optional
 	Timeout *metav1.Duration `json:"timeout,omitempty"`
 }

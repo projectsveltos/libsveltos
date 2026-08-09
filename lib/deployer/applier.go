@@ -58,7 +58,27 @@ const (
 
 	recreateDeletePollInterval = 2 * time.Second
 	recreateDeletePollTimeout  = time.Minute
+
+	// When this annotation is set on a resource, that resource is force-recreated on a
+	// delete+recreate-only update error, regardless of the KustomizationRef/PolicyRef-level
+	// Force setting.
+	forceRecreateAnnotation = "projectsveltos.io/forceRecreate"
 )
+
+// HasForceRecreateAnnotation verifies whether resource has the
+// `projectsveltos.io/forceRecreate` annotation set. Any resource with this annotation is
+// force-recreated on a delete+recreate-only update error, regardless of the
+// KustomizationRef/PolicyRef-level Force setting.
+func HasForceRecreateAnnotation(resource *unstructured.Unstructured) bool {
+	annotations := resource.GetAnnotations()
+	if annotations != nil {
+		if _, ok := annotations[forceRecreateAnnotation]; ok {
+			return true
+		}
+	}
+
+	return false
+}
 
 // requiresRecreate returns true if err indicates the API server rejected the request
 // because of an invalid combination of fields (eg a Deployment with strategy.rollingUpdate
@@ -511,10 +531,11 @@ func removeDriftExclusionsFields(ctx context.Context, dr dynamic.ResourceInterfa
 
 // UpdateResource creates or updates a resource in a Cluster.
 // No action in DryRun mode.
-// When forceRecreate is true, and the apply is rejected with an error that only a
-// delete+recreate can resolve (see requiresRecreate), the object is deleted and recreated
-// instead of returning the error. This never applies to CustomResourceDefinitions, since
-// deleting one cascades to every instance of it.
+// When forceRecreate is true, or object carries the `projectsveltos.io/forceRecreate`
+// annotation (see HasForceRecreateAnnotation), and the apply is rejected with an error
+// that only a delete+recreate can resolve (see requiresRecreate), the object is deleted
+// and recreated instead of returning the error. This never applies to
+// CustomResourceDefinitions, since deleting one cascades to every instance of it.
 func UpdateResource(ctx context.Context, dr dynamic.ResourceInterface, isDriftDetection, isDryRun, forceRecreate bool,
 	driftExclusions []libsveltosv1beta1.DriftExclusion, object *unstructured.Unstructured, subresources []string,
 	logger logr.Logger) (*unstructured.Unstructured, error) {
@@ -576,7 +597,7 @@ func UpdateResource(ctx context.Context, dr dynamic.ResourceInterface, isDriftDe
 			return nil
 		})
 
-		if err != nil && !isDryRun && forceRecreate && requiresRecreate(err) {
+		if err != nil && !isDryRun && (forceRecreate || HasForceRecreateAnnotation(object)) && requiresRecreate(err) {
 			l.V(logs.LogInfo).Info(fmt.Sprintf("apply rejected (%v), recreating resource", err))
 			if recreateErr := recreateResource(ctx, dr, object); recreateErr != nil {
 				return nil, recreateErr
