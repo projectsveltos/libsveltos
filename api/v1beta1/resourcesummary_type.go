@@ -88,12 +88,30 @@ type HelmResources struct {
 	Resources []ResourceSummaryResource `json:"group,omitempty"`
 }
 
+// HelmChartRef identifies the Helm release a watched resource belongs to.
+type HelmChartRef struct {
+	// ChartName is the chart name
+	ChartName string `json:"chartName"`
+
+	// ReleaseName is the chart release
+	ReleaseName string `json:"releaseName"`
+
+	// ReleaseNamespace is the namespace the release is installed in
+	ReleaseNamespace string `json:"releaseNamespace"`
+}
+
 type ResourceHash struct {
 	// Resource specifies a resource.
 	Resource `json:",inline"`
 
 	// Hash is the hash of a resource's data.
 	Hash string `json:"hash,omitempty"`
+
+	// HelmChartRef identifies which Helm release this resource was deployed by.
+	// Only set when this ResourceHash was generated for a Helm-deployed resource
+	// (i.e. as part of HelmResourceHashes).
+	// +optional
+	HelmChartRef *HelmChartRef `json:"helmChartRef,omitempty"`
 }
 
 // ResourceSummarySpec defines the desired state of ResourceSummary
@@ -130,6 +148,14 @@ type ResourceSummaryStatus struct {
 	// Helm Resources changed.
 	// +optional
 	HelmResourcesChanged bool `json:"helmResourcesChanged,omitempty"`
+
+	// DriftedHelmCharts lists the Helm releases that had at least one deployed resource
+	// change out of band since this status was last consumed. Set alongside HelmResourcesChanged,
+	// scoped to only the charts actually affected (as opposed to HelmResourcesChanged, which
+	// only says some Helm-deployed resource changed, without saying which chart). The consumer
+	// is expected to clear this list after acting on it, the same way it resets HelmResourcesChanged.
+	// +optional
+	DriftedHelmCharts []HelmChartRef `json:"driftedHelmCharts,omitempty"`
 
 	// ResourceHashes specifies a list of resource plus hash
 	ResourceHashes []ResourceHash `json:"resourceHashes,omitempty"`
