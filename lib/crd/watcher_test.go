@@ -18,6 +18,7 @@ package crd_test
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -25,6 +26,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2/textlogger"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/projectsveltos/libsveltos/lib/crd"
 	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
@@ -73,6 +75,33 @@ spec:
     # shortNames allow shorter string to match your resource on the CLI
     shortNames:
     - ct`
+
+	// A second, distinct CRD (different name/group) so this spec does not collide
+	// with the CRD left behind (envtest is shared across specs) by the spec above.
+	widgetCrdYAML = `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: widgets.other.example.com
+spec:
+  group: other.example.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                size:
+                  type: string
+  scope: Namespaced
+  names:
+    plural: widgets
+    singular: widget
+    kind: Widget`
 )
 
 func handler(gvk *schema.GroupVersionKind, _ crd.ChangeType) {
@@ -91,13 +120,72 @@ var _ = Describe("WatchCustomResourceDefinition", func() {
 		defer cancel()
 		go crd.WatchCustomResourceDefinition(watcherCtx, testEnv.Config, handler, logger)
 
-		crd, err := k8s_utils.GetUnstructured([]byte(crdYAML))
+		crdInstance, err := k8s_utils.GetUnstructured([]byte(crdYAML))
 		Expect(err).To(BeNil())
 
-		Expect(testEnv.Create(watcherCtx, crd)).To(Succeed())
+		Expect(testEnv.Create(watcherCtx, crdInstance)).To(Succeed())
 
 		Eventually(func() bool {
 			return handlerCalled
+		}, time.Minute, time.Second).Should(BeTrue())
+	})
+
+	It("WatchCustomResourceDefinition reports Modify and Delete for the same GVK", func() {
+		var err error
+		scheme, err = setupScheme()
+		Expect(err).ToNot(HaveOccurred())
+
+		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+
+		var mu sync.Mutex
+		seen := make(map[crd.ChangeType]bool)
+		recorder := func(gvk *schema.GroupVersionKind, action crd.ChangeType) {
+			if gvk.Group != "other.example.com" {
+				// Ignore CRDs created/left over by other specs in this suite.
+				return
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			seen[action] = true
+		}
+
+		watcherCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go crd.WatchCustomResourceDefinition(watcherCtx, testEnv.Config, recorder, logger)
+
+		crdInstance, err := k8s_utils.GetUnstructured([]byte(widgetCrdYAML))
+		Expect(err).To(BeNil())
+		Expect(testEnv.Create(watcherCtx, crdInstance)).To(Succeed())
+
+		Eventually(func() bool {
+			mu.Lock()
+			defer mu.Unlock()
+			return seen[crd.Add]
+		}, time.Minute, time.Second).Should(BeTrue())
+
+		currentCrd, err := k8s_utils.GetUnstructured([]byte(widgetCrdYAML))
+		Expect(err).To(BeNil())
+		Expect(testEnv.Get(watcherCtx, client.ObjectKeyFromObject(currentCrd), currentCrd)).To(Succeed())
+		labels := currentCrd.GetLabels()
+		if labels == nil {
+			labels = map[string]string{}
+		}
+		labels["updated"] = "true"
+		currentCrd.SetLabels(labels)
+		Expect(testEnv.Update(watcherCtx, currentCrd)).To(Succeed())
+
+		Eventually(func() bool {
+			mu.Lock()
+			defer mu.Unlock()
+			return seen[crd.Modify]
+		}, time.Minute, time.Second).Should(BeTrue())
+
+		Expect(testEnv.Delete(watcherCtx, currentCrd)).To(Succeed())
+
+		Eventually(func() bool {
+			mu.Lock()
+			defer mu.Unlock()
+			return seen[crd.Delete]
 		}, time.Minute, time.Second).Should(BeTrue())
 	})
 })
