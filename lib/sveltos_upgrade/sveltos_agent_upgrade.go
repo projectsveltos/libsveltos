@@ -31,7 +31,7 @@ import (
 	"github.com/go-logr/logr"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
-	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
+	"github.com/projectsveltos/libsveltos/lib/clustercache"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
@@ -92,7 +92,13 @@ func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client,
 	configMapClient := c
 	if !isAgentInMgmtMode {
 		var err error
-		configMapClient, err = clusterproxy.GetKubernetesClient(ctx, c, clusterNamespace, clusterName, "", "",
+		// clustercache caches the derived client per cluster, keyed off the same rest.Config
+		// cache GetKubernetesRestConfig maintains - the kubeconfig Secret is only re-read on a
+		// cache miss or explicit invalidation, not on every call. Callers of this function tend
+		// to run on a tight poll loop (e.g. drift-detection version checks every few seconds per
+		// cluster), so going through clusterproxy directly here would mean a live apiserver read
+		// on every single poll.
+		configMapClient, err = clustercache.GetManager().GetKubernetesClient(ctx, c, clusterNamespace, clusterName, "", "",
 			clusterType, logger)
 		if err != nil {
 			logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get managed cluster client: %v", err))
@@ -141,7 +147,13 @@ func IsDriftDetectionVersionCompatible(ctx context.Context, c client.Client,
 	configMapClient := c
 	if !isAgentInMgmtMode {
 		var err error
-		configMapClient, err = clusterproxy.GetKubernetesClient(ctx, c, clusterNamespace, clusterName, "", "",
+		// clustercache caches the derived client per cluster, keyed off the same rest.Config
+		// cache GetKubernetesRestConfig maintains - the kubeconfig Secret is only re-read on a
+		// cache miss or explicit invalidation, not on every call. Callers of this function tend
+		// to run on a tight poll loop (e.g. drift-detection version checks every few seconds per
+		// cluster), so going through clusterproxy directly here would mean a live apiserver read
+		// on every single poll.
+		configMapClient, err = clustercache.GetManager().GetKubernetesClient(ctx, c, clusterNamespace, clusterName, "", "",
 			clusterType, logger)
 		if err != nil {
 			logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get managed cluster client: %v", err))
