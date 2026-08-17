@@ -104,6 +104,11 @@ func IsSveltosAgentVersionCompatible(ctx context.Context, c client.Client,
 			logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get managed cluster client: %v", err))
 			return false
 		}
+		// configMapClient is nil here only if clusterType is pull-mode - every caller of this
+		// function already checks that and skips the call entirely, so this is intentionally
+		// left unguarded: if that invariant is ever violated, getConfigMap below will panic on
+		// the nil client rather than this silently returning false, which would be much harder
+		// to catch than a crash.
 	}
 
 	cm, err := getConfigMap(ctx, configMapClient, cmInfo, logger)
@@ -159,6 +164,11 @@ func IsDriftDetectionVersionCompatible(ctx context.Context, c client.Client,
 			logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get managed cluster client: %v", err))
 			return false
 		}
+		// configMapClient is nil here only if clusterType is pull-mode - every caller of this
+		// function already checks that and skips the call entirely, so this is intentionally
+		// left unguarded: if that invariant is ever violated, getConfigMap below will panic on
+		// the nil client rather than this silently returning false, which would be much harder
+		// to catch than a crash.
 	}
 
 	cm, err := getConfigMap(ctx, configMapClient, cmInfo, logger)
