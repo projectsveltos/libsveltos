@@ -314,6 +314,15 @@ func (m *clusterCache) GetKubernetesClient(ctx context.Context, mgmtClient clien
 		return nil, err
 	}
 
+	if config == nil {
+		// Cluster is in pull mode: the management cluster has no direct network access to it,
+		// so there is no rest.Config to build a client from. Preserve the nil, nil contract
+		// GetKubernetesRestConfig/clusterproxy.GetKubernetesClient already use for this case -
+		// client.New would otherwise error on a nil config, turning "this cluster is in pull
+		// mode, skip" into a hard failure for every caller that already handles a nil client.
+		return nil, nil
+	}
+
 	logger.V(logs.LogVerbose).Info("return new client")
 	return client.New(config, client.Options{Scheme: mgmtClient.Scheme()})
 }
