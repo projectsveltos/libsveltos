@@ -233,6 +233,14 @@ spec:
                   This setting applies only to feature deployments, not resource removal.
                   This field is optional. If not set, Sveltos default behavior is to keep retrying.
                 type: integer
+              postDeleteCheckJobs:
+                additionalProperties:
+                  type: string
+                description: |-
+                  PostDeleteCheckJobs holds the resolved manifest for every PostDeleteChecks entry that
+                  uses JobCheck. See PreDeployCheckJobs for the key format and why this is resolved ahead
+                  of time by addon-controller rather than fetched by sveltos-applier.
+                type: object
               postDeleteChecks:
                 description: |-
                   PostDeleteChecks is a slice of checks to run against the managed cluster
@@ -446,6 +454,14 @@ spec:
                     rule: '!has(self.jobCheck) || (!has(self.script) && !has(self.evaluateCEL))'
                 type: array
                 x-kubernetes-list-type: atomic
+              preDeleteCheckJobs:
+                additionalProperties:
+                  type: string
+                description: |-
+                  PreDeleteCheckJobs holds the resolved manifest for every PreDeleteChecks entry that uses
+                  JobCheck. See PreDeployCheckJobs for the key format and why this is resolved ahead of
+                  time by addon-controller rather than fetched by sveltos-applier.
+                type: object
               preDeleteChecks:
                 description: |-
                   PreDeleteChecks is a slice of checks to run against the managed cluster
@@ -659,6 +675,20 @@ spec:
                     rule: '!has(self.jobCheck) || (!has(self.script) && !has(self.evaluateCEL))'
                 type: array
                 x-kubernetes-list-type: atomic
+              preDeployCheckJobs:
+                additionalProperties:
+                  type: string
+                description: |-
+                  PreDeployCheckJobs holds the resolved manifest for every PreDeployChecks entry that uses
+                  JobCheck, keyed by "<namespace>/<name>" (the namespace/name JobHealthCheck.JobRef
+                  resolves to). The value is the YAML-encoded Job manifest.
+                  JobCheck requires a Sveltos Enterprise license, which sveltos-applier (an open-source
+                  binary) cannot verify on its own, so addon-controller resolves each Job manifest once,
+                  up front - fetching JobRef's ConfigMap/Secret and applying Cluster-field templating -
+                  and stages the result here. Sveltos-applier only ever runs the already-resolved Job; it
+                  never fetches JobRef or checks licensing itself.
+                  Empty when no PreDeployChecks entry uses JobCheck.
+                type: object
               preDeployChecks:
                 description: |-
                   PreDeployChecks is a slice of checks to run against the managed cluster
@@ -986,6 +1016,14 @@ spec:
                 - Ready
                 - Preparing
                 type: string
+              validateHealthJobs:
+                additionalProperties:
+                  type: string
+                description: |-
+                  ValidateHealthJobs holds the resolved manifest for every ValidateHealths entry that uses
+                  JobCheck. See PreDeployCheckJobs for the key format and why this is resolved ahead of
+                  time by addon-controller rather than fetched by sveltos-applier.
+                type: object
               validateHealths:
                 description: |-
                   ValidateHealths is a slice of checks to run against the managed cluster

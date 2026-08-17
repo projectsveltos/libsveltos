@@ -175,6 +175,18 @@ type ConfigurationGroupSpec struct {
 	// +optional
 	PreDeployChecks []ValidateHealth `json:"preDeployChecks,omitempty"`
 
+	// PreDeployCheckJobs holds the resolved manifest for every PreDeployChecks entry that uses
+	// JobCheck, keyed by "<namespace>/<name>" (the namespace/name JobHealthCheck.JobRef
+	// resolves to). The value is the YAML-encoded Job manifest.
+	// JobCheck requires a Sveltos Enterprise license, which sveltos-applier (an open-source
+	// binary) cannot verify on its own, so addon-controller resolves each Job manifest once,
+	// up front - fetching JobRef's ConfigMap/Secret and applying Cluster-field templating -
+	// and stages the result here. Sveltos-applier only ever runs the already-resolved Job; it
+	// never fetches JobRef or checks licensing itself.
+	// Empty when no PreDeployChecks entry uses JobCheck.
+	// +optional
+	PreDeployCheckJobs map[string]string `json:"preDeployCheckJobs,omitempty"`
+
 	// ValidateHealths is a slice of checks to run against the managed cluster
 	// *after* resources are deployed to validate that the state of the
 	// add-ons/applications is healthy.
@@ -182,6 +194,12 @@ type ConfigurationGroupSpec struct {
 	// +listType=atomic
 	// +optional
 	ValidateHealths []ValidateHealth `json:"validateHealths,omitempty"`
+
+	// ValidateHealthJobs holds the resolved manifest for every ValidateHealths entry that uses
+	// JobCheck. See PreDeployCheckJobs for the key format and why this is resolved ahead of
+	// time by addon-controller rather than fetched by sveltos-applier.
+	// +optional
+	ValidateHealthJobs map[string]string `json:"validateHealthJobs,omitempty"`
 
 	// PreDeleteChecks is a slice of checks to run against the managed cluster
 	// *before* Sveltos starts deleting resources.
@@ -191,6 +209,12 @@ type ConfigurationGroupSpec struct {
 	// +optional
 	PreDeleteChecks []ValidateHealth `json:"preDeleteChecks,omitempty"`
 
+	// PreDeleteCheckJobs holds the resolved manifest for every PreDeleteChecks entry that uses
+	// JobCheck. See PreDeployCheckJobs for the key format and why this is resolved ahead of
+	// time by addon-controller rather than fetched by sveltos-applier.
+	// +optional
+	PreDeleteCheckJobs map[string]string `json:"preDeleteCheckJobs,omitempty"`
+
 	// PostDeleteChecks is a slice of checks to run against the managed cluster
 	// *after* Sveltos has deleted all resources.
 	// This ensures that the environment has reached the desired clean state.
@@ -198,6 +222,12 @@ type ConfigurationGroupSpec struct {
 	// +listType=atomic
 	// +optional
 	PostDeleteChecks []ValidateHealth `json:"postDeleteChecks,omitempty"`
+
+	// PostDeleteCheckJobs holds the resolved manifest for every PostDeleteChecks entry that
+	// uses JobCheck. See PreDeployCheckJobs for the key format and why this is resolved ahead
+	// of time by addon-controller rather than fetched by sveltos-applier.
+	// +optional
+	PostDeleteCheckJobs map[string]string `json:"postDeleteCheckJobs,omitempty"`
 
 	// DeployedGroupVersionKind contains all GroupVersionKinds deployed in either
 	// the workload cluster or the management cluster because of this feature.
