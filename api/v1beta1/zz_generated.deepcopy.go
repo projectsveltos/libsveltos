@@ -921,11 +921,25 @@ func (in *ConfigurationGroupSpec) DeepCopyInto(out *ConfigurationGroupSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.PreDeployCheckJobs != nil {
+		in, out := &in.PreDeployCheckJobs, &out.PreDeployCheckJobs
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.ValidateHealths != nil {
 		in, out := &in.ValidateHealths, &out.ValidateHealths
 		*out = make([]ValidateHealth, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.ValidateHealthJobs != nil {
+		in, out := &in.ValidateHealthJobs, &out.ValidateHealthJobs
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
 		}
 	}
 	if in.PreDeleteChecks != nil {
@@ -935,11 +949,25 @@ func (in *ConfigurationGroupSpec) DeepCopyInto(out *ConfigurationGroupSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.PreDeleteCheckJobs != nil {
+		in, out := &in.PreDeleteCheckJobs, &out.PreDeleteCheckJobs
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.PostDeleteChecks != nil {
 		in, out := &in.PostDeleteChecks, &out.PostDeleteChecks
 		*out = make([]ValidateHealth, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.PostDeleteCheckJobs != nil {
+		in, out := &in.PostDeleteCheckJobs, &out.PostDeleteCheckJobs
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
 		}
 	}
 	if in.DeployedGroupVersionKind != nil {

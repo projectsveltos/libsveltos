@@ -37,9 +37,13 @@ type Options struct {
 	MaxConsecutiveFailures *uint
 	LeavePolicies          bool
 	PreDeployChecks        []libsveltosv1beta1.ValidateHealth
+	PreDeployCheckJobs     map[string]string
 	ValidateHealths        []libsveltosv1beta1.ValidateHealth
+	ValidateHealthJobs     map[string]string
 	PreDeleteChecks        []libsveltosv1beta1.ValidateHealth
+	PreDeleteCheckJobs     map[string]string
 	PostDeleteChecks       []libsveltosv1beta1.ValidateHealth
+	PostDeleteCheckJobs    map[string]string
 	DeployedGVKs           []string
 	Annotations            map[string]string
 	RequestorHash          []byte
@@ -84,9 +88,25 @@ func WithPreDeployChecks(preDeployChecks []libsveltosv1beta1.ValidateHealth) Opt
 	}
 }
 
+// WithPreDeployCheckJobs sets the resolved Job manifests (keyed by "<namespace>/<name>") for
+// any JobCheck entries in PreDeployChecks. See ConfigurationGroupSpec.PreDeployCheckJobs.
+func WithPreDeployCheckJobs(jobs map[string]string) Option {
+	return func(args *Options) {
+		args.PreDeployCheckJobs = jobs
+	}
+}
+
 func WithValidateHealths(validateHealths []libsveltosv1beta1.ValidateHealth) Option {
 	return func(args *Options) {
 		args.ValidateHealths = validateHealths
+	}
+}
+
+// WithValidateHealthJobs sets the resolved Job manifests (keyed by "<namespace>/<name>") for
+// any JobCheck entries in ValidateHealths. See ConfigurationGroupSpec.ValidateHealthJobs.
+func WithValidateHealthJobs(jobs map[string]string) Option {
+	return func(args *Options) {
+		args.ValidateHealthJobs = jobs
 	}
 }
 
@@ -96,9 +116,25 @@ func WithPreDeleteChecks(preDeleteChecks []libsveltosv1beta1.ValidateHealth) Opt
 	}
 }
 
+// WithPreDeleteCheckJobs sets the resolved Job manifests (keyed by "<namespace>/<name>") for
+// any JobCheck entries in PreDeleteChecks. See ConfigurationGroupSpec.PreDeleteCheckJobs.
+func WithPreDeleteCheckJobs(jobs map[string]string) Option {
+	return func(args *Options) {
+		args.PreDeleteCheckJobs = jobs
+	}
+}
+
 func WithPostDeleteChecks(postDeleteChecks []libsveltosv1beta1.ValidateHealth) Option {
 	return func(args *Options) {
 		args.PostDeleteChecks = postDeleteChecks
+	}
+}
+
+// WithPostDeleteCheckJobs sets the resolved Job manifests (keyed by "<namespace>/<name>") for
+// any JobCheck entries in PostDeleteChecks. See ConfigurationGroupSpec.PostDeleteCheckJobs.
+func WithPostDeleteCheckJobs(jobs map[string]string) Option {
+	return func(args *Options) {
+		args.PostDeleteCheckJobs = jobs
 	}
 }
 
@@ -181,9 +217,13 @@ func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Op
 	confGroup.Spec.DriftExclusions = c.DriftExclusion
 
 	confGroup.Spec.ValidateHealths = c.ValidateHealths
+	confGroup.Spec.ValidateHealthJobs = c.ValidateHealthJobs
 	confGroup.Spec.PreDeleteChecks = c.PreDeleteChecks
+	confGroup.Spec.PreDeleteCheckJobs = c.PreDeleteCheckJobs
 	confGroup.Spec.PostDeleteChecks = c.PostDeleteChecks
+	confGroup.Spec.PostDeleteCheckJobs = c.PostDeleteCheckJobs
 	confGroup.Spec.PreDeployChecks = c.PreDeployChecks
+	confGroup.Spec.PreDeployCheckJobs = c.PreDeployCheckJobs
 
 	if c.DryRun {
 		confGroup.Spec.DryRun = true
