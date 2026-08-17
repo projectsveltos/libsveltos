@@ -32,6 +32,14 @@ const (
 	// PolicyLuaAnnotation is the annotation that must be set on a policy when the
 	// policy contains Lua script.
 	PolicyLuaAnnotation = "projectsveltos.io/lua"
+
+	// ValidateHealthCheckNameAnnotation carries a ValidateHealth check's Name onto the Job
+	// resolved for it. addon-controller sets it when resolving a JobCheck for a pull-mode
+	// ConfigurationGroup (see ConfigurationGroupSpec's *CheckJobs fields), since the
+	// map[string]string those checks travel in is keyed by the Job's own namespace/name, not
+	// the check's Name; sveltos-applier reads it back to build a failure message consistent
+	// with the one push-mode's HealthCheckError produces (which includes the check Name).
+	ValidateHealthCheckNameAnnotation = "validatehealth.projectsveltos.io/check-name"
 )
 
 const (
