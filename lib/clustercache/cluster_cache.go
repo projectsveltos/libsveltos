@@ -159,9 +159,9 @@ func (m *clusterCache) GetKubernetesRestConfig(ctx context.Context, mgmtClient c
 	config, ok := m.configs[*cluster]
 	if ok {
 		if config != nil {
-			logger.V(logs.LogInfo).Info("remote restConfig cache hit")
+			logger.V(logs.LogDebug).Info("remote restConfig cache hit")
 		} else {
-			logger.V(logs.LogInfo).Info("remote restConfig cache hit: cluster in pull mode")
+			logger.V(logs.LogDebug).Info("remote restConfig cache hit: cluster in pull mode")
 		}
 		return config, nil
 	}
