@@ -27,18 +27,32 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2/textlogger"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 	license "github.com/projectsveltos/libsveltos/lib/licenses"
 )
 
 const (
 	kubeSystemNamespace = "kube-system"
+	//nolint: gosec // this is a Secret name, not a credential
+	licenseSecretName = "sveltos-license"
+
+	// testLicenseDataKey/testLicenseSignatureKey/testLabelKey/testLabelValue are used by the
+	// MigrateLicenseSecretType tests below, which don't need a real signed license, just data
+	// to assert gets carried over unchanged.
+	testLicenseDataKey        = "licenseData"
+	testLicenseSignatureKey   = "licenseSignature"
+	testLicenseDataValue      = "data"
+	testLicenseSignatureValue = "signature"
+	testLabelKey              = "foo"
+	testLabelValue            = "bar"
 
 	// validLicenseDataB64 / validLicenseSignatureB64 are the licenseData/licenseSignature
 	// values of a valid, non-expired license (Enterprise plan, PullMode feature, MaxClusters 1).
@@ -221,6 +235,86 @@ var _ = Describe("VerifyLicensePayload", func() {
 		Expect(result.Payload).To(BeNil())
 		Expect(result.IsExpired).To(BeTrue())
 		Expect(result.IsEnforced).To(BeTrue())
+	})
+})
+
+var _ = Describe("MigrateLicenseSecretType", func() {
+	var logger logr.Logger
+
+	BeforeEach(func() {
+		logger = textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+	})
+
+	It("does nothing when the license Secret does not exist", func() {
+		sveltosNamespace := randomString()
+
+		c := fake.NewClientBuilder().Build()
+
+		Expect(license.MigrateLicenseSecretType(context.TODO(), c, sveltosNamespace, logger)).To(Succeed())
+
+		currentSecret := &corev1.Secret{}
+		err := c.Get(context.TODO(), types.NamespacedName{Namespace: sveltosNamespace, Name: licenseSecretName},
+			currentSecret)
+		Expect(apierrors.IsNotFound(err)).To(BeTrue())
+	})
+
+	It("does nothing when the license Secret already has the correct type", func() {
+		sveltosNamespace := randomString()
+
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: sveltosNamespace,
+				Name:      licenseSecretName,
+				Labels:    map[string]string{testLabelKey: testLabelValue},
+			},
+			Type: libsveltosv1beta1.ClusterProfileSecretType,
+			Data: map[string][]byte{
+				testLicenseDataKey:      []byte(testLicenseDataValue),
+				testLicenseSignatureKey: []byte(testLicenseSignatureValue),
+			},
+		}
+
+		c := fake.NewClientBuilder().WithObjects(secret).Build()
+
+		Expect(license.MigrateLicenseSecretType(context.TODO(), c, sveltosNamespace, logger)).To(Succeed())
+
+		currentSecret := &corev1.Secret{}
+		Expect(c.Get(context.TODO(), types.NamespacedName{Namespace: sveltosNamespace, Name: licenseSecretName},
+			currentSecret)).To(Succeed())
+		Expect(currentSecret.Type).To(Equal(libsveltosv1beta1.ClusterProfileSecretType))
+		Expect(currentSecret.Data).To(Equal(secret.Data))
+		// unchanged: still the exact same object, never deleted/recreated
+		Expect(currentSecret.UID).To(Equal(secret.UID))
+	})
+
+	It("recreates an Opaque license Secret with the ClusterProfileSecretType type, preserving data/labels/annotations", func() {
+		sveltosNamespace := randomString()
+
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:   sveltosNamespace,
+				Name:        licenseSecretName,
+				Labels:      map[string]string{testLabelKey: testLabelValue},
+				Annotations: map[string]string{"baz": "qux"},
+			},
+			Type: corev1.SecretTypeOpaque,
+			Data: map[string][]byte{
+				testLicenseDataKey:      []byte(testLicenseDataValue),
+				testLicenseSignatureKey: []byte(testLicenseSignatureValue),
+			},
+		}
+
+		c := fake.NewClientBuilder().WithObjects(secret).Build()
+
+		Expect(license.MigrateLicenseSecretType(context.TODO(), c, sveltosNamespace, logger)).To(Succeed())
+
+		currentSecret := &corev1.Secret{}
+		Expect(c.Get(context.TODO(), types.NamespacedName{Namespace: sveltosNamespace, Name: licenseSecretName},
+			currentSecret)).To(Succeed())
+		Expect(currentSecret.Type).To(Equal(libsveltosv1beta1.ClusterProfileSecretType))
+		Expect(currentSecret.Data).To(Equal(secret.Data))
+		Expect(currentSecret.Labels).To(Equal(secret.Labels))
+		Expect(currentSecret.Annotations).To(Equal(secret.Annotations))
 	})
 })
 

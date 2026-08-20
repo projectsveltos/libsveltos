@@ -31,15 +31,22 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
 const (
 	licenseKey   = "licenseData"
 	signatureKey = "licenseSignature"
+
+	//nolint: gosec // this is a Secret name, not a credential
+	licenseSecretName = "sveltos-license"
 )
 
 const (
@@ -173,7 +180,7 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client, sveltosNamespace 
 
 	secretNsName := types.NamespacedName{
 		Namespace: sveltosNamespace,
-		Name:      "sveltos-license",
+		Name:      licenseSecretName,
 	}
 
 	result := LicenseVerificationResult{}
@@ -223,6 +230,76 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client, sveltosNamespace 
 
 	verifyClusterFingerprint(ctx, c, result.Payload, &result, logger)
 	return result
+}
+
+// MigrateLicenseSecretType is a one-time, idempotent migration: addon-controller v1.14.0 scopes
+// its Secret cache to ClusterProfileSecretType, so any Secret of a different type is invisible
+// to that cache and every read of it returns a false NotFound. Installs that created the
+// sveltos-license Secret before that change have it as Opaque, which silently breaks every
+// license check (JobCheck, ClusterPromotion) after upgrading. type is immutable on a Secret, so
+// this fixes it by recreating: read the existing data, delete, recreate with the corrected type.
+// No-op if the Secret doesn't exist yet (no license installed) or already has the correct type.
+// Requires get/delete/create permission on Secrets in sveltosNamespace.
+func MigrateLicenseSecretType(ctx context.Context, c client.Client, sveltosNamespace string,
+	logger logr.Logger) error {
+
+	secretNsName := types.NamespacedName{
+		Namespace: sveltosNamespace,
+		Name:      licenseSecretName,
+	}
+
+	current := &corev1.Secret{}
+	err := c.Get(ctx, secretNsName, current)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to get license secret %q: %v", secretNsName, err))
+		return err
+	}
+
+	if current.Type == libsveltosv1beta1.ClusterProfileSecretType {
+		return nil
+	}
+
+	logger.V(logs.LogInfo).Info(fmt.Sprintf("migrating license secret %q type %q -> %q",
+		secretNsName, current.Type, libsveltosv1beta1.ClusterProfileSecretType))
+
+	replacement := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:   current.Namespace,
+			Name:        current.Name,
+			Labels:      current.Labels,
+			Annotations: current.Annotations,
+		},
+		Data: current.Data,
+		Type: libsveltosv1beta1.ClusterProfileSecretType,
+	}
+
+	if err := c.Delete(ctx, current); err != nil {
+		// Nothing changed yet - current still exists as-is, safe to retry this whole
+		// function again later (next upgrade run, or a caller-side retry).
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("failed to delete license secret %q: %v", secretNsName, err))
+		return err
+	}
+
+	// This is the one step that must not be given up on early: the Secret is now gone, and
+	// unlike the delete above, a failure here can't be recovered by simply retrying the whole
+	// function on a later run - the original (with its data) no longer exists to read back.
+	// Retry with backoff to ride out a transient API server hiccup before surfacing the error.
+	backoff := wait.Backoff{Steps: 5, Duration: time.Second, Factor: 2.0, Jitter: 0.1}
+	createErr := retry.OnError(backoff, func(error) bool { return true }, func() error {
+		return c.Create(ctx, replacement)
+	})
+	if createErr != nil {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf(
+			"failed to recreate license secret %q after retries: %v. The license Secret no longer "+
+				"exists and must be recreated manually from the original license file.",
+			secretNsName, createErr))
+		return createErr
+	}
+
+	return nil
 }
 
 // VerifyLicensePayload verifies a license's digital signature against publicKey and, if valid,
