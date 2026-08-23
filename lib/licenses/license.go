@@ -61,7 +61,7 @@ const (
 )
 
 // Features is all features requiring a license
-// +kubebuilder:validation:Enum:=PullMode;MCP
+// +kubebuilder:validation:Enum:=PullMode;MCP;Promotion;JobHealthCheck;NamespaceScopedAgents
 type Features string
 
 const (
@@ -76,6 +76,11 @@ const (
 
 	// FeatureJobHealthCheck is the ability to use a Job as a ValidateHealth check
 	FeatureJobHealthCheck = Features("JobHealthCheck")
+
+	// FeatureNamespaceScopedAgents is the ability to run drift-detection-manager and
+	// sveltos-agent (agentless mode) restricted to watching a configured set of namespaces,
+	// instead of cluster-wide.
+	FeatureNamespaceScopedAgents = Features("NamespaceScopedAgents")
 )
 
 // +kubebuilder:validation:Enum:=Enterprise;EnterprisePlus
