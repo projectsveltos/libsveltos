@@ -173,6 +173,17 @@ type LicenseVerificationResult struct {
 	IsEnforced      bool            // True if license is expired and fully enforced
 	Message         string          // A human-readable message about the license status
 	RawError        error           // The underlying error (e.g., secret not found, unmarshal error, signature error)
+
+	// Unknown is true when the license state could not be determined at all -- e.g. the
+	// Secret couldn't be read because the apiserver was unreachable, not because it's
+	// genuinely absent (that case is IsExpired/IsEnforced with RawError satisfying
+	// apierrors.IsNotFound, not this). IsExpired/IsEnforced are still set true alongside it,
+	// for existing callers that don't check Unknown and should keep today's conservative
+	// "treat anything but a clean read as not entitled" behavior. Callers that can afford to
+	// be more precise -- e.g. ones that cache a previous verdict across periodic re-checks --
+	// should check Unknown first and, when true, leave that previous verdict alone rather
+	// than treating "couldn't check" as "checked and denied".
+	Unknown bool
 }
 
 // VerifyLicenseSecret attempts to decode and verify the license secret.
@@ -199,6 +210,10 @@ func VerifyLicenseSecret(ctx context.Context, c client.Client, sveltosNamespace 
 		if apierrors.IsNotFound(err) {
 			result.Message = fmt.Sprintf("License secret '%s' not found.", secretNsName.String())
 		} else {
+			// Some other error reading the Secret (e.g. apiserver unreachable, a transient
+			// network failure) -- this isn't evidence the license is absent or invalid, just
+			// that this attempt couldn't tell. See Unknown's doc comment.
+			result.Unknown = true
 			result.Message = fmt.Sprintf("Failed to get license secret '%s': %v", secretNsName.String(), err)
 		}
 		logger.V(logs.LogInfo).Info(fmt.Sprintf("%s: %v", result.Message, err))
