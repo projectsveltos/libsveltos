@@ -27,11 +27,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/go-logr/logr"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/clustercache"
+	"github.com/projectsveltos/libsveltos/lib/clusterproxy"
 	logs "github.com/projectsveltos/libsveltos/lib/logsettings"
 )
 
@@ -201,6 +203,11 @@ func StoreSveltosAgentVersion(ctx context.Context, c client.Client,
 	sveltosNamespace, version, clusterNamespace, clusterName string,
 	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) error {
 
+	owner, err := getConfigMapOwner(ctx, c, clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
+	if err != nil {
+		return err
+	}
+
 	lbls := getLabels(clusterName, clusterType)
 	lbls[agentTypeLabel] = sveltosAgentType
 
@@ -208,7 +215,7 @@ func StoreSveltosAgentVersion(ctx context.Context, c client.Client,
 	cm, err := getConfigMap(ctx, c, cmInfo, logger)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return createConfigMap(ctx, c, version, cmInfo, lbls)
+			return createConfigMap(ctx, c, version, cmInfo, lbls, owner)
 		}
 		return err
 	}
@@ -218,6 +225,11 @@ func StoreSveltosAgentVersion(ctx context.Context, c client.Client,
 		cm.Data = map[string]string{}
 	}
 	cm.Data[configMapKey] = version
+	if owner != nil {
+		if err := controllerutil.SetOwnerReference(owner, cm, c.Scheme()); err != nil {
+			return err
+		}
+	}
 	return c.Update(ctx, cm)
 }
 
@@ -232,6 +244,11 @@ func StoreDriftDetectionVersion(ctx context.Context, c client.Client,
 	sveltosNamespace, version, clusterNamespace, clusterName string,
 	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) error {
 
+	owner, err := getConfigMapOwner(ctx, c, clusterNamespace, clusterName, clusterType, isAgentInMgmtMode)
+	if err != nil {
+		return err
+	}
+
 	lbls := getLabels(clusterName, clusterType)
 	lbls[agentTypeLabel] = driftDetectionType
 
@@ -239,7 +256,7 @@ func StoreDriftDetectionVersion(ctx context.Context, c client.Client,
 	cm, err := getConfigMap(ctx, c, cmInfo, logger)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return createConfigMap(ctx, c, version, cmInfo, lbls)
+			return createConfigMap(ctx, c, version, cmInfo, lbls, owner)
 		}
 		return err
 	}
@@ -249,11 +266,30 @@ func StoreDriftDetectionVersion(ctx context.Context, c client.Client,
 		cm.Data = map[string]string{}
 	}
 	cm.Data[configMapKey] = version
+	if owner != nil {
+		if err := controllerutil.SetOwnerReference(owner, cm, c.Scheme()); err != nil {
+			return err
+		}
+	}
 	return c.Update(ctx, cm)
 }
 
+// getConfigMapOwner returns the object that should own the per-cluster version-tracking
+// ConfigMap, so it gets garbage collected together with the cluster it tracks. This only
+// applies when the agent runs in the management cluster: the ConfigMap it creates there
+// lives independently of the managed cluster and would otherwise never be cleaned up. When
+// the agent runs in the managed cluster itself, the ConfigMap already dies with that cluster.
+func getConfigMapOwner(ctx context.Context, c client.Client, clusterNamespace, clusterName string,
+	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool) (client.Object, error) {
+
+	if !isAgentInMgmtMode {
+		return nil, nil
+	}
+	return clusterproxy.GetCluster(ctx, c, clusterNamespace, clusterName, clusterType)
+}
+
 func createConfigMap(ctx context.Context, c client.Client, version string,
-	info types.NamespacedName, lbls map[string]string) error {
+	info types.NamespacedName, lbls map[string]string, owner client.Object) error {
 
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -265,6 +301,13 @@ func createConfigMap(ctx context.Context, c client.Client, version string,
 			configMapKey: version,
 		},
 	}
+
+	if owner != nil {
+		if err := controllerutil.SetOwnerReference(owner, cm, c.Scheme()); err != nil {
+			return err
+		}
+	}
+
 	return c.Create(ctx, cm)
 }
 

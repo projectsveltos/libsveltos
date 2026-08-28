@@ -24,9 +24,11 @@ import (
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2/textlogger"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -37,6 +39,38 @@ import (
 const (
 	version = "v1.31.0"
 )
+
+// createOwnerCluster creates the CAPI Cluster or SveltosCluster object that owns the
+// per-cluster version-tracking ConfigMap when the agent runs in the management cluster.
+// The fake client does not auto-assign a UID, so one is set explicitly: without it, an
+// assertion against OwnerReferences[0].UID would be vacuous (comparing empty to empty).
+func createOwnerCluster(c client.Client, clusterNamespace, clusterName string,
+	clusterType libsveltosv1beta1.ClusterType) types.UID {
+
+	uid := types.UID(randomString())
+
+	var obj client.Object
+	if clusterType == libsveltosv1beta1.ClusterTypeSveltos {
+		obj = &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      clusterName,
+				UID:       uid,
+			},
+		}
+	} else {
+		obj = &clusterv1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      clusterName,
+				UID:       uid,
+			},
+		}
+	}
+
+	Expect(c.Create(context.TODO(), obj)).To(Succeed())
+	return uid
+}
 
 var _ = Describe("SveltosAgent compatibility checks", func() {
 	var logger logr.Logger
@@ -64,6 +98,8 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
 
+		ownerUID := createOwnerCluster(c, clusterNamespace, clusterName, clusterType)
+
 		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, sveltosNamespace, version,
 			clusterNamespace, clusterName, clusterType, true, logger)).To(Succeed())
 
@@ -72,6 +108,8 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 			types.NamespacedName{Namespace: clusterNamespace, Name: name}, cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+		Expect(cm.OwnerReferences).To(HaveLen(1))
+		Expect(cm.OwnerReferences[0].UID).To(Equal(ownerUID))
 	})
 
 	It("Update ConfigMap with Sveltos-agent version", func() {
@@ -101,6 +139,8 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
 
+		ownerUID := createOwnerCluster(c, clusterNamespace, clusterName, clusterType)
+
 		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, sveltosNamespace, version,
 			clusterNamespace, clusterName, clusterType, true, logger)).To(Succeed())
 		name := sveltos_upgrade.GenerateName(sveltos_upgrade.SveltosAgentType, clusterName, clusterType)
@@ -112,6 +152,8 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 			cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+		Expect(cm.OwnerReferences).To(HaveLen(1))
+		Expect(cm.OwnerReferences[0].UID).To(Equal(ownerUID))
 	})
 
 	It("IsSveltosAgentVersionCompatible returns true Sveltos-agent version is compatible (agent in management cluster)", func() {
@@ -197,6 +239,8 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 		clusterName := randomString()
 		clusterType := libsveltosv1beta1.ClusterTypeCapi
 
+		ownerUID := createOwnerCluster(c, clusterNamespace, clusterName, clusterType)
+
 		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, sveltosNamespace, version,
 			clusterNamespace, clusterName, clusterType, true, logger)).To(Succeed())
 
@@ -205,6 +249,8 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 			types.NamespacedName{Namespace: clusterNamespace, Name: name}, cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+		Expect(cm.OwnerReferences).To(HaveLen(1))
+		Expect(cm.OwnerReferences[0].UID).To(Equal(ownerUID))
 	})
 
 	It("Update ConfigMap with drift-detection-manager version", func() {
@@ -234,6 +280,8 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 		clusterName := randomString()
 		clusterType := libsveltosv1beta1.ClusterTypeSveltos
 
+		ownerUID := createOwnerCluster(c, clusterNamespace, clusterName, clusterType)
+
 		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, sveltosNamespace, version,
 			clusterNamespace, clusterName, clusterType, true, logger)).To(Succeed())
 
@@ -245,5 +293,25 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 			cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+		Expect(cm.OwnerReferences).To(HaveLen(1))
+		Expect(cm.OwnerReferences[0].UID).To(Equal(ownerUID))
+	})
+
+	It("StoreDriftDetectionVersion returns NotFound and creates no ConfigMap when the owning cluster is missing", func() {
+		c := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeCapi
+
+		err := sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, sveltosNamespace, version,
+			clusterNamespace, clusterName, clusterType, true, logger)
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsNotFound(err)).To(BeTrue())
+
+		name := sveltos_upgrade.GenerateName(sveltos_upgrade.DriftDetectionType, clusterName, clusterType)
+		cm := &corev1.ConfigMap{}
+		err = c.Get(context.TODO(), types.NamespacedName{Namespace: clusterNamespace, Name: name}, cm)
+		Expect(apierrors.IsNotFound(err)).To(BeTrue())
 	})
 })

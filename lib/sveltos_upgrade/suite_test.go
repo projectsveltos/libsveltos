@@ -21,10 +21,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 )
 
 var (
@@ -41,6 +44,10 @@ var _ = BeforeSuite(func() {
 
 	scheme = runtime.NewScheme()
 	err := clientgoscheme.AddToScheme(scheme)
+	Expect(err).To(BeNil())
+	err = clusterv1.AddToScheme(scheme)
+	Expect(err).To(BeNil())
+	err = libsveltosv1beta1.AddToScheme(scheme)
 	Expect(err).To(BeNil())
 })
 
