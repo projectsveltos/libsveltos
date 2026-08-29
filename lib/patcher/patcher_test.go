@@ -49,6 +49,10 @@ const (
 	veleroExclude     = "true"
 	veleroLabel       = "velero.io/exclude-from-backup"
 	v1Version         = "v1"
+	appsGroup         = "apps"
+	deploymentKind    = "Deployment"
+	nginxReproName    = "nginx-repro"
+	nginxReproNs      = "nginx-repro"
 
 	removePatchVelero = `- op: remove
   path: /metadata/labels/velero.io~1exclude-from-backup`
@@ -56,6 +60,9 @@ const (
 	addPatchVelero = `- op: add
   path: /metadata/labels/velero.io~1exclude-from-backup
   value: "true"`
+
+	removePatchReplicas = `- op: remove
+  path: /spec/replicas`
 )
 
 var (
@@ -67,6 +74,48 @@ spec:
   containers:
   - name: mycontainer
     image: myimage
+`
+
+	// deploymentYAMLNoReplicas mirrors a chart rendered with autoscaling enabled, where the
+	// standard `{{- if not .Values.autoscaling.enabled }}` guard omits spec.replicas because
+	// the HPA owns it.
+	deploymentYAMLNoReplicas = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-repro
+  namespace: nginx-repro
+spec:
+  selector:
+    matchLabels:
+      app: nginx-repro
+  template:
+    metadata:
+      labels:
+        app: nginx-repro
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+`
+
+	deploymentYAMLWithReplicas = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-repro
+  namespace: nginx-repro
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-repro
+  template:
+    metadata:
+      labels:
+        app: nginx-repro
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
 `
 )
 
@@ -360,6 +409,61 @@ metadata:
 			Expect(obj.GetName()).To(Equal(mypodName))
 			Expect(obj.GetLabels()["test"]).To(Equal("value"))
 			Expect(obj.GetLabels()["environment"]).To(Equal("production"))
+		})
+
+		It("does not fail a driftExclusion remove whose path is absent from the render (regression for #1934)", func() {
+			r := &patcher.CustomPatchPostRenderer{
+				Patches: []sveltosv1beta1.Patch{
+					{
+						Patch: removePatchReplicas,
+						Target: &sveltosv1beta1.PatchSelector{
+							Group:     appsGroup,
+							Version:   v1Version,
+							Kind:      deploymentKind,
+							Namespace: nginxReproNs,
+							Name:      "^" + nginxReproName + "$",
+						},
+					},
+				},
+			}
+
+			modifiedManifests, err := r.Run(bytes.NewBufferString(deploymentYAMLNoReplicas))
+			Expect(err).ToNot(HaveOccurred())
+
+			parsedObjects, err := patcher.ParseYAMLToUnstructured(modifiedManifests)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(parsedObjects).To(HaveLen(1))
+			Expect(parsedObjects[0].GetName()).To(Equal(nginxReproName))
+			_, found, err := unstructured.NestedInt64(parsedObjects[0].Object, "spec", "replicas")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(found).To(BeFalse())
+		})
+
+		It("still removes the path when it is present in the render", func() {
+			r := &patcher.CustomPatchPostRenderer{
+				Patches: []sveltosv1beta1.Patch{
+					{
+						Patch: removePatchReplicas,
+						Target: &sveltosv1beta1.PatchSelector{
+							Group:     appsGroup,
+							Version:   v1Version,
+							Kind:      deploymentKind,
+							Namespace: nginxReproNs,
+							Name:      "^" + nginxReproName + "$",
+						},
+					},
+				},
+			}
+
+			modifiedManifests, err := r.Run(bytes.NewBufferString(deploymentYAMLWithReplicas))
+			Expect(err).ToNot(HaveOccurred())
+
+			parsedObjects, err := patcher.ParseYAMLToUnstructured(modifiedManifests)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(parsedObjects).To(HaveLen(1))
+			_, found, err := unstructured.NestedInt64(parsedObjects[0].Object, "spec", "replicas")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(found).To(BeFalse())
 		})
 	})
 
