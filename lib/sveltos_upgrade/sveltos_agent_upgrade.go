@@ -252,6 +252,48 @@ func StoreDriftDetectionVersion(ctx context.Context, c client.Client,
 	return c.Update(ctx, cm)
 }
 
+// DeleteSveltosAgentVersion deletes the ConfigMap that stores the Sveltos-agent version, if
+// present. It is a no-op if the ConfigMap does not exist. See StoreSveltosAgentVersion for how
+// the ConfigMap identity is derived.
+func DeleteSveltosAgentVersion(ctx context.Context, c client.Client,
+	sveltosNamespace, clusterNamespace, clusterName string,
+	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) error {
+
+	return deleteConfigMap(ctx, c,
+		getSveltosAgentConfigMapInfo(sveltosNamespace, clusterNamespace, clusterName, clusterType, isAgentInMgmtMode),
+		logger)
+}
+
+// DeleteDriftDetectionVersion deletes the ConfigMap that stores the drift-detection-manager
+// version, if present. It is a no-op if the ConfigMap does not exist. See
+// StoreDriftDetectionVersion for how the ConfigMap identity is derived.
+func DeleteDriftDetectionVersion(ctx context.Context, c client.Client,
+	sveltosNamespace, clusterNamespace, clusterName string,
+	clusterType libsveltosv1beta1.ClusterType, isAgentInMgmtMode bool, logger logr.Logger) error {
+
+	return deleteConfigMap(ctx, c,
+		getDriftDetectionConfigMapInfo(sveltosNamespace, clusterNamespace, clusterName, clusterType, isAgentInMgmtMode),
+		logger)
+}
+
+func deleteConfigMap(ctx context.Context, c client.Client, cmInfo types.NamespacedName,
+	logger logr.Logger) error {
+
+	cm, err := getConfigMap(ctx, c, cmInfo, logger)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	err = c.Delete(ctx, cm)
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	return err
+}
+
 func createConfigMap(ctx context.Context, c client.Client, version string,
 	info types.NamespacedName, lbls map[string]string) error {
 
