@@ -24,6 +24,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2/textlogger"
@@ -139,6 +140,36 @@ var _ = Describe("SveltosAgent compatibility checks", func() {
 		Expect(sveltos_upgrade.IsSveltosAgentVersionCompatible(context.TODO(), c, randomString(), clusterNamespace, clusterName,
 			clusterType, true, logger)).To(BeFalse())
 	})
+
+	It("DeleteSveltosAgentVersion deletes the ConfigMap", func() {
+		c := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeCapi
+
+		Expect(sveltos_upgrade.StoreSveltosAgentVersion(context.TODO(), c, sveltosNamespace, version,
+			clusterNamespace, clusterName, clusterType, true, logger)).To(Succeed())
+
+		name := sveltos_upgrade.GenerateName(sveltos_upgrade.SveltosAgentType, clusterName, clusterType)
+		cm := &corev1.ConfigMap{}
+		Expect(c.Get(context.TODO(),
+			types.NamespacedName{Namespace: clusterNamespace, Name: name}, cm)).To(Succeed())
+
+		Expect(sveltos_upgrade.DeleteSveltosAgentVersion(context.TODO(), c, sveltosNamespace,
+			clusterNamespace, clusterName, clusterType, true, logger)).To(Succeed())
+
+		err := c.Get(context.TODO(),
+			types.NamespacedName{Namespace: clusterNamespace, Name: name}, cm)
+		Expect(apierrors.IsNotFound(err)).To(BeTrue())
+	})
+
+	It("DeleteSveltosAgentVersion is a no-op when the ConfigMap does not exist", func() {
+		c := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+		Expect(sveltos_upgrade.DeleteSveltosAgentVersion(context.TODO(), c, sveltosNamespace,
+			randomString(), randomString(), libsveltosv1beta1.ClusterTypeCapi, true, logger)).To(Succeed())
+	})
 })
 
 var _ = Describe("DriftDetection compatibility checks", func() {
@@ -241,5 +272,35 @@ var _ = Describe("DriftDetection compatibility checks", func() {
 			cm)).To(Succeed())
 		Expect(cm.Data).ToNot(BeNil())
 		Expect(cm.Data[sveltos_upgrade.ConfigMapKey]).To(Equal(version))
+	})
+
+	It("DeleteDriftDetectionVersion deletes the ConfigMap", func() {
+		c := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		clusterType := libsveltosv1beta1.ClusterTypeSveltos
+
+		Expect(sveltos_upgrade.StoreDriftDetectionVersion(context.TODO(), c, sveltosNamespace, version,
+			clusterNamespace, clusterName, clusterType, true, logger)).To(Succeed())
+
+		name := sveltos_upgrade.GenerateName(sveltos_upgrade.DriftDetectionType, clusterName, clusterType)
+		cm := &corev1.ConfigMap{}
+		Expect(c.Get(context.TODO(),
+			types.NamespacedName{Namespace: clusterNamespace, Name: name}, cm)).To(Succeed())
+
+		Expect(sveltos_upgrade.DeleteDriftDetectionVersion(context.TODO(), c, sveltosNamespace,
+			clusterNamespace, clusterName, clusterType, true, logger)).To(Succeed())
+
+		err := c.Get(context.TODO(),
+			types.NamespacedName{Namespace: clusterNamespace, Name: name}, cm)
+		Expect(apierrors.IsNotFound(err)).To(BeTrue())
+	})
+
+	It("DeleteDriftDetectionVersion is a no-op when the ConfigMap does not exist", func() {
+		c := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+		Expect(sveltos_upgrade.DeleteDriftDetectionVersion(context.TODO(), c, sveltosNamespace,
+			randomString(), randomString(), libsveltosv1beta1.ClusterTypeSveltos, true, logger)).To(Succeed())
 	})
 })
