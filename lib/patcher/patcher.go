@@ -90,6 +90,14 @@ func (k *CustomPatchPostRenderer) Run(renderedManifests *bytes.Buffer) (modified
 	cfg.APIVersion = kustomizetypes.KustomizationVersion
 	cfg.Kind = kustomizetypes.KustomizationKind
 
+	// Drop patch operations that would be no-ops against this render (e.g. a driftExclusion
+	// 'remove' whose path is legitimately absent, because an HPA owns it), the same way
+	// RunUnstructured already does before applying anything. Without this, kustomize fails
+	// hard on a remove of a path that isn't there, turning every subsequent helm upgrade
+	// into a failure for as long as the exclusion is in place.
+	// Must run before writeFile below: Buffer.WriteTo drains renderedManifests.
+	applicablePatches := k.filterPatchesForRenderedManifests(renderedManifests)
+
 	// Add rendered Helm output as input resource to the Kustomization.
 	const input = "helm-output.yaml"
 	cfg.Resources = append(cfg.Resources, input)
@@ -98,7 +106,7 @@ func (k *CustomPatchPostRenderer) Run(renderedManifests *bytes.Buffer) (modified
 	}
 
 	// Add patches.
-	for _, m := range k.Patches {
+	for _, m := range applicablePatches {
 		if err := validatePatch(m); err != nil {
 			return nil, err
 		}
@@ -174,6 +182,60 @@ func (k *CustomPatchPostRenderer) getMatchingPatches(obj *unstructured.Unstructu
 		}
 		if matches {
 			matching = append(matching, patch)
+		}
+	}
+
+	return matching, nil
+}
+
+// filterPatchesForRenderedManifests drops 'remove' operations from k.Patches whose path is
+// absent from every object in renderedManifests that the patch targets, mirroring the
+// missing-path filtering RunUnstructured already applies via filterApplicablePatches. Run (used
+// as Helm's PostRenderer) only sees the raw rendered manifest rather than a single already-scoped
+// object, so it has to work out which objects each patch applies to first.
+//
+// Filtering is best-effort: if the render can't be parsed, or a patch's target can't be matched,
+// that patch is passed through unfiltered and left for kustomize to apply or reject as before.
+func (k *CustomPatchPostRenderer) filterPatchesForRenderedManifests(renderedManifests *bytes.Buffer,
+) []sveltosv1beta1.Patch {
+
+	// Bytes() does not consume the buffer, so renderedManifests is still intact for the caller.
+	objs, err := parseYAMLToUnstructured(bytes.NewBuffer(renderedManifests.Bytes()))
+	if err != nil {
+		return k.Patches
+	}
+
+	applicable := make([]sveltosv1beta1.Patch, 0, len(k.Patches))
+	for _, patch := range k.Patches {
+		matchingObjs, err := matchingObjects(patch.Target, objs)
+		if err != nil || len(matchingObjs) == 0 {
+			// Can't evaluate the target, or nothing in the render matches it: leave the
+			// patch as-is.
+			applicable = append(applicable, patch)
+			continue
+		}
+
+		filtered, keep := filterPatchOperationsAgainstObjects(patch, matchingObjs)
+		if keep {
+			applicable = append(applicable, filtered)
+		}
+	}
+
+	return applicable
+}
+
+// matchingObjects returns the objects in objs whose target selector matches target.
+func matchingObjects(target *sveltosv1beta1.PatchSelector,
+	objs []*unstructured.Unstructured) ([]*unstructured.Unstructured, error) {
+
+	var matching []*unstructured.Unstructured
+	for _, obj := range objs {
+		matches, err := patchMatchesObject(target, obj)
+		if err != nil {
+			return nil, err
+		}
+		if matches {
+			matching = append(matching, obj)
 		}
 	}
 
@@ -303,6 +365,33 @@ func (k *CustomPatchPostRenderer) filterApplicablePatches(obj *unstructured.Unst
 // path does not exist in the object. Returns the (possibly modified) patch and whether it
 // should be kept at all. SM patches are always kept unchanged.
 func filterPatchOperations(patch sveltosv1beta1.Patch, obj *unstructured.Unstructured) (sveltosv1beta1.Patch, bool) {
+	return filterPatchOperationsFunc(patch, func(path string) bool {
+		return pathExistsInObject(obj, path)
+	})
+}
+
+// filterPatchOperationsAgainstObjects is filterPatchOperations for a patch that may apply to more
+// than one rendered object (see filterPatchesForRenderedManifests): a 'remove' operation is only
+// dropped when its path is absent from every object in objs, since it's still needed wherever it
+// does exist.
+func filterPatchOperationsAgainstObjects(patch sveltosv1beta1.Patch,
+	objs []*unstructured.Unstructured) (sveltosv1beta1.Patch, bool) {
+
+	return filterPatchOperationsFunc(patch, func(path string) bool {
+		for _, obj := range objs {
+			if pathExistsInObject(obj, path) {
+				return true
+			}
+		}
+		return false
+	})
+}
+
+// filterPatchOperationsFunc holds the logic shared by filterPatchOperations and
+// filterPatchOperationsAgainstObjects: drop 'remove' operations whose path pathExists reports as
+// missing, keep everything else. Returns the (possibly modified) patch and whether it should be
+// kept at all. SM patches are always kept unchanged.
+func filterPatchOperationsFunc(patch sveltosv1beta1.Patch, pathExists func(path string) bool) (sveltosv1beta1.Patch, bool) {
 	if !isJSONPatch(patch.Patch) {
 		return patch, true
 	}
@@ -316,7 +405,7 @@ func filterPatchOperations(patch sveltosv1beta1.Patch, obj *unstructured.Unstruc
 	for _, op := range ops {
 		opStr, _ := op["op"].(string)
 		pathStr, _ := op["path"].(string)
-		if opStr == "remove" && pathStr != "" && !pathExistsInObject(obj, pathStr) {
+		if opStr == "remove" && pathStr != "" && !pathExists(pathStr) {
 			continue
 		}
 		keepOps = append(keepOps, op)
