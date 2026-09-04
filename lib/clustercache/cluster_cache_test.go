@@ -18,6 +18,9 @@ package clustercache_test
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -26,6 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2/textlogger"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
@@ -34,6 +38,7 @@ import (
 
 const (
 	sveltosKubeconfigPostfix = "-sveltos-kubeconfig"
+	kubeconfigSecretDataKey  = "value"
 )
 
 var _ = Describe("Clustercache", func() {
@@ -199,6 +204,72 @@ var _ = Describe("Clustercache", func() {
 			libsveltosv1beta1.ClusterTypeSveltos, forbiddenErr)).To(BeTrue())
 		Expect(cacheMgr.GetConfigFromMap(clusterObj)).To(BeNil())
 	})
+
+	It("self-evicts the cache when a request through the returned config gets a 401, with no explicit InvalidateOnAuthError call",
+		func() {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusUnauthorized)
+			}))
+			defer server.Close()
+
+			createClusterResourcesWithServer(cluster, server.URL)
+
+			cacheMgr := clustercache.GetManager()
+			restConfig, err := cacheMgr.GetKubernetesRestConfig(context.TODO(), testEnv.Client, cluster.Namespace,
+				cluster.Name, "", "", libsveltosv1beta1.ClusterTypeSveltos, logger)
+			Expect(err).To(BeNil())
+			Expect(restConfig).ToNot(BeNil())
+
+			clusterObj := &corev1.ObjectReference{
+				Namespace:  cluster.Namespace,
+				Name:       cluster.Name,
+				Kind:       libsveltosv1beta1.SveltosClusterKind,
+				APIVersion: libsveltosv1beta1.GroupVersion.String(),
+			}
+			Expect(cacheMgr.GetConfigFromMap(clusterObj)).ToNot(BeNil())
+
+			// Issue one request through the returned config. The mock server always answers 401 -
+			// nothing here calls InvalidateOnAuthError; eviction must happen as a side effect of
+			// the transport wrapping GetKubernetesRestConfig installed.
+			httpClient, err := rest.HTTPClientFor(restConfig)
+			Expect(err).To(BeNil())
+			resp, err := httpClient.Get(server.URL + "/api")
+			Expect(err).To(BeNil())
+			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+			Expect(resp.Body.Close()).To(Succeed())
+
+			Expect(cacheMgr.GetConfigFromMap(clusterObj)).To(BeNil())
+		})
+
+	It("does not evict the cache when requests through the returned config succeed", func() {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		createClusterResourcesWithServer(cluster, server.URL)
+
+		cacheMgr := clustercache.GetManager()
+		restConfig, err := cacheMgr.GetKubernetesRestConfig(context.TODO(), testEnv.Client, cluster.Namespace,
+			cluster.Name, "", "", libsveltosv1beta1.ClusterTypeSveltos, logger)
+		Expect(err).To(BeNil())
+		Expect(restConfig).ToNot(BeNil())
+
+		httpClient, err := rest.HTTPClientFor(restConfig)
+		Expect(err).To(BeNil())
+		resp, err := httpClient.Get(server.URL + "/api")
+		Expect(err).To(BeNil())
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		Expect(resp.Body.Close()).To(Succeed())
+
+		clusterObj := &corev1.ObjectReference{
+			Namespace:  cluster.Namespace,
+			Name:       cluster.Name,
+			Kind:       libsveltosv1beta1.SveltosClusterKind,
+			APIVersion: libsveltosv1beta1.GroupVersion.String(),
+		}
+		Expect(cacheMgr.GetConfigFromMap(clusterObj)).ToNot(BeNil())
+	})
 })
 
 func createClusterResources(cluster *libsveltosv1beta1.SveltosCluster) *corev1.Secret {
@@ -216,7 +287,7 @@ func createClusterResources(cluster *libsveltosv1beta1.SveltosCluster) *corev1.S
 			Name:      cluster.Name + sveltosKubeconfigPostfix,
 		},
 		Data: map[string][]byte{
-			"value": testEnv.Kubeconfig,
+			kubeconfigSecretDataKey: testEnv.Kubeconfig,
 		},
 	}
 
@@ -229,4 +300,54 @@ func createClusterResources(cluster *libsveltosv1beta1.SveltosCluster) *corev1.S
 	Expect(waitForObject(context.TODO(), testEnv.Client, cluster)).To(Succeed())
 	Expect(waitForObject(context.TODO(), testEnv.Client, secret)).To(Succeed())
 	return secret
+}
+
+// createClusterResourcesWithServer is createClusterResources, but the Secret holds a kubeconfig
+// pointing at serverURL (an httptest server) instead of testEnv's own API server. For tests that
+// need to control what a request through the resulting rest.Config gets back.
+func createClusterResourcesWithServer(cluster *libsveltosv1beta1.SveltosCluster, serverURL string) {
+	By("Create the cluster's namespace")
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: cluster.Namespace,
+		},
+	}
+
+	kubeconfig := fmt.Sprintf(`apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    server: %s
+  name: test
+contexts:
+- context:
+    cluster: test
+    user: test
+  name: test
+current-context: test
+users:
+- name: test
+  user:
+    token: fake-token
+`, serverURL)
+
+	By("Create the secret with a kubeconfig pointing at the test server")
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: cluster.Namespace,
+			Name:      cluster.Name + sveltosKubeconfigPostfix,
+		},
+		Data: map[string][]byte{
+			kubeconfigSecretDataKey: []byte(kubeconfig),
+		},
+	}
+
+	Expect(testEnv.Create(context.TODO(), ns)).To(Succeed())
+	Expect(waitForObject(context.TODO(), testEnv.Client, ns)).To(Succeed())
+
+	Expect(testEnv.Create(context.TODO(), cluster)).To(Succeed())
+	Expect(testEnv.Create(context.TODO(), secret)).To(Succeed())
+
+	Expect(waitForObject(context.TODO(), testEnv.Client, cluster)).To(Succeed())
+	Expect(waitForObject(context.TODO(), testEnv.Client, secret)).To(Succeed())
 }
