@@ -106,14 +106,15 @@ type TokenRequestRenewalOption struct {
 	KubeconfigKeyName *string `json:"kubeconfigKeyName,omitempty"`
 }
 
-// WorkloadIdentityProvider identifies the cloud provider for workload identity.
-// +kubebuilder:validation:Enum=AWS;GCP;Azure
+// WorkloadIdentityProvider identifies the cloud provider, or generic OIDC IdP, for workload identity.
+// +kubebuilder:validation:Enum=AWS;GCP;Azure;OIDC
 type WorkloadIdentityProvider string
 
 const (
 	WorkloadIdentityProviderAWS   WorkloadIdentityProvider = "AWS"
 	WorkloadIdentityProviderGCP   WorkloadIdentityProvider = "GCP"
 	WorkloadIdentityProviderAzure WorkloadIdentityProvider = "Azure"
+	WorkloadIdentityProviderOIDC  WorkloadIdentityProvider = "OIDC"
 )
 
 // AWSWorkloadIdentityConfig holds AWS-specific workload identity configuration.
@@ -178,14 +179,46 @@ type AzureWorkloadIdentityConfig struct {
 	ClusterName string `json:"clusterName,omitempty"`
 }
 
+// OIDCWorkloadIdentityConfig holds configuration for a generic OIDC client credentials
+// grant (RFC 6749 section 4.4), used to authenticate to a managed cluster whose control
+// plane is not one of the three cloud providers with their own federation mechanism, for
+// example an on-prem or self-managed cluster backed by an enterprise IdP (Keycloak, Dex,
+// Okta, or similar). Unlike the AWS/GCP/Azure cases, this is not secretless: Sveltos holds
+// a standing client_id/client_secret and exchanges it directly at the IdP's token endpoint,
+// rather than a cloud trusting a token Kubernetes itself already minted for the pod.
+type OIDCWorkloadIdentityConfig struct {
+	// TokenURL is the IdP's OAuth2 token endpoint.
+	// +kubebuilder:validation:MinLength=1
+	TokenURL string `json:"tokenURL"`
+
+	// SecretRef references a Secret in the management cluster containing the client
+	// credentials, under the keys "client_id" and "client_secret".
+	// If Namespace is omitted, the cluster's namespace is used.
+	SecretRef corev1.SecretReference `json:"secretRef"`
+
+	// Scopes is the list of OAuth2 scopes to request alongside the client credentials
+	// grant. Leave empty if the IdP does not require one.
+	// +optional
+	Scopes []string `json:"scopes,omitempty"`
+
+	// CASecretRef references a Secret in the management cluster containing the CA
+	// certificate of the IdP's token endpoint under the key "ca.crt". This is distinct
+	// from WorkloadIdentityConfig.CASecretRef, which trusts the managed cluster's own
+	// API server rather than the IdP. If not set, the system certificate pool is used.
+	// +optional
+	CASecretRef *corev1.LocalObjectReference `json:"caSecretRef,omitempty"`
+}
+
 // WorkloadIdentityConfig specifies how Sveltos authenticates to the managed
-// cluster using the cloud provider's workload identity mechanism instead of a
-// static kubeconfig Secret.
+// cluster using the cloud provider's workload identity mechanism, or a generic
+// OIDC client credentials grant, instead of a static kubeconfig Secret.
 // +kubebuilder:validation:XValidation:rule="(self.provider == 'AWS') == has(self.aws)",message="aws must be set if and only if provider is AWS"
 // +kubebuilder:validation:XValidation:rule="(self.provider == 'GCP') == has(self.gcp)",message="gcp must be set if and only if provider is GCP"
 // +kubebuilder:validation:XValidation:rule="(self.provider == 'Azure') == has(self.azure)",message="azure must be set if and only if provider is Azure"
+// +kubebuilder:validation:XValidation:rule="(self.provider == 'OIDC') == has(self.oidc)",message="oidc must be set if and only if provider is OIDC"
 type WorkloadIdentityConfig struct {
-	// Provider is the cloud provider implementing the workload identity mechanism.
+	// Provider is the cloud provider, or generic OIDC IdP, implementing the workload
+	// identity mechanism.
 	// +kubebuilder:validation:Required
 	Provider WorkloadIdentityProvider `json:"provider"`
 
@@ -213,6 +246,11 @@ type WorkloadIdentityConfig struct {
 	// Required when Provider is Azure.
 	// +optional
 	Azure *AzureWorkloadIdentityConfig `json:"azure,omitempty"`
+
+	// OIDC contains configuration for a generic OIDC client credentials grant.
+	// Required when Provider is OIDC.
+	// +optional
+	OIDC *OIDCWorkloadIdentityConfig `json:"oidc,omitempty"`
 }
 
 // SveltosClusterSpec defines the desired state of SveltosCluster

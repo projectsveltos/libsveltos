@@ -19,6 +19,8 @@ package clusterproxy
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -36,6 +38,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/sync/singleflight"
 	corev1 "k8s.io/api/core/v1"
@@ -151,6 +155,8 @@ func getWorkloadIdentityRestConfig(
 			cfg, expiresAt, err = getGCPRestConfig(ctx, wi, caData, logger)
 		case libsveltosv1beta1.WorkloadIdentityProviderAzure:
 			cfg, expiresAt, err = getAzureRestConfig(ctx, wi, caData, logger)
+		case libsveltosv1beta1.WorkloadIdentityProviderOIDC:
+			cfg, expiresAt, err = getOIDCRestConfig(ctx, c, clusterNamespace, wi, caData, logger)
 		default:
 			err = fmt.Errorf("unknown workload identity provider %q", wi.Provider)
 		}
@@ -362,4 +368,127 @@ func getAzureRestConfig(
 
 	logger.V(logs.LogDebug).Info("obtained Azure AAD token", "expiresAt", tokenResp.ExpiresOn)
 	return buildRestConfig(wi.Endpoint, tokenResp.Token, caData), tokenResp.ExpiresOn, nil
+}
+
+// ── OIDC ─────────────────────────────────────────────────────────────────────
+
+const (
+	oidcClientIDKey     = "client_id"
+	oidcClientSecretKey = "client_secret"
+)
+
+// getOIDCCredentials fetches client_id and client_secret from the referenced Secret.
+// If secretRef.Namespace is empty, clusterNamespace is used.
+func getOIDCCredentials(
+	ctx context.Context,
+	c client.Client,
+	clusterNamespace string,
+	secretRef corev1.SecretReference,
+	logger logr.Logger,
+) (clientID, clientSecret string, err error) {
+
+	namespace := secretRef.Namespace
+	if namespace == "" {
+		namespace = clusterNamespace
+	}
+
+	secret := &corev1.Secret{}
+	key := client.ObjectKey{Namespace: namespace, Name: secretRef.Name}
+	if getErr := c.Get(ctx, key, secret); getErr != nil {
+		if apierrors.IsNotFound(getErr) {
+			return "", "", errors.Wrap(getErr,
+				fmt.Sprintf("OIDC credentials secret %s/%s not found", namespace, secretRef.Name))
+		}
+		return "", "", errors.Wrap(getErr,
+			fmt.Sprintf("failed to get OIDC credentials secret %s/%s", namespace, secretRef.Name))
+	}
+
+	id, ok := secret.Data[oidcClientIDKey]
+	if !ok {
+		return "", "", fmt.Errorf("OIDC credentials secret %s/%s has no %q key", namespace, secretRef.Name, oidcClientIDKey)
+	}
+	sec, ok := secret.Data[oidcClientSecretKey]
+	if !ok {
+		return "", "", fmt.Errorf("OIDC credentials secret %s/%s has no %q key", namespace, secretRef.Name, oidcClientSecretKey)
+	}
+
+	logger.V(logs.LogDebug).Info("loaded OIDC client credentials from secret", "secret", secretRef.Name)
+	return string(id), string(sec), nil
+}
+
+// getOIDCRestConfig obtains an access token from the IdP's token endpoint using the
+// standard OAuth2 client credentials grant (RFC 6749 section 4.4): a form encoded POST
+// carrying client_id, client_secret and grant_type, with a JSON response holding
+// access_token and expires_in as a number. This is the shape any RFC compliant IdP
+// (Dex, Keycloak, Okta, and similar) implements; a provider that deviates from it needs
+// its own accommodation rather than changing this baseline.
+func getOIDCRestConfig(
+	ctx context.Context,
+	c client.Client,
+	clusterNamespace string,
+	wi *libsveltosv1beta1.WorkloadIdentityConfig,
+	caData []byte,
+	logger logr.Logger,
+) (*rest.Config, time.Time, error) {
+
+	oidcCfg := wi.OIDC
+
+	clientID, clientSecret, err := getOIDCCredentials(ctx, c, clusterNamespace, oidcCfg.SecretRef, logger)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+
+	idpCAData, err := getCAData(ctx, c, clusterNamespace, oidcCfg.CASecretRef, logger)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+
+	tokenConfig := clientcredentials.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		TokenURL:     oidcCfg.TokenURL,
+		Scopes:       oidcCfg.Scopes,
+	}
+
+	tokenCtx, err := contextWithIdPTrust(ctx, idpCAData)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+
+	token, err := tokenConfig.Token(tokenCtx)
+	if err != nil {
+		return nil, time.Time{}, errors.Wrap(err, "failed to obtain OIDC access token")
+	}
+
+	logger.V(logs.LogDebug).Info("obtained OIDC access token", "expiresAt", token.Expiry)
+	return buildRestConfig(wi.Endpoint, token.AccessToken, caData), token.Expiry, nil
+}
+
+// contextWithIdPTrust returns a context carrying an HTTP client that trusts idpCAData
+// alongside the system certificate pool, for use by the oauth2 client credentials
+// exchange against the IdP's token endpoint. With no idpCAData, ctx is returned
+// unchanged and the system pool alone applies.
+func contextWithIdPTrust(ctx context.Context, idpCAData []byte) (context.Context, error) {
+	if len(idpCAData) == 0 {
+		return ctx, nil
+	}
+
+	pool, err := x509.SystemCertPool()
+	if err != nil || pool == nil {
+		pool = x509.NewCertPool()
+	}
+	if !pool.AppendCertsFromPEM(idpCAData) {
+		return nil, fmt.Errorf("no valid certificate found in IdP CA data")
+	}
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs:    pool,
+				MinVersion: tls.VersionTLS12,
+			},
+		},
+	}
+
+	return context.WithValue(ctx, oauth2.HTTPClient, httpClient), nil
 }
