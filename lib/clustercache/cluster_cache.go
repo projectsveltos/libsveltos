@@ -19,6 +19,7 @@ package clustercache
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -125,6 +126,13 @@ func (m *clusterCache) RemoveSecret(sec *corev1.ObjectReference) {
 // InvalidateOnAuthError evicts all cached data (rest.Config, mapper, discovery client) for
 // a cluster, plus the underlying workload-identity cache entry, if err indicates the API
 // server rejected the current credentials (401/403). Returns true if anything was evicted.
+//
+// Kept for callers that already have a typed error in hand (e.g. from a deployer job
+// result) and want to check it directly. New code does not need to call this: the rest.Config
+// returned by GetKubernetesRestConfig/GetKubernetesClient self-evicts on the same condition,
+// read straight off the HTTP response status rather than relying on a typed error surviving
+// whatever a caller (or an SDK like Helm) wraps it in. Calling this after that self-eviction
+// has already run is harmless: RemoveCluster on an already-absent entry is a no-op.
 func (m *clusterCache) InvalidateOnAuthError(clusterNamespace, clusterName string,
 	clusterType libsveltosv1beta1.ClusterType, err error) bool {
 
@@ -132,15 +140,77 @@ func (m *clusterCache) InvalidateOnAuthError(clusterNamespace, clusterName strin
 		return false
 	}
 
+	m.evictAuth(clusterNamespace, clusterName, clusterType)
+	return true
+}
+
+// evictAuth is the shared eviction routine behind both InvalidateOnAuthError and the
+// self-evicting transport wrapWithAuthInvalidation installs on every rest.Config it hands out.
+func (m *clusterCache) evictAuth(clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType) {
 	m.RemoveCluster(clusterNamespace, clusterName, clusterType)
 	clusterproxy.EvictWorkloadIdentityCache(clusterNamespace, clusterName)
-	return true
+}
+
+// authInvalidatingTransport wraps a cluster's http.RoundTripper so that any 401/403 response
+// evicts this cluster's cache entry as a side effect. This applies to any request, issued by
+// any client built from this rest.Config, including Helm's own discovery/REST clients when
+// Sveltos hands this same config to its SDK. This is what makes eviction automatic instead of
+// something every caller has to remember to trigger after the fact.
+//
+// Reading resp.StatusCode directly, rather than decoding the response into an error first, is
+// deliberate: it does not depend on whatever wraps that error afterwards (Helm's IsReachable
+// wraps with fmt.Errorf's %w, other paths may not) preserving the APIStatus type
+// apierrors.IsUnauthorized/IsForbidden need to recognize it.
+type authInvalidatingTransport struct {
+	base             http.RoundTripper
+	clusterNamespace string
+	clusterName      string
+	clusterType      libsveltosv1beta1.ClusterType
+	onAuthError      func(clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType)
+}
+
+func (t *authInvalidatingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := t.base.RoundTrip(req)
+	if resp != nil && (resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) {
+		t.onAuthError(t.clusterNamespace, t.clusterName, t.clusterType)
+	}
+	return resp, err
+}
+
+// wrapWithAuthInvalidation returns a copy of cfg whose transport evicts this cluster's cache
+// entry on any 401/403. Preserves whatever WrapTransport cfg already carried.
+func (m *clusterCache) wrapWithAuthInvalidation(cfg *rest.Config, clusterNamespace, clusterName string,
+	clusterType libsveltosv1beta1.ClusterType) *rest.Config {
+
+	cfg = rest.CopyConfig(cfg)
+	base := cfg.WrapTransport
+	cfg.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+		if base != nil {
+			rt = base(rt)
+		}
+		return &authInvalidatingTransport{
+			base:             rt,
+			clusterNamespace: clusterNamespace,
+			clusterName:      clusterName,
+			clusterType:      clusterType,
+			onAuthError:      m.evictAuth,
+		}
+	}
+	return cfg
 }
 
 // GetKubernetesRestConfig returns managed cluster restConfig.
 // If result is cached, it will be returned immediately. Otherwise it will be built
 // by fetching the Secret containing the cluster kubeconfig.
 // Admins restConfig are never cached.
+//
+// The returned config's transport self-evicts this cluster's cache entry (and the
+// underlying workload-identity cache entry) the moment any request made through it, by any
+// caller, using any client built from this config, including Helm's own SDK, gets a
+// 401/403 back. Callers no longer need to remember to call InvalidateOnAuthError themselves;
+// several call sites did not, and each was a stale-credential loop that only recovered when
+// some unrelated request against the same cluster happened to hit the cache-invalidating
+// path. See https://github.com/projectsveltos/addon-controller/issues/1941.
 func (m *clusterCache) GetKubernetesRestConfig(ctx context.Context, mgmtClient client.Client,
 	clusterNamespace, clusterName, adminNamespace, adminName string,
 	clusterType libsveltosv1beta1.ClusterType, logger logr.Logger) (*rest.Config, error) {
@@ -171,6 +241,10 @@ func (m *clusterCache) GetKubernetesRestConfig(ctx context.Context, mgmtClient c
 		adminNamespace, adminName, clusterType, logger)
 	if err != nil {
 		return nil, err
+	}
+
+	if remoteRestConfig != nil {
+		remoteRestConfig = m.wrapWithAuthInvalidation(remoteRestConfig, clusterNamespace, clusterName, clusterType)
 	}
 
 	var cachedDiscoveryClient discovery.CachedDiscoveryInterface
