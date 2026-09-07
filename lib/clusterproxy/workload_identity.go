@@ -94,6 +94,52 @@ func wiCacheKey(namespace, name string) string {
 	return namespace + "/" + name
 }
 
+// wiAuthInvalidatingTransport wraps a cluster's http.RoundTripper so that any 401/403
+// response evicts this cluster's workload-identity cache entry as a side effect. This
+// catches a token being rejected for a reason its own expiry does not predict (early
+// revocation, an IdP restart invalidating outstanding tokens, and similar), so the next
+// call gets a freshly fetched token instead of repeating the same rejected one until the
+// proactive refresh threshold in getWorkloadIdentityRestConfig eventually catches up.
+//
+// This mirrors clustercache's authInvalidatingTransport, one layer down: clustercache
+// wraps this same eviction into its own transport for callers that go through
+// GetKubernetesRestConfig/GetKubernetesClient, but a caller using
+// GetSveltosKubernetesRestConfig/GetKubernetesRestConfig directly, bypassing clustercache,
+// previously got none of that. Duplicated rather than shared because clustercache already
+// imports this package for EvictWorkloadIdentityCache; the reverse import would cycle.
+type wiAuthInvalidatingTransport struct {
+	base             http.RoundTripper
+	clusterNamespace string
+	clusterName      string
+}
+
+func (t *wiAuthInvalidatingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := t.base.RoundTrip(req)
+	if resp != nil && (resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) {
+		EvictWorkloadIdentityCache(t.clusterNamespace, t.clusterName)
+	}
+	return resp, err
+}
+
+// wrapWithWorkloadIdentityAuthInvalidation returns a copy of cfg whose transport evicts
+// this cluster's workload-identity cache entry on any 401/403. Preserves whatever
+// WrapTransport cfg already carried.
+func wrapWithWorkloadIdentityAuthInvalidation(cfg *rest.Config, clusterNamespace, clusterName string) *rest.Config {
+	cfg = rest.CopyConfig(cfg)
+	base := cfg.WrapTransport
+	cfg.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+		if base != nil {
+			rt = base(rt)
+		}
+		return &wiAuthInvalidatingTransport{
+			base:             rt,
+			clusterNamespace: clusterNamespace,
+			clusterName:      clusterName,
+		}
+	}
+	return cfg
+}
+
 // workloadIdentityConfigHash returns a stable hash of a WorkloadIdentityConfig, used to
 // detect when spec.workloadIdentity changes (provider, endpoint, cloud-specific fields,
 // or which CA Secret is referenced) so a stale cached rest.Config is not reused.
@@ -164,6 +210,7 @@ func getWorkloadIdentityRestConfig(
 			return nil, err
 		}
 
+		cfg = wrapWithWorkloadIdentityAuthInvalidation(cfg, clusterNamespace, clusterName)
 		wiCache.Store(key, cachedRestConfig{config: cfg, expiresAt: expiresAt, specHash: specHash})
 		return result{cfg: cfg}, nil
 	})

@@ -418,4 +418,71 @@ var _ = Describe("WorkloadIdentity OIDC", func() {
 		Expect(err).ToNot(BeNil())
 		Expect(err.Error()).To(ContainSubstring("failed to obtain OIDC access token"))
 	})
+
+	It("self-evicts the cache when a request through the returned config gets a 401, with no explicit eviction call",
+		func() {
+			tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"access_token":"test-access-token","token_type":"Bearer","expires_in":3600}`))
+			}))
+			defer tokenServer.Close()
+
+			// The managed cluster's own API server, separate from the IdP: this is what
+			// GetSveltosKubernetesRestConfig's returned config actually points requests at.
+			apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusUnauthorized)
+			}))
+			defer apiServer.Close()
+
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: oidcNS,
+					Name:      oidcSecretName,
+				},
+				Data: map[string][]byte{
+					oidcClientIDKey:   []byte(oidcClientID),
+					oidcSecretDataKey: []byte(oidcClientSecret),
+				},
+			}
+
+			wi := &libsveltosv1beta1.WorkloadIdentityConfig{
+				Provider: libsveltosv1beta1.WorkloadIdentityProviderOIDC,
+				Endpoint: apiServer.URL,
+				OIDC: &libsveltosv1beta1.OIDCWorkloadIdentityConfig{
+					TokenURL:  tokenServer.URL,
+					SecretRef: corev1.SecretReference{Name: oidcSecretName, Namespace: oidcNS},
+				},
+			}
+			sveltosCluster := &libsveltosv1beta1.SveltosCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: oidcNS,
+					Name:      oidcClusterName,
+				},
+				Spec: libsveltosv1beta1.SveltosClusterSpec{
+					WorkloadIdentity: wi,
+				},
+			}
+
+			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sveltosCluster, secret).Build()
+			logger := logr.Discard()
+
+			got, err := clusterproxy.GetSveltosKubernetesRestConfig(ctx, logger, c, oidcNS, oidcClusterName)
+			Expect(err).To(BeNil())
+
+			_, _, ok := clusterproxy.LoadTestWiCache(oidcNS, oidcClusterName)
+			Expect(ok).To(BeTrue())
+
+			// Issue one request through the returned config. The mock API server always answers
+			// 401: nothing here calls EvictWorkloadIdentityCache, eviction must happen as a side
+			// effect of the transport GetSveltosKubernetesRestConfig installed.
+			httpClient, err := rest.HTTPClientFor(got)
+			Expect(err).To(BeNil())
+			resp, err := httpClient.Get(apiServer.URL)
+			Expect(err).To(BeNil())
+			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+			Expect(resp.Body.Close()).To(Succeed())
+
+			_, _, ok = clusterproxy.LoadTestWiCache(oidcNS, oidcClusterName)
+			Expect(ok).To(BeFalse())
+		})
 })
