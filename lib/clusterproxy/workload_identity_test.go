@@ -17,6 +17,8 @@ limitations under the License.
 package clusterproxy_test
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -208,4 +210,54 @@ var _ = Describe("WorkloadIdentity CA secret", func() {
 		Expect(err.Error()).To(ContainSubstring("CA secret"))
 		Expect(err.Error()).To(ContainSubstring("missing-ca"))
 	})
+})
+
+var _ = Describe("WorkloadIdentity auth invalidation", func() {
+	const (
+		wiaiNS   = "default"
+		wiaiName = "auth-invalidation-cluster"
+	)
+
+	AfterEach(func() {
+		clusterproxy.EvictWorkloadIdentityCache(wiaiNS, wiaiName)
+	})
+
+	It("self-evicts the cache when a request through the wrapped config gets a 401, with no explicit eviction call",
+		func() {
+			// Stands in for the managed cluster's own API server: this is what a client built
+			// off the wrapped config actually sends requests to.
+			apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusUnauthorized)
+			}))
+			defer apiServer.Close()
+
+			wi := &libsveltosv1beta1.WorkloadIdentityConfig{
+				Provider: libsveltosv1beta1.WorkloadIdentityProviderGCP,
+				Endpoint: apiServer.URL,
+				GCP: &libsveltosv1beta1.GCPWorkloadIdentityConfig{
+					ProjectID:   wiTestGCPProjectID,
+					ClusterName: wiTestGCPCluster,
+					Location:    wiTestGCPLocation,
+				},
+			}
+			cfg := clusterproxy.WrapWithWorkloadIdentityAuthInvalidationForTest(
+				&rest.Config{Host: apiServer.URL}, wiaiNS, wiaiName)
+			clusterproxy.StoreTestWiCache(wiaiNS, wiaiName, cfg, time.Now().Add(time.Hour), wi)
+
+			_, _, ok := clusterproxy.LoadTestWiCache(wiaiNS, wiaiName)
+			Expect(ok).To(BeTrue())
+
+			// Issue one request through the wrapped config. The mock API server always answers
+			// 401: nothing here calls EvictWorkloadIdentityCache, eviction must happen as a side
+			// effect of the transport wrapWithWorkloadIdentityAuthInvalidation installed.
+			httpClient, err := rest.HTTPClientFor(cfg)
+			Expect(err).To(BeNil())
+			resp, err := httpClient.Get(apiServer.URL)
+			Expect(err).To(BeNil())
+			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+			Expect(resp.Body.Close()).To(Succeed())
+
+			_, _, ok = clusterproxy.LoadTestWiCache(wiaiNS, wiaiName)
+			Expect(ok).To(BeFalse())
+		})
 })

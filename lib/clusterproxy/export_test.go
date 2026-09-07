@@ -62,3 +62,8 @@ func LoadTestWiCache(namespace, name string) (*rest.Config, time.Time, bool) {
 // GetCADataForTest calls the internal getCAData function.
 // For use in tests only.
 var GetCADataForTest = getCAData
+
+// WrapWithWorkloadIdentityAuthInvalidationForTest calls the internal
+// wrapWithWorkloadIdentityAuthInvalidation function.
+// For use in tests only.
+var WrapWithWorkloadIdentityAuthInvalidationForTest = wrapWithWorkloadIdentityAuthInvalidation
