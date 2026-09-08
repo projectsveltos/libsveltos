@@ -435,13 +435,14 @@ func AddAnnotation(obj metav1.Object, annotationKey, annotationValue string) {
 // - if resource is currently already deployed in the managed cluster and owned by same (Cluster)Profile but different
 // referenced resource => it cannot be updated
 // - if resource is currently already deployed in the managed cluster but owned by different (Cluster)Profile
-// => it can be updated only if current (Cluster)Profile tier is lower than profile currently deploying the resource
+// => it can be updated only if current (Cluster)Profile tier is lower than profile currently deploying the resource,
+// or if transitionFrom names the (Cluster)Profile currently owning it
 //
 // If resource cannot be deployed, return a ConflictError.
 // If any other error occurs while doing those verification, the error is returned
 func CanDeployResource(ctx context.Context, dr dynamic.ResourceInterface, policy *unstructured.Unstructured,
 	referencedObject *corev1.ObjectReference, profile client.Object, profileTier, referenceTier int32,
-	logger logr.Logger) (resourceInfo *ResourceInfo, requeueOldOwner bool, err error) {
+	transitionFrom []string, logger logr.Logger) (resourceInfo *ResourceInfo, requeueOldOwner bool, err error) {
 
 	l := logger.WithValues("resource",
 		fmt.Sprintf("%s:%s/%s", referencedObject.Kind, referencedObject.Namespace, referencedObject.Name))
@@ -458,6 +459,12 @@ func CanDeployResource(ctx context.Context, dr dynamic.ResourceInterface, policy
 				// owning the resource must be requeued for reconciliation
 				return resourceInfo, true, nil
 			}
+			if isTransitioningFrom(resourceInfo, profile, transitionFrom) {
+				l.V(logs.LogDebug).Info("conflict detected but resource ownership can change (transition)")
+				// profile declares it is replacing the (Cluster)Profile currently owning this resource.
+				// Ownership must change regardless of tier, and the current owner must be requeued.
+				return resourceInfo, true, nil
+			}
 			l.V(logs.LogDebug).Info("conflict detected")
 			// Conflict cannot be resolved in favor of the clustersummary being reconciled. So report the conflict
 			// error
@@ -468,6 +475,37 @@ func CanDeployResource(ctx context.Context, dr dynamic.ResourceInterface, policy
 
 	// There was no conflict. Resource can be deployed.
 	return resourceInfo, false, nil
+}
+
+// isTransitioningFrom returns true if resourceInfo's current owner (read from the OwnerName/OwnerKind
+// annotations Sveltos sets on every resource it deploys) is named in transitionFrom, profile's declared
+// list of (Cluster)Profiles it is replacing. Same-kind is required (a ClusterProfile can only transition
+// from another ClusterProfile, a Profile from another Profile), matching TransitionFrom's own restriction.
+func isTransitioningFrom(resourceInfo *ResourceInfo, profile client.Object, transitionFrom []string) bool {
+	if len(transitionFrom) == 0 || resourceInfo == nil || resourceInfo.CurrentResource == nil {
+		return false
+	}
+
+	annotations := resourceInfo.CurrentResource.GetAnnotations()
+	if annotations == nil {
+		return false
+	}
+
+	ownerName := annotations[OwnerName]
+	if ownerName == "" {
+		return false
+	}
+	if annotations[OwnerKind] != profile.GetObjectKind().GroupVersionKind().Kind {
+		return false
+	}
+
+	for i := range transitionFrom {
+		if transitionFrom[i] == ownerName {
+			return true
+		}
+	}
+
+	return false
 }
 
 func GenerateConflictResourceReport(ctx context.Context, dr dynamic.ResourceInterface,

@@ -902,6 +902,11 @@ func (in *ConfigurationGroupSpec) DeepCopyInto(out *ConfigurationGroupSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.TransitionFrom != nil {
+		in, out := &in.TransitionFrom, &out.TransitionFrom
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.DriftExclusions != nil {
 		in, out := &in.DriftExclusions, &out.DriftExclusions
 		*out = make([]DriftExclusion, len(*in))

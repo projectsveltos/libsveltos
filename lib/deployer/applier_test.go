@@ -897,3 +897,76 @@ var _ = Describe("UpdateResource force recreate", func() {
 		Expect(strategyType).To(Equal("Recreate"))
 	})
 })
+
+var _ = Describe("CanDeployResource", func() {
+	It("allows takeover when transitionFrom names the current owner, regardless of tier", func() {
+		name := randomString()
+
+		predecessor, err := k8s_utils.GetUnstructured([]byte(clusterProfile))
+		Expect(err).To(BeNil())
+
+		successorYAML := fmt.Sprintf(`apiVersion: config.projectsveltos.io/v1beta1
+kind: ClusterProfile
+metadata:
+  name: %s
+  uid: %s`, randomString(), randomString())
+		successor, err := k8s_utils.GetUnstructured([]byte(successorYAML))
+		Expect(err).To(BeNil())
+
+		configMapNs := randomString()
+		configMapName := randomString()
+
+		ns := &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+				Annotations: map[string]string{
+					deployer.ReferenceKindAnnotation:      string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
+					deployer.ReferenceNameAnnotation:      configMapName,
+					deployer.ReferenceNamespaceAnnotation: configMapNs,
+					deployer.OwnerKind:                    clusterProfileKind,
+					deployer.OwnerName:                    predecessor.GetName(),
+					deployer.OwnerTier:                    "50", // lower (higher priority) than successor's tier below
+				},
+			},
+		}
+
+		Expect(testEnv.Create(context.TODO(), ns)).To(Succeed())
+		Expect(waitForObject(context.TODO(), testEnv.Client, ns)).To(Succeed())
+		Expect(addTypeInformationToObject(scheme, ns))
+
+		dr, err := k8s_utils.GetDynamicResourceInterface(testEnv.Config, ns.GroupVersionKind(), "")
+		Expect(err).To(BeNil())
+
+		u, err := k8s_utils.GetUnstructured([]byte(fmt.Sprintf(nsTemplate, name)))
+		Expect(err).To(BeNil())
+
+		referencedObject := &corev1.ObjectReference{
+			Kind:      string(libsveltosv1beta1.ConfigMapReferencedResourceKind),
+			Namespace: configMapNs,
+			Name:      configMapName,
+		}
+
+		logger := textlogger.NewLogger(textlogger.NewConfig())
+
+		const successorTier = int32(100) // same-or-higher than predecessor's 50: tier alone would conflict
+
+		// Without transitionFrom, same/higher tier cannot take over: conflict.
+		_, requeue, err := deployer.CanDeployResource(context.TODO(), dr, u, referencedObject, successor,
+			successorTier, 100, nil, logger)
+		Expect(err).ToNot(BeNil())
+		Expect(requeue).To(BeFalse())
+
+		// With transitionFrom naming the predecessor, takeover is allowed despite the tier.
+		resourceInfo, requeue, err := deployer.CanDeployResource(context.TODO(), dr, u, referencedObject, successor,
+			successorTier, 100, []string{predecessor.GetName()}, logger)
+		Expect(err).To(BeNil())
+		Expect(requeue).To(BeTrue())
+		Expect(resourceInfo).ToNot(BeNil())
+
+		// transitionFrom naming an unrelated profile does not grant takeover.
+		_, requeue, err = deployer.CanDeployResource(context.TODO(), dr, u, referencedObject, successor,
+			successorTier, 100, []string{randomString()}, logger)
+		Expect(err).ToNot(BeNil())
+		Expect(requeue).To(BeFalse())
+	})
+})

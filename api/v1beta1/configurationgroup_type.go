@@ -108,6 +108,16 @@ type ConfigurationGroupSpec struct {
 	// +optional
 	Tier int32 `json:"tier,omitempty"`
 
+	// TransitionFrom names the Profiles or ClusterProfiles this instance replaces.
+	// For matching target clusters, teardown of the replaced profiles is deferred
+	// until this instance reaches Provisioned. This instance is also permitted to
+	// adopt resources owned by the replaced profiles, ignoring tier restrictions.
+	// Same-kind only: a ClusterProfile names other ClusterProfiles, a Profile names
+	// other Profiles in the same namespace.
+	// +listType=atomic
+	// +optional
+	TransitionFrom []string `json:"transitionFrom,omitempty"`
+
 	// DryRun means no change will be propagated to matching cluster. A report
 	// instead will be generated summarizing what would happen in any matching cluster
 	// because of the changes made by this ConfigurationGroup
