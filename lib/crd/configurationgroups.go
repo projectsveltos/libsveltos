@@ -1294,6 +1294,7 @@ spec:
                 - Removing
                 - Removed
                 - AgentRemoving
+                - Blocked
                 type: string
             type: object
         type: object
