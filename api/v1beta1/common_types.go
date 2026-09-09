@@ -440,7 +440,7 @@ type ValidateHealth struct {
 	JobCheck *JobHealthCheck `json:"jobCheck,omitempty"`
 }
 
-// +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;FailedNonRetriable;Removing;Removed;AgentRemoving
+// +kubebuilder:validation:Enum:=Provisioning;Provisioned;Failed;FailedNonRetriable;Removing;Removed;AgentRemoving;Blocked
 type FeatureStatus string
 
 const (
@@ -470,6 +470,11 @@ const (
 
 	// FeatureStatusRemoved indicates that feature is removed
 	FeatureStatusRemoved = FeatureStatus("Removed")
+
+	// FeatureStatusBlocked indicates that removal of this feature is deferred:
+	// a dependent ClusterSummary (DependsOn) has not been removed yet, or a
+	// successor ClusterSummary (TransitionFrom) has not reached Provisioned yet.
+	FeatureStatusBlocked = FeatureStatus("Blocked")
 )
 
 type FeatureDeploymentInfo struct {
