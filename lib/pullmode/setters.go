@@ -28,6 +28,7 @@ type Options struct {
 	SourceRef              *corev1.ObjectReference
 	SourceStatus           libsveltosv1beta1.SourceStatus
 	Tier                   int32
+	TransitionFrom         []string
 	DryRun                 bool
 	Reloader               bool
 	DriftDetection         bool
@@ -150,6 +151,12 @@ func WithTier(tier int32) Option {
 	}
 }
 
+func WithTransitionFrom(transitionFrom []string) Option {
+	return func(args *Options) {
+		args.TransitionFrom = transitionFrom
+	}
+}
+
 func WithSourceRef(sourceRef *corev1.ObjectReference) Option {
 	return func(args *Options) {
 		args.SourceRef = sourceRef
@@ -210,6 +217,7 @@ func applySetters(confGroup *libsveltosv1beta1.ConfigurationGroup, setters ...Op
 	}
 
 	confGroup.Spec.Tier = c.Tier
+	confGroup.Spec.TransitionFrom = c.TransitionFrom
 
 	if c.DriftDetection {
 		confGroup.Spec.DriftDetection = true
