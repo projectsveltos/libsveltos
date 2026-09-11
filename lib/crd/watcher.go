@@ -59,7 +59,7 @@ func WatchCustomResourceDefinition(ctx context.Context, config *rest.Config,
 		Kind:    "CustomResourceDefinition",
 	}
 
-	lw, err := getCRDListerWatcher(ctx, &gvk, config)
+	lw, err := getCRDListerWatcher(&gvk, config)
 	if err != nil {
 		logger.Error(err, "Failed to get lister watcher")
 		return
@@ -68,7 +68,7 @@ func WatchCustomResourceDefinition(ctx context.Context, config *rest.Config,
 	runCRDReflector(ctx, lw, h, logger)
 }
 
-func getCRDListerWatcher(ctx context.Context, gvk *schema.GroupVersionKind, config *rest.Config,
+func getCRDListerWatcher(gvk *schema.GroupVersionKind, config *rest.Config,
 ) (cache.ListerWatcher, error) {
 
 	d, err := dynamic.NewForConfig(config)
@@ -99,11 +99,14 @@ func getCRDListerWatcher(ctx context.Context, gvk *schema.GroupVersionKind, conf
 	// CustomResourceDefinition is cluster-scoped, so no namespace is set.
 	resourceClient := d.Resource(resourceId)
 
+	// ListWithContextFunc/WatchFuncWithContext (rather than the deprecated ListFunc/WatchFunc)
+	// so the reflector's own per-call context is used for every List/Watch it issues over the
+	// life of the watcher, instead of a single ctx snapshotted once at construction time here.
 	return &cache.ListWatch{
-		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+		ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
 			return resourceClient.List(ctx, options)
 		},
-		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+		WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
 			return resourceClient.Watch(ctx, options)
 		},
 	}, nil
