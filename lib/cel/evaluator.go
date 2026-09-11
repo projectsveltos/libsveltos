@@ -19,9 +19,9 @@ package cel
 import (
 	"fmt"
 
+	"cel.dev/cel-go/cel"
+	"cel.dev/cel-go/common/types"
 	"github.com/go-logr/logr"
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"

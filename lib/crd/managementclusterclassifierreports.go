@@ -21,7 +21,7 @@ var ManagementClusterClassifierReportCRD = []byte(`apiVersion: apiextensions.k8s
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   name: managementclusterclassifierreports.lib.projectsveltos.io
 spec:
   group: lib.projectsveltos.io
