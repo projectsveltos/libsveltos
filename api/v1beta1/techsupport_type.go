@@ -84,7 +84,7 @@ type Event struct {
 }
 
 type FromManagement struct {
-	// Resources indicates what resorces to collect
+	// Resources indicates what resources to collect
 	// +optional
 	Resources []ResourceSelector `json:"resources,omitempty"`
 
@@ -106,7 +106,7 @@ type FromManaged struct {
 	// +optional
 	ClusterRefs []corev1.ObjectReference `json:"clusterRefs,omitempty"`
 
-	// Resources indicates what resorces to collect
+	// Resources indicates what resources to collect
 	// +optional
 	Resources []ResourceSelector `json:"resources,omitempty"`
 

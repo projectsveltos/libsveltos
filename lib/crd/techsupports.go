@@ -261,7 +261,7 @@ spec:
                       type: object
                     type: array
                   resources:
-                    description: Resources indicates what resorces to collect
+                    description: Resources indicates what resources to collect
                     items:
                       description: ResourceSelector defines what resources are a match
                       properties:
@@ -471,7 +471,7 @@ spec:
                       type: object
                     type: array
                   resources:
-                    description: Resources indicates what resorces to collect
+                    description: Resources indicates what resources to collect
                     items:
                       description: ResourceSelector defines what resources are a match
                       properties:
