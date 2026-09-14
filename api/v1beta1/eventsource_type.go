@@ -76,7 +76,7 @@ type EventSourceSpec struct {
 	// This can be useful for more sophisticated tasks, such as identifying resources
 	// that are related to each other or that have similar properties.
 	// The Lua function must return a struct with:
-	// - "resources" field: slice of matching resorces;
+	// - "resources" field: slice of matching resources;
 	// - "message" field: (optional) message.
 	AggregatedSelection string `json:"aggregatedSelection,omitempty"`
 
