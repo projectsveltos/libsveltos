@@ -476,14 +476,18 @@ spec:
                   saName:
                     description: |-
                       SAName is name of the ServiceAccount to renew the token for.
-                      If specified, ServiceAccount must exist in the managed cluster.
-                      If not specified, sveltos will try to deduce it from current kubeconfig
+                      For clusters in push mode, this ServiceAccount must exist in the managed cluster,
+                      and if not specified, sveltos will try to deduce it from the current kubeconfig.
+                      For clusters in pull mode, this ServiceAccount must exist in the management cluster
+                      (sveltosctl creates it there when registering the cluster).
                     type: string
                   saNamespace:
                     description: |-
                       SANamespace is the namespace of the ServiceAccount to renew the token for.
-                      If specified, ServiceAccount must exist in the managed cluster.
-                      If not specified, sveltos will try to deduce it from current kubeconfig
+                      For clusters in push mode, this ServiceAccount must exist in the managed cluster,
+                      and if not specified, sveltos will try to deduce it from the current kubeconfig.
+                      For clusters in pull mode, this ServiceAccount must exist in the management cluster
+                      (sveltosctl creates it there when registering the cluster).
                     type: string
                   tokenDuration:
                     description: |-

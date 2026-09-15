@@ -24,6 +24,12 @@ import (
 
 const (
 	SveltosClusterKind = "SveltosCluster"
+
+	// FeatureTokenRenewal identifies, as requestorFeature in the pull-mode
+	// ConfigurationGroup/ConfigurationBundle transport (see lib/pullmode), the renewed
+	// kubeconfig sveltoscluster-manager delivers to sveltos-applier for SveltosClusters
+	// with TokenRequestRenewalOption set.
+	FeatureTokenRenewal = "TokenRenewal"
 )
 
 const (
@@ -86,14 +92,18 @@ type TokenRequestRenewalOption struct {
 	TokenDuration metav1.Duration `json:"tokenDuration,omitempty"`
 
 	// SANamespace is the namespace of the ServiceAccount to renew the token for.
-	// If specified, ServiceAccount must exist in the managed cluster.
-	// If not specified, sveltos will try to deduce it from current kubeconfig
+	// For clusters in push mode, this ServiceAccount must exist in the managed cluster,
+	// and if not specified, sveltos will try to deduce it from the current kubeconfig.
+	// For clusters in pull mode, this ServiceAccount must exist in the management cluster
+	// (sveltosctl creates it there when registering the cluster).
 	// +optional
 	SANamespace string `json:"saNamespace,omitempty"`
 
 	// SAName is name of the ServiceAccount to renew the token for.
-	// If specified, ServiceAccount must exist in the managed cluster.
-	// If not specified, sveltos will try to deduce it from current kubeconfig
+	// For clusters in push mode, this ServiceAccount must exist in the managed cluster,
+	// and if not specified, sveltos will try to deduce it from the current kubeconfig.
+	// For clusters in pull mode, this ServiceAccount must exist in the management cluster
+	// (sveltosctl creates it there when registering the cluster).
 	// +optional
 	SAName string `json:"saName,omitempty"`
 
