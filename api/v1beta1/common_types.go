@@ -228,6 +228,15 @@ type ResourceSelector struct {
 	// rules will not be evaluated.
 	// +optional
 	EvaluateCEL []CELRule `json:"evaluateCEL,omitempty"`
+
+	// IncludeDeletingResources indicates whether resources with a non-zero
+	// metadata.deletionTimestamp should still be considered for a match.
+	// By default, such resources are excluded. Set this to true to react
+	// while a resource is being deleted but still exists, for instance to
+	// run cleanup logic before it is fully removed.
+	// +kubebuilder:default:=false
+	// +optional
+	IncludeDeletingResources bool `json:"includeDeletingResources,omitempty"`
 }
 
 type PatchSelector struct {
