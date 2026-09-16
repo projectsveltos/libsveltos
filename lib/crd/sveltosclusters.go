@@ -101,6 +101,16 @@ spec:
                 - from
                 - to
                 type: object
+              cleanupGracePeriod:
+                description: |-
+                  CleanupGracePeriod delays removal of the SveltosCluster finalizer after
+                  deletion is requested, keeping the object present (with a non-zero
+                  deletionTimestamp) for this long before it is actually removed.
+                  This is useful when some cleanup needs to happen while the cluster is
+                  still considered registered, for instance running a job that depends
+                  on the SveltosCluster still existing.
+                  If not specified, the finalizer is removed immediately.
+                type: string
               consecutiveFailureThreshold:
                 default: 3
                 description: |-

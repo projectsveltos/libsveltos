@@ -30,6 +30,10 @@ const (
 	// kubeconfig sveltoscluster-manager delivers to sveltos-applier for SveltosClusters
 	// with TokenRequestRenewalOption set.
 	FeatureTokenRenewal = "TokenRenewal"
+
+	// SveltosClusterFinalizer allows SveltosClusterReconciler to clean up resources
+	// associated with a SveltosCluster before removing it.
+	SveltosClusterFinalizer = "sveltoscluster.finalizer.projectsveltos.io"
 )
 
 const (
@@ -328,6 +332,16 @@ type SveltosClusterSpec struct {
 	// Mutually exclusive with KubeconfigName/KubeconfigKeyName.
 	// +optional
 	WorkloadIdentity *WorkloadIdentityConfig `json:"workloadIdentity,omitempty"`
+
+	// CleanupGracePeriod delays removal of the SveltosCluster finalizer after
+	// deletion is requested, keeping the object present (with a non-zero
+	// deletionTimestamp) for this long before it is actually removed.
+	// This is useful when some cleanup needs to happen while the cluster is
+	// still considered registered, for instance running a job that depends
+	// on the SveltosCluster still existing.
+	// If not specified, the finalizer is removed immediately.
+	// +optional
+	CleanupGracePeriod *metav1.Duration `json:"cleanupGracePeriod,omitempty"`
 }
 
 // SveltosClusterStatus defines the status of SveltosCluster
