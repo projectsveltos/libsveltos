@@ -170,6 +170,16 @@ func SveltosClusterPredicates(logger logr.Logger) predicate.Funcs {
 				return true
 			}
 
+			// Cluster entering deletion is a metadata-only change (deletionTimestamp), so it
+			// would otherwise be missed by the comparisons below. A cluster with a
+			// CleanupGracePeriod set stays present-but-deleting for a while, and (Cluster)Profiles/
+			// (Cluster)Set need to stop matching it as soon as that starts, not once it is gone.
+			if oldCluster.DeletionTimestamp.IsZero() && !newCluster.DeletionTimestamp.IsZero() {
+				log.V(logs.LogVerbose).Info(
+					"Cluster is now marked for deletion.")
+				return true
+			}
+
 			// return true if Cluster.Spec.Paused has changed from true to false
 			if oldCluster.Spec.Paused && !newCluster.Spec.Paused {
 				log.V(logs.LogVerbose).Info(
