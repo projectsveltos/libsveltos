@@ -218,6 +218,27 @@ var _ = Describe("ClusterProfile Predicates: SvelotsClusterPredicates", func() {
 		result := clusterPredicate.Update(e)
 		Expect(result).To(BeTrue())
 	})
+	It("Update reprocesses when sveltos Cluster starts being deleted", func() {
+		clusterPredicate := predicates.SveltosClusterPredicates(logger)
+
+		now := metav1.Now()
+		cluster.DeletionTimestamp = &now
+
+		oldCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cluster.Name,
+				Namespace: cluster.Namespace,
+			},
+		}
+
+		e := event.UpdateEvent{
+			ObjectNew: cluster,
+			ObjectOld: oldCluster,
+		}
+
+		result := clusterPredicate.Update(e)
+		Expect(result).To(BeTrue())
+	})
 	It("Update reprocesses when agent in sveltos Cluster goes from healthy to healthy", func() {
 		clusterPredicate := predicates.SveltosClusterPredicates(logger)
 
