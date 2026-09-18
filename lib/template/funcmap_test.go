@@ -23,6 +23,11 @@ import (
 	"github.com/projectsveltos/libsveltos/lib/template"
 )
 
+const (
+	testKey   = "foo"
+	testValue = "bar"
+)
+
 var _ = Describe("FuncMap", func() {
 	funcMap := template.ExtraFuncMap()
 
@@ -39,11 +44,11 @@ var _ = Describe("FuncMap", func() {
 		toYaml := funcMap["toYaml"].(func(interface{}) string)
 		fromYaml := funcMap["fromYaml"].(func(string) map[string]interface{})
 
-		out := toYaml(map[string]interface{}{"foo": "bar"})
+		out := toYaml(map[string]interface{}{testKey: testValue})
 		Expect(out).To(Equal("foo: bar"))
 
 		parsed := fromYaml(out)
-		Expect(parsed["foo"]).To(Equal("bar"))
+		Expect(parsed[testKey]).To(Equal(testValue))
 	})
 
 	It("fromYaml records the parse error instead of failing", func() {
@@ -66,9 +71,9 @@ var _ = Describe("FuncMap", func() {
 		toToml := funcMap["toToml"].(func(interface{}) string)
 		fromToml := funcMap["fromToml"].(func(string) map[string]interface{})
 
-		out := toToml(map[string]interface{}{"foo": "bar"})
+		out := toToml(map[string]interface{}{testKey: testValue})
 		parsed := fromToml(out)
-		Expect(parsed["foo"]).To(Equal("bar"))
+		Expect(parsed[testKey]).To(Equal(testValue))
 	})
 
 	It("fromToml records the parse error instead of failing", func() {
@@ -81,11 +86,11 @@ var _ = Describe("FuncMap", func() {
 		toJson := funcMap["toJson"].(func(interface{}) string)
 		fromJson := funcMap["fromJson"].(func(string) map[string]interface{})
 
-		out := toJson(map[string]interface{}{"foo": "bar"})
+		out := toJson(map[string]interface{}{testKey: testValue})
 		Expect(out).To(Equal(`{"foo":"bar"}`))
 
 		parsed := fromJson(out)
-		Expect(parsed["foo"]).To(Equal("bar"))
+		Expect(parsed[testKey]).To(Equal(testValue))
 	})
 
 	It("toJson returns an empty string when the value cannot be marshaled", func() {
