@@ -119,6 +119,13 @@ type HealthCheckReportStatus struct {
 	// Phase represents the current phase of report.
 	// +optional
 	Phase *ReportPhase `json:"phase,omitempty"`
+
+	// AgentFailureMessage reports the error sveltos-agent hit while evaluating the HealthCheck
+	// this HealthCheckReport is for, if any. Set by sveltos-agent itself, in the managed cluster,
+	// when it cannot refresh Spec.ResourceStatuses. Spec is left exactly as it was from the last
+	// successful evaluation while this is set. Cleared on the next successful evaluation.
+	// +optional
+	AgentFailureMessage *string `json:"agentFailureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
