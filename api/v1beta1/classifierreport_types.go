@@ -109,6 +109,15 @@ type ClassifierReportStatus struct {
 	// FailureMessage provides more information when DeploymentStatus is Failed.
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
+
+	// AgentFailureMessage reports the error sveltos-agent hit while evaluating the Classifier
+	// this ClassifierReport is for, if any. Unlike FailureMessage (set in the management cluster
+	// while managing labels from this report), this is set by sveltos-agent itself, in the managed
+	// cluster, when it cannot refresh Spec.Match. Spec is left exactly as it was from the last
+	// successful evaluation while this is set, so label management keeps acting on the last
+	// known-good result instead of a false non-match. Cleared on the next successful evaluation.
+	// +optional
+	AgentFailureMessage *string `json:"agentFailureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true

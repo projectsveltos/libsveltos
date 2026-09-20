@@ -155,6 +155,13 @@ spec:
           status:
             description: HealthCheckReportStatus defines the observed state of HealthCheckReport
             properties:
+              agentFailureMessage:
+                description: |-
+                  AgentFailureMessage reports the error sveltos-agent hit while evaluating the HealthCheck
+                  this HealthCheckReport is for, if any. Set by sveltos-agent itself, in the managed cluster,
+                  when it cannot refresh Spec.ResourceStatuses. Spec is left exactly as it was from the last
+                  successful evaluation while this is set. Cleared on the next successful evaluation.
+                type: string
               phase:
                 description: Phase represents the current phase of report.
                 enum:

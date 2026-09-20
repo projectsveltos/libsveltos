@@ -99,6 +99,16 @@ type EventReportStatus struct {
 	// EventReport, if any. Set when processing fails; cleared on success.
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
+
+	// AgentFailureMessage reports the error sveltos-agent hit while evaluating the EventSource
+	// this EventReport is for, if any. Unlike FailureMessage (set in the management cluster while
+	// generating ClusterProfile(s) from this report), this is set by sveltos-agent itself, in the
+	// managed cluster, when it cannot refresh Spec.MatchingResources/Spec.CloudEvents. Spec is left
+	// exactly as it was from the last successful evaluation while this is set, so consumers keep
+	// acting on the last known-good data instead of a false empty result. Cleared on the next
+	// successful evaluation.
+	// +optional
+	AgentFailureMessage *string `json:"agentFailureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
