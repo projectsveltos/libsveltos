@@ -92,6 +92,24 @@ type ResourceStatus struct {
 	Message string `json:"message,omitempty"`
 }
 
+// PendingResourceStatus tracks a resource currently observed in a non-Healthy status that
+// has not yet crossed HealthCheck.Spec.Flapping.ConsecutiveEvaluations.
+type PendingResourceStatus struct {
+	// ObjectRef for which status is reported
+	ObjectRef corev1.ObjectReference `json:"objectRef"`
+
+	// HealthStatus is the status last observed for the object
+	HealthStatus HealthStatus `json:"healthStatus"`
+
+	// Message is an extra message for human consumption
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// ConsecutiveCount is the number of consecutive evaluations HealthStatus
+	// has been observed for this object
+	ConsecutiveCount int32 `json:"consecutiveCount"`
+}
+
 type HealthCheckReportSpec struct {
 	// ClusterNamespace is the namespace of the Cluster this
 	// HealthCheckReport is for.
@@ -126,6 +144,13 @@ type HealthCheckReportStatus struct {
 	// successful evaluation while this is set. Cleared on the next successful evaluation.
 	// +optional
 	AgentFailureMessage *string `json:"agentFailureMessage,omitempty"`
+
+	// PendingResourceStatuses tracks resources currently observed in a non-Healthy status that
+	// have not yet crossed HealthCheck.Spec.Flapping.ConsecutiveEvaluations. Once a resource's
+	// count reaches the threshold it moves to Spec.ResourceStatuses and is removed here.
+	// Agent-local bookkeeping only: not propagated to the management-cluster copy of this report.
+	// +optional
+	PendingResourceStatuses []PendingResourceStatus `json:"pendingResourceStatuses,omitempty"`
 }
 
 //+kubebuilder:object:root=true
