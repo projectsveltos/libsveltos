@@ -59,6 +59,25 @@ type HealthCheckSpec struct {
 	// +kubebuilder:default:=true
 	// +optional
 	EvaluateIndependently bool `json:"evaluateIndependently,omitempty"`
+
+	// Flapping, when set, delays reporting a resource in a non-Healthy status until the
+	// same status has been observed for ConsecutiveEvaluations consecutive evaluations.
+	// This filters out transient status changes. Recovery to Healthy is always immediate:
+	// a single Healthy evaluation clears any pending count for that resource.
+	// +optional
+	Flapping *FlappingPolicy `json:"flapping,omitempty"`
+}
+
+// FlappingPolicy controls how many consecutive evaluations a resource must remain in the
+// same non-Healthy status before HealthCheckReport reports it.
+type FlappingPolicy struct {
+	// ConsecutiveEvaluations is the number of consecutive evaluations a resource must be
+	// found in the same non-Healthy status before it is reported in
+	// HealthCheckReport.Spec.ResourceStatuses.
+	// +kubebuilder:default:=3
+	// +kubebuilder:validation:Minimum=2
+	// +optional
+	ConsecutiveEvaluations int32 `json:"consecutiveEvaluations,omitempty"`
 }
 
 //+kubebuilder:object:root=true
