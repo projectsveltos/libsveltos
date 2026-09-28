@@ -20,7 +20,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"html/template"
+	htmltemplate "html/template"
+	texttemplate "text/template"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -59,6 +60,39 @@ func getTemplateName(clusterNamespace, clusterName, requestorName string) string
 	return fmt.Sprintf("%s-%s-%s", clusterNamespace, clusterName, requestorName)
 }
 
+// clusterTemplateData is the data a cluster template (html or text) is rendered against: the
+// target Cluster as unstructured content, so any of its fields can be referenced, plus the two
+// identifiers most templates end up needing directly.
+type clusterTemplateData struct {
+	Cluster                       map[string]interface{}
+	ClusterNamespace, ClusterName string
+}
+
+// getClusterTemplateData fetches the target cluster and builds the data a cluster template is
+// rendered against. Shared by renderClusterTemplate (html/template) and
+// RenderClusterTemplateText (text/template) so the two can't drift apart on what a cluster
+// template can see.
+func getClusterTemplateData(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName string, clusterType libsveltosv1beta1.ClusterType,
+) (*clusterTemplateData, error) {
+
+	cluster, err := clusterproxy.GetCluster(ctx, c, clusterNamespace, clusterName, clusterType)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	return &clusterTemplateData{
+		Cluster:          u,
+		ClusterNamespace: clusterNamespace,
+		ClusterName:      clusterName,
+	}, nil
+}
+
 func renderClusterTemplate(ctx context.Context, c client.Client,
 	clusterNamespace, clusterName, rawTemplate string, clusterType libsveltosv1beta1.ClusterType,
 ) (string, error) {
@@ -67,33 +101,51 @@ func renderClusterTemplate(ctx context.Context, c client.Client,
 		return clusterNamespace, nil
 	}
 
-	cluster, err := clusterproxy.GetCluster(ctx, c, clusterNamespace, clusterName, clusterType)
-	if err != nil {
-		return "", err
-	}
-
-	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cluster)
+	data, err := getClusterTemplateData(ctx, c, clusterNamespace, clusterName, clusterType)
 	if err != nil {
 		return "", err
 	}
 
 	templateName := getTemplateName(clusterNamespace, clusterName, string(clusterType))
 
-	tmpl, err := template.New(templateName).Option("missingkey=error").Funcs(ExtraFuncMap()).Parse(rawTemplate)
+	tmpl, err := htmltemplate.New(templateName).Option("missingkey=error").Funcs(ExtraFuncMap()).Parse(rawTemplate)
 	if err != nil {
 		return "", err
 	}
 
 	var buffer bytes.Buffer
-	err = tmpl.Execute(&buffer, struct {
-		Cluster                       map[string]interface{}
-		ClusterNamespace, ClusterName string
-	}{
-		Cluster:          u,
-		ClusterNamespace: clusterNamespace,
-		ClusterName:      clusterName,
-	})
+	if err := tmpl.Execute(&buffer, data); err != nil {
+		return "", errors.Wrapf(err, "error executing template")
+	}
+
+	return buffer.String(), nil
+}
+
+// RenderClusterTemplateText renders rawTemplate as a Go text/template against the target
+// cluster, the same way GetReferenceResourceName does (same template data, same functions,
+// same missingkey=error), but without HTML-escaping values taken from cluster fields.
+//
+// Use this instead of GetReferenceResourceName/GetReferenceResourceNamespace for a template
+// whose result isn't going to be treated as HTML, such as a URL: html/template turns '&' into
+// '&amp;' and '+' into '&#43;', which corrupts a value like that.
+func RenderClusterTemplateText(ctx context.Context, c client.Client,
+	clusterNamespace, clusterName, rawTemplate string, clusterType libsveltosv1beta1.ClusterType,
+) (string, error) {
+
+	data, err := getClusterTemplateData(ctx, c, clusterNamespace, clusterName, clusterType)
 	if err != nil {
+		return "", err
+	}
+
+	templateName := getTemplateName(clusterNamespace, clusterName, string(clusterType))
+
+	tmpl, err := texttemplate.New(templateName).Option("missingkey=error").Funcs(ExtraFuncMap()).Parse(rawTemplate)
+	if err != nil {
+		return "", err
+	}
+
+	var buffer bytes.Buffer
+	if err := tmpl.Execute(&buffer, data); err != nil {
 		return "", errors.Wrapf(err, "error executing template")
 	}
 
