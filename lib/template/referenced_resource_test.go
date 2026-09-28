@@ -142,4 +142,44 @@ var _ = Describe("Template", func() {
 		Expect(instantiatedName).To(Equal(expectedName))
 	})
 
+	It("renderClusterTemplateText instantiates template using cluster data, without HTML-escaping it", func() {
+		versionKey := "version"
+		versionValue := "1.2.3+build"
+
+		sveltosCluster.Labels = map[string]string{
+			versionKey: versionValue,
+		}
+
+		initObjects := []client.Object{
+			sveltosCluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		// A string with no template directives is returned unchanged.
+		rawURL := "https://example.com/manifest.yaml?a=1&b=2"
+		instantiatedURL, err := template.RenderClusterTemplateText(context.TODO(), c,
+			sveltosCluster.Namespace, sveltosCluster.Name, rawURL, libsveltosv1beta1.ClusterTypeSveltos)
+		Expect(err).To(BeNil())
+		Expect(instantiatedURL).To(Equal(rawURL))
+
+		// A templated string is instantiated using cluster data, same as GetReferenceResourceName,
+		// but html/template's escaping of '&' and '+' must not happen: those are valid, meaningful
+		// characters in a URL, not HTML that needs escaping.
+		rawURL = fmt.Sprintf(`https://example.com/manifest.yaml?cluster={{ .ClusterName }}&version={{ index .Cluster.metadata.labels %q }}`,
+			versionKey)
+		instantiatedURL, err = template.RenderClusterTemplateText(context.TODO(), c,
+			sveltosCluster.Namespace, sveltosCluster.Name, rawURL, libsveltosv1beta1.ClusterTypeSveltos)
+		Expect(err).To(BeNil())
+		expectedURL := fmt.Sprintf("https://example.com/manifest.yaml?cluster=%s&version=%s",
+			sveltosCluster.Name, versionValue)
+		Expect(instantiatedURL).To(Equal(expectedURL))
+
+		// A template referencing a field the cluster does not have returns an error.
+		rawURL = "https://example.com/{{ .Cluster.metadata.labels.region }}"
+		_, err = template.RenderClusterTemplateText(context.TODO(), c,
+			sveltosCluster.Namespace, sveltosCluster.Name, rawURL, libsveltosv1beta1.ClusterTypeSveltos)
+		Expect(err).ToNot(BeNil())
+	})
+
 })
