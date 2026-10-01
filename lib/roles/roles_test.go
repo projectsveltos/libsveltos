@@ -3,6 +3,7 @@ package roles_test
 import (
 	"context"
 	"reflect"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -51,6 +52,7 @@ var _ = Describe("Roles", func() {
 				Name:      randomString(),
 				Labels: map[string]string{
 					roles.ClusterNameLabel:             clusterName,
+					roles.ClusterTypeLabel:             strings.ToLower(string(libsveltosv1beta1.ClusterTypeSveltos)),
 					roles.ServiceAccountNameLabel:      serviceaccountName,
 					roles.ServiceAccountNamespaceLabel: serviceAccountNamespace,
 				},
@@ -100,6 +102,7 @@ var _ = Describe("Roles", func() {
 				Name:      randomString(),
 				Labels: map[string]string{
 					roles.ClusterNameLabel:             clusterName,
+					roles.ClusterTypeLabel:             strings.ToLower(string(libsveltosv1beta1.ClusterTypeSveltos)),
 					roles.ServiceAccountNameLabel:      serviceaccountName,
 					roles.ServiceAccountNamespaceLabel: serviceAccountNamespace,
 				},
@@ -134,11 +137,48 @@ var _ = Describe("Roles", func() {
 		Expect(ok).To(BeTrue())
 		Expect(v).To(Equal(clusterName))
 
+		v, ok = currentSecret.Labels[roles.ClusterTypeLabel]
+		Expect(ok).To(BeTrue())
+		Expect(v).To(Equal(strings.ToLower(string(libsveltosv1beta1.ClusterTypeSveltos))))
+
 		Expect(currentSecret.Data).ToNot(BeNil())
 		var currentKubeconfig []byte
 		currentKubeconfig, ok = currentSecret.Data[roles.Key]
 		Expect(ok).To(BeTrue())
 		Expect(reflect.DeepEqual(currentKubeconfig, kubeconfig)).To(BeTrue())
+	})
+
+	It("GetSecret does not return a secret created for a different cluster type", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		serviceAccountNamespace := randomString()
+		serviceaccountName := randomString()
+
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      randomString(),
+				Labels: map[string]string{
+					roles.ClusterNameLabel:             clusterName,
+					roles.ClusterTypeLabel:             strings.ToLower(string(libsveltosv1beta1.ClusterTypeCapi)),
+					roles.ServiceAccountNameLabel:      serviceaccountName,
+					roles.ServiceAccountNamespaceLabel: serviceAccountNamespace,
+				},
+			},
+			Data: map[string][]byte{
+				roles.Key: []byte(randomString()),
+			},
+		}
+
+		initObjects := []client.Object{secret}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		currentSecret, err := roles.GetSecret(context.TODO(), c,
+			clusterNamespace, clusterName, serviceAccountNamespace, serviceaccountName,
+			libsveltosv1beta1.ClusterTypeSveltos)
+		Expect(err).To(BeNil())
+		Expect(currentSecret).To(BeNil())
 	})
 
 	It("CreateSecret creates secret and returns it", func() {
@@ -179,6 +219,10 @@ var _ = Describe("Roles", func() {
 		Expect(ok).To(BeTrue())
 		Expect(v).To(Equal(clusterName))
 
+		v, ok = secret.Labels[roles.ClusterTypeLabel]
+		Expect(ok).To(BeTrue())
+		Expect(v).To(Equal(strings.ToLower(string(libsveltosv1beta1.ClusterTypeSveltos))))
+
 		Expect(secret.OwnerReferences).ToNot(BeNil())
 		Expect(len(secret.OwnerReferences)).To(Equal(1))
 	})
@@ -196,6 +240,7 @@ var _ = Describe("Roles", func() {
 				Name:      randomString(),
 				Labels: map[string]string{
 					roles.ClusterNameLabel:             clusterName,
+					roles.ClusterTypeLabel:             strings.ToLower(string(libsveltosv1beta1.ClusterTypeSveltos)),
 					roles.ServiceAccountNameLabel:      serviceaccountName,
 					roles.ServiceAccountNamespaceLabel: serviceAccountNamespace,
 				},
@@ -286,6 +331,7 @@ var _ = Describe("Roles", func() {
 				Name:      randomString(),
 				Labels: map[string]string{
 					roles.ClusterNameLabel:             clusterName,
+					roles.ClusterTypeLabel:             strings.ToLower(string(libsveltosv1beta1.ClusterTypeSveltos)),
 					roles.ServiceAccountNameLabel:      serviceaccountName,
 					roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 				},
@@ -308,6 +354,7 @@ var _ = Describe("Roles", func() {
 			client.InNamespace(clusterNamespace),
 			client.MatchingLabels{
 				roles.ClusterNameLabel:             clusterName,
+				roles.ClusterTypeLabel:             strings.ToLower(string(libsveltosv1beta1.ClusterTypeSveltos)),
 				roles.ServiceAccountNameLabel:      serviceaccountName,
 				roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 			},
@@ -316,6 +363,50 @@ var _ = Describe("Roles", func() {
 		secretList := &corev1.SecretList{}
 		Expect(c.List(context.TODO(), secretList, listOptions...)).To(Succeed())
 		Expect(len(secretList.Items)).To(BeZero())
+	})
+
+	It("DeleteSecret does not delete a secret created for a different cluster type", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		serviceaccountNamespace := randomString()
+		serviceaccountName := randomString()
+
+		roleRequest := &libsveltosv1beta1.RoleRequest{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: randomString(),
+			},
+		}
+		Expect(addTypeInformationToObject(scheme, roleRequest)).To(Succeed())
+
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: clusterNamespace,
+				Name:      randomString(),
+				Labels: map[string]string{
+					roles.ClusterNameLabel:             clusterName,
+					roles.ClusterTypeLabel:             strings.ToLower(string(libsveltosv1beta1.ClusterTypeCapi)),
+					roles.ServiceAccountNameLabel:      serviceaccountName,
+					roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
+				},
+				OwnerReferences: []metav1.OwnerReference{
+					{APIVersion: roleRequest.APIVersion, Kind: libsveltosv1beta1.RoleRequestKind, Name: roleRequest.Name},
+				},
+			},
+		}
+
+		initObjects := []client.Object{secret}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		err := roles.DeleteSecret(context.TODO(), c,
+			clusterNamespace, clusterName, serviceaccountNamespace, serviceaccountName,
+			libsveltosv1beta1.ClusterTypeSveltos, roleRequest)
+		Expect(err).To(BeNil())
+
+		secretList := &corev1.SecretList{}
+		Expect(c.List(context.TODO(), secretList, client.InNamespace(clusterNamespace))).To(Succeed())
+		Expect(len(secretList.Items)).To(Equal(1))
+		Expect(secretList.Items[0].Name).To(Equal(secret.Name))
 	})
 
 	It("DeleteSecret does not delete existing secret with multiple owners", func() {
@@ -344,6 +435,7 @@ var _ = Describe("Roles", func() {
 				Name:      randomString(),
 				Labels: map[string]string{
 					roles.ClusterNameLabel:             clusterName,
+					roles.ClusterTypeLabel:             strings.ToLower(string(libsveltosv1beta1.ClusterTypeSveltos)),
 					roles.ServiceAccountNameLabel:      serviceaccountName,
 					roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 				},
@@ -367,6 +459,7 @@ var _ = Describe("Roles", func() {
 			client.InNamespace(clusterNamespace),
 			client.MatchingLabels{
 				roles.ClusterNameLabel:             clusterName,
+				roles.ClusterTypeLabel:             strings.ToLower(string(libsveltosv1beta1.ClusterTypeSveltos)),
 				roles.ServiceAccountNameLabel:      serviceaccountName,
 				roles.ServiceAccountNamespaceLabel: serviceaccountNamespace,
 			},

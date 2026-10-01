@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"reflect"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,6 +34,8 @@ import (
 
 const (
 	clusterNameLabel = "projectsveltos.io/role-cluster"
+
+	clusterTypeLabel = "projectsveltos.io/role-cluster-type"
 
 	serviceAccountNameLabel = "projectsveltos.io/role-service-account-name"
 
@@ -61,7 +64,7 @@ func GetSecret(ctx context.Context, c client.Client,
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
-		serviceAccountNamespace, serviceAccountName)...)
+		serviceAccountNamespace, serviceAccountName, clusterType)...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +89,7 @@ func CreateSecret(ctx context.Context, c client.Client,
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
-		serviceAccountNamespace, serviceAccountName)...)
+		serviceAccountNamespace, serviceAccountName, clusterType)...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +97,7 @@ func CreateSecret(ctx context.Context, c client.Client,
 	switch len(secretList.Items) {
 	case 0:
 		return createSecret(ctx, c, clusterNamespace, clusterName, serviceAccountNamespace,
-			serviceAccountName, kubeconfig, owner)
+			serviceAccountName, clusterType, kubeconfig, owner)
 	case 1:
 		if shouldUpdate(&secretList.Items[0], kubeconfig, owner) {
 			return updateSecret(ctx, c, &secretList.Items[0], kubeconfig, owner)
@@ -114,7 +117,7 @@ func DeleteSecret(ctx context.Context, c client.Client,
 
 	secretList := &corev1.SecretList{}
 	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
-		serviceAccountNamespace, serviceAccountName)...)
+		serviceAccountNamespace, serviceAccountName, clusterType)...)
 	if err != nil {
 		return nil
 	}
@@ -197,7 +200,8 @@ func GetKubeconfig(ctx context.Context, c client.Client,
 	clusterType libsveltosv1beta1.ClusterType) ([]byte, error) {
 
 	secretList := &corev1.SecretList{}
-	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName)...)
+	err := c.List(ctx, secretList, getListOptionsForSecret(clusterNamespace, clusterName,
+		serviceAccountNamespace, serviceAccountName, clusterType)...)
 	if err != nil {
 		return nil, err
 	}
@@ -244,6 +248,7 @@ func getSha256(text string) string {
 
 func createSecret(ctx context.Context, c client.Client,
 	namespace, clusterName, serviceAccountNamespace, serviceAccountName string,
+	clusterType libsveltosv1beta1.ClusterType,
 	kubeconfig []byte, ownerReference metav1.Object) (*corev1.Secret, error) {
 
 	var config string
@@ -258,6 +263,7 @@ func createSecret(ctx context.Context, c client.Client,
 			Name:      name,
 			Labels: map[string]string{
 				clusterNameLabel:                   clusterName,
+				clusterTypeLabel:                   strings.ToLower(string(clusterType)),
 				serviceAccountNameLabel:            serviceAccountName,
 				serviceAccountNamespaceLabel:       serviceAccountNamespace,
 				libsveltosv1beta1.RoleRequestLabel: roleRequestLabelOK,
@@ -280,12 +286,13 @@ func createSecret(ctx context.Context, c client.Client,
 }
 
 func getListOptionsForSecret(clusterNamespace, clusterName, serviceAccountNamespace, serviceAccountName string,
-) []client.ListOption {
+	clusterType libsveltosv1beta1.ClusterType) []client.ListOption {
 
 	return []client.ListOption{
 		client.InNamespace(clusterNamespace),
 		client.MatchingLabels{
 			clusterNameLabel:             clusterName,
+			clusterTypeLabel:             strings.ToLower(string(clusterType)),
 			serviceAccountNameLabel:      serviceAccountName,
 			serviceAccountNamespaceLabel: serviceAccountNamespace,
 		},

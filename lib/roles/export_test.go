@@ -18,6 +18,7 @@ package roles
 
 const (
 	ClusterNameLabel             = clusterNameLabel
+	ClusterTypeLabel             = clusterTypeLabel
 	ServiceAccountNameLabel      = serviceAccountNameLabel
 	ServiceAccountNamespaceLabel = serviceAccountNamespaceLabel
 	Key                          = key
