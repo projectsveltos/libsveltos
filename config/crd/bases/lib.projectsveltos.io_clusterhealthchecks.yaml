@@ -207,6 +207,31 @@ spec:
                           type: string
                       type: object
                       x-kubernetes-map-type: atomic
+                    policy:
+                      description: |-
+                        Policy tunes when this notification is delivered, to reduce the number of notifications
+                        sent while a cluster is changing. When not set, a notification is delivered every time the
+                        status of a liveness check changes or, while a liveness check keeps failing, every time its
+                        failure message changes.
+                      properties:
+                        failingFor:
+                          description: |-
+                            FailingFor is how long a cluster has to keep failing before a failure is delivered.
+                            A failure ending before that is never delivered, and neither is its recovery.
+                          type: string
+                        minInterval:
+                          description: |-
+                            MinInterval is the minimum time between two notifications for the same cluster.
+                            Changes happening inside the interval are coalesced: when the interval ends, the current
+                            state is delivered if it differs from the last delivered one.
+                          type: string
+                        onlyOnTransition:
+                          description: |-
+                            OnlyOnTransition, when true, delivers a notification only when the cluster moves between
+                            passing and failing. A change of the failure message while the cluster keeps failing is not
+                            delivered. A cluster found passing the first time it is evaluated is not delivered either.
+                          type: boolean
+                      type: object
                     type:
                       description: NotificationType specifies the type of notification
                       enum:
@@ -361,6 +386,22 @@ spec:
                             description: |-
                               FailureMessage is a human consumable message explaining the
                               misconfiguration
+                            type: string
+                          lastSentFailing:
+                            description: |-
+                              LastSentFailing tells whether the cluster was failing when this notification
+                              was last delivered. Only set for notifications with a Policy.
+                            type: boolean
+                          lastSentMessageHash:
+                            description: |-
+                              LastSentMessageHash is a hash of the failure message delivered the last time.
+                              Used to detect a change of the failure message. Only set for notifications with a Policy.
+                            type: string
+                          lastSentTime:
+                            description: |-
+                              LastSentTime is when this notification was last delivered for the cluster.
+                              Only set for notifications with a Policy.
+                            format: date-time
                             type: string
                           name:
                             description: Name of the notification check.
