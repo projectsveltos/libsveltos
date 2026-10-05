@@ -215,6 +215,35 @@ type Notification struct {
 	// the details for the notification.
 	// +optional
 	NotificationRef *corev1.ObjectReference `json:"notificationRef,omitempty"`
+
+	// Policy tunes when this notification is delivered, to reduce the number of notifications
+	// sent while a cluster is changing. When not set, a notification is delivered every time the
+	// status of a liveness check changes or, while a liveness check keeps failing, every time its
+	// failure message changes.
+	// +optional
+	Policy *NotificationPolicy `json:"policy,omitempty"`
+}
+
+// NotificationPolicy tunes when a notification is delivered. All fields are optional and can be
+// combined. The notification is evaluated per cluster: the failing liveness checks of a cluster
+// are always reported together in a single notification.
+type NotificationPolicy struct {
+	// OnlyOnTransition, when true, delivers a notification only when the cluster moves between
+	// passing and failing. A change of the failure message while the cluster keeps failing is not
+	// delivered. A cluster found passing the first time it is evaluated is not delivered either.
+	// +optional
+	OnlyOnTransition bool `json:"onlyOnTransition,omitempty"`
+
+	// MinInterval is the minimum time between two notifications for the same cluster.
+	// Changes happening inside the interval are coalesced: when the interval ends, the current
+	// state is delivered if it differs from the last delivered one.
+	// +optional
+	MinInterval *metav1.Duration `json:"minInterval,omitempty"`
+
+	// FailingFor is how long a cluster has to keep failing before a failure is delivered.
+	// A failure ending before that is never delivered, and neither is its recovery.
+	// +optional
+	FailingFor *metav1.Duration `json:"failingFor,omitempty"`
 }
 
 // NotificationStatus specifies status of notifications
@@ -241,6 +270,21 @@ type NotificationSummary struct {
 	// misconfiguration
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
+
+	// LastSentTime is when this notification was last delivered for the cluster.
+	// Only set for notifications with a Policy.
+	// +optional
+	LastSentTime *metav1.Time `json:"lastSentTime,omitempty"`
+
+	// LastSentFailing tells whether the cluster was failing when this notification
+	// was last delivered. Only set for notifications with a Policy.
+	// +optional
+	LastSentFailing *bool `json:"lastSentFailing,omitempty"`
+
+	// LastSentMessageHash is a hash of the failure message delivered the last time.
+	// Used to detect a change of the failure message. Only set for notifications with a Policy.
+	// +optional
+	LastSentMessageHash string `json:"lastSentMessageHash,omitempty"`
 }
 
 // ClusterHealthCheckSpec defines the desired state of ClusterHealthCheck
