@@ -405,6 +405,23 @@ var _ = Describe("applyBundleSetters", func() {
 
 		Expect(bundle.Spec.Force).To(BeFalse())
 	})
+
+	It("WithSkipApply sets SkipApply on the ConfigurationBundle", func() {
+		bundle := &libsveltosv1beta1.ConfigurationBundle{}
+
+		pullmode.ApplyBundleSetters(bundle, pullmode.WithSkipApply())
+
+		Expect(bundle.Spec.SkipApply).To(BeTrue())
+	})
+
+	It("SkipApply defaults to false", func() {
+		bundle := &libsveltosv1beta1.ConfigurationBundle{}
+
+		pullmode.ApplyBundleSetters(bundle,
+			pullmode.WithResourceInfo(randomString(), randomString(), randomString(), 100, false, false))
+
+		Expect(bundle.Spec.SkipApply).To(BeFalse())
+	})
 })
 
 func getResources() []unstructured.Unstructured {

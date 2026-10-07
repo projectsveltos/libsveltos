@@ -120,6 +120,15 @@ type ConfigurationBundleSpec struct {
 	// +kubebuilder:default:=false
 	// +optional
 	Force bool `json:"force,omitempty"`
+
+	// SkipApply indicates the resources in this ConfigurationBundle must not be applied to the
+	// managed cluster in this pass because the component that created the bundle knows they
+	// are already deployed with this exact content. The resources are still reported as
+	// deployed, so they are not treated as stale and removed.
+	// By default (false) the resources are applied.
+	// +kubebuilder:default:=false
+	// +optional
+	SkipApply bool `json:"skipApply,omitempty"`
 }
 
 type ConfigurationBundleStatus struct {
