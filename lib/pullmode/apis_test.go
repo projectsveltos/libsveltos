@@ -302,6 +302,45 @@ var _ = Describe("APIs for SveltosCluster instances in pullmode", func() {
 		}, time.Minute, time.Second).Should(BeTrue())
 	})
 
+	It("StageResourcesForDeployment sets SkipApply on the staged bundle only when WithSkipApply is used", func() {
+		clusterNamespace := randomString()
+		clusterName := randomString()
+		requestorKind := randomString()
+		requestorName := randomString()
+		requestorFeature := randomString()
+		requestorIndex := randomString()
+
+		createNamespace(clusterNamespace)
+
+		labels := pullmode.GetConfigurationGroupLabels(clusterName, requestorKind, requestorFeature)
+
+		stage := func(setters ...pullmode.BundleOption) {
+			resources := make(map[string][]unstructured.Unstructured, 0)
+			resources[requestorIndex] = getResources()
+			Expect(pullmode.StageResourcesForDeployment(context.TODO(), k8sClient, clusterNamespace, clusterName,
+				requestorKind, requestorName, requestorFeature, resources, false, logger, setters...)).To(Succeed())
+		}
+
+		verifySkipApply := func(expected bool) {
+			Eventually(func() bool {
+				bundles, err := pullmode.GetConfigurationBundles(context.TODO(), k8sClient,
+					clusterNamespace, requestorName, "", labels)
+				if err != nil || len(bundles.Items) != 1 {
+					return false
+				}
+				return bundles.Items[0].Spec.SkipApply == expected
+			}, time.Minute, time.Second).Should(BeTrue())
+		}
+
+		By("Staging with WithSkipApply marks the bundle")
+		stage(pullmode.WithSkipApply())
+		verifySkipApply(true)
+
+		By("Staging the same bundle again without WithSkipApply clears the mark")
+		stage(pullmode.WithTimeout(&metav1.Duration{Duration: time.Minute}))
+		verifySkipApply(false)
+	})
+
 	It("RemoveResourcesFromDeployment marks a ConfigurationGroup for removal and removes all associated ConfigurationBundles", func() {
 		clusterNamespace := randomString()
 		clusterName := randomString()

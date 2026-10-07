@@ -278,6 +278,7 @@ type BundleOptions struct {
 	ReferencedTier            int32
 	SkipNamespaceCreation     bool
 	Force                     bool
+	SkipApply                 bool
 }
 
 type BundleOption func(*BundleOptions)
@@ -315,6 +316,14 @@ func WithResourceInfo(kind, namespace, name string,
 	}
 }
 
+// WithSkipApply marks the ConfigurationBundle as not to be applied: the caller knows its content
+// is already deployed unchanged (see ConfigurationBundleSpec.SkipApply).
+func WithSkipApply() BundleOption {
+	return func(args *BundleOptions) {
+		args.SkipApply = true
+	}
+}
+
 func applyBundleSetters(confBundle *libsveltosv1beta1.ConfigurationBundle, setters ...BundleOption,
 ) *libsveltosv1beta1.ConfigurationBundle {
 
@@ -343,6 +352,7 @@ func applyBundleSetters(confBundle *libsveltosv1beta1.ConfigurationBundle, sette
 	confBundle.Spec.ReferenceTier = c.ReferencedTier
 	confBundle.Spec.SkipNamespaceCreation = c.SkipNamespaceCreation
 	confBundle.Spec.Force = c.Force
+	confBundle.Spec.SkipApply = c.SkipApply
 
 	return confBundle
 }

@@ -42,6 +42,11 @@ const (
 
 	// ClusterSummaryNamespaceLabel is added to all ResourceSummary instances
 	ClusterSummaryNamespaceAnnotation = "projectsveltos.io/cluster-summary-namespace"
+
+	// MaxDriftedResources is the maximum number of entries recorded in
+	// ResourceSummary Status.DriftedResources. Producers and consumers of the list
+	// share this value so the status stays bounded when many resources drift at once.
+	MaxDriftedResources = 20
 )
 
 type ResourceSummaryResource struct {
@@ -100,6 +105,36 @@ type HelmChartRef struct {
 	ReleaseNamespace string `json:"releaseNamespace"`
 }
 
+// DriftedResource identifies a resource deployed by Sveltos that was changed out of band.
+type DriftedResource struct {
+	// Group of the drifted resource.
+	Group string `json:"group"`
+
+	// Kind of the drifted resource.
+	// +kubebuilder:validation:MinLength=1
+	Kind string `json:"kind"`
+
+	// Namespace of the drifted resource.
+	// Empty for resources scoped at cluster level.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
+	// Name of the drifted resource.
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// FeatureID is the feature that deployed the resource.
+	FeatureID FeatureID `json:"featureID"`
+
+	// HelmChartRef identifies the Helm release that deployed the resource.
+	// Only set when FeatureID is Helm.
+	// +optional
+	HelmChartRef *HelmChartRef `json:"helmChartRef,omitempty"`
+
+	// DetectedTime is when the drift was detected.
+	DetectedTime metav1.Time `json:"detectedTime"`
+}
+
 type ResourceHash struct {
 	// Resource specifies a resource.
 	Resource `json:",inline"`
@@ -156,6 +191,20 @@ type ResourceSummaryStatus struct {
 	// is expected to clear this list after acting on it, the same way it resets HelmResourcesChanged.
 	// +optional
 	DriftedHelmCharts []HelmChartRef `json:"driftedHelmCharts,omitempty"`
+
+	// DriftedResources lists the resources that changed out of band since this status was last
+	// consumed. It names the resources behind ResourcesChanged, KustomizeResourcesChanged and
+	// HelmResourcesChanged. Entries are unique and the list holds at most MaxDriftedResources
+	// of them; DriftedResourcesTruncated tells when more resources drifted than are listed.
+	// The consumer is expected to clear this list after acting on it, the same way it resets
+	// the changed flags.
+	// +optional
+	DriftedResources []DriftedResource `json:"driftedResources,omitempty"`
+
+	// DriftedResourcesTruncated is true when more resources drifted than are listed in
+	// DriftedResources.
+	// +optional
+	DriftedResourcesTruncated bool `json:"driftedResourcesTruncated,omitempty"`
 
 	// ResourceHashes specifies a list of resource plus hash
 	ResourceHashes []ResourceHash `json:"resourceHashes,omitempty"`
