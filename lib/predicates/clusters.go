@@ -153,6 +153,15 @@ func (c ClusterPredicate) Generic(obj event.TypedGenericEvent[*clusterv1.Cluster
 	return false
 }
 
+// isConnectionRestored returns true if the connection to the SveltosCluster was down and it is not anymore.
+// Status.Ready stays true while the connection is down, so a Status.Ready comparison does not catch it. A
+// cluster whose connection is down is not ready to be configured (clusterproxy.IsClusterReadyToBeConfigured):
+// reconcile when the connection is back, so what was skipped meanwhile is processed.
+func isConnectionRestored(oldCluster, newCluster *libsveltosv1beta1.SveltosCluster) bool {
+	return oldCluster.Status.ConnectionStatus == libsveltosv1beta1.ConnectionDown &&
+		newCluster.Status.ConnectionStatus != libsveltosv1beta1.ConnectionDown
+}
+
 // SveltosClusterPredicates predicates for sveltos Cluster. ClusterProfileReconciler watches sveltos Cluster events
 // and react to those by reconciling itself based on following predicates
 func SveltosClusterPredicates(logger logr.Logger) predicate.Funcs {
@@ -190,6 +199,11 @@ func SveltosClusterPredicates(logger logr.Logger) predicate.Funcs {
 			if oldCluster.Status.Ready != newCluster.Status.Ready {
 				log.V(logs.LogVerbose).Info(
 					"Cluster Status.Ready changed.")
+				return true
+			}
+
+			if isConnectionRestored(oldCluster, newCluster) {
+				log.V(logs.LogVerbose).Info("Cluster connection is not down anymore.")
 				return true
 			}
 
