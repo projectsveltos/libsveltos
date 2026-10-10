@@ -454,6 +454,58 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(ready).To(Equal(false))
 	})
 
+	It("IsClusterReadyToBeConfigured returns false when SveltosCluster connection is down", func() {
+		sveltosCluster.Status.Ready = true
+		sveltosCluster.Status.ConnectionStatus = libsveltosv1beta1.ConnectionDown
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sveltosCluster).Build()
+
+		clusterRef := &corev1.ObjectReference{
+			Namespace: sveltosCluster.Namespace,
+			Name:      sveltosCluster.Name,
+			Kind:      libsveltosv1beta1.SveltosClusterKind,
+		}
+		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+
+		// Status.Ready stays true while the connection is down
+		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c, clusterRef, logger)
+		Expect(err).To(BeNil())
+		Expect(ready).To(BeFalse())
+
+		sveltosCluster.Status.ConnectionStatus = libsveltosv1beta1.ConnectionHealthy
+		Expect(c.Update(context.TODO(), sveltosCluster)).To(Succeed())
+
+		ready, err = clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c, clusterRef, logger)
+		Expect(err).To(BeNil())
+		Expect(ready).To(BeTrue())
+
+		// ConnectionStatus is not set until the first connection check
+		sveltosCluster.Status.ConnectionStatus = ""
+		Expect(c.Update(context.TODO(), sveltosCluster)).To(Succeed())
+
+		ready, err = clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c, clusterRef, logger)
+		Expect(err).To(BeNil())
+		Expect(ready).To(BeTrue())
+	})
+
+	It("IsClusterReadyToBeConfigured ignores ConnectionStatus for a SveltosCluster in pull mode", func() {
+		// In pull mode ConnectionStatus mirrors the agent heartbeat, which is verified separately
+		sveltosCluster.Spec.PullMode = true
+		sveltosCluster.Status.Ready = true
+		sveltosCluster.Status.ConnectionStatus = libsveltosv1beta1.ConnectionDown
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sveltosCluster).Build()
+
+		ready, err := clusterproxy.IsClusterReadyToBeConfigured(context.TODO(), c,
+			&corev1.ObjectReference{
+				Namespace: sveltosCluster.Namespace,
+				Name:      sveltosCluster.Name,
+				Kind:      libsveltosv1beta1.SveltosClusterKind},
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(ready).To(BeTrue())
+	})
+
 	It("GetSveltosKubernetesRestConfig returns nil for a SveltosCluster in pull mode", func() {
 		sveltosCluster.Spec.PullMode = true
 		initObjects := []client.Object{

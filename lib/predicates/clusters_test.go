@@ -218,6 +218,58 @@ var _ = Describe("ClusterProfile Predicates: SvelotsClusterPredicates", func() {
 		result := clusterPredicate.Update(e)
 		Expect(result).To(BeTrue())
 	})
+	It("Update reprocesses when sveltos Cluster connection is not down anymore", func() {
+		clusterPredicate := predicates.SveltosClusterPredicates(logger)
+
+		cluster.Status.Ready = true
+		cluster.Status.ConnectionStatus = libsveltosv1beta1.ConnectionHealthy
+
+		oldCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cluster.Name,
+				Namespace: cluster.Namespace,
+				Labels:    map[string]string{},
+			},
+			Status: libsveltosv1beta1.SveltosClusterStatus{
+				Ready:            true,
+				ConnectionStatus: libsveltosv1beta1.ConnectionDown,
+			},
+		}
+
+		e := event.UpdateEvent{
+			ObjectNew: cluster,
+			ObjectOld: oldCluster,
+		}
+
+		result := clusterPredicate.Update(e)
+		Expect(result).To(BeTrue())
+	})
+	It("Update does not reprocess when sveltos Cluster connection goes down or its status does not change", func() {
+		clusterPredicate := predicates.SveltosClusterPredicates(logger)
+
+		cluster.Status.Ready = true
+		cluster.Status.ConnectionStatus = libsveltosv1beta1.ConnectionDown
+
+		oldCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cluster.Name,
+				Namespace: cluster.Namespace,
+			},
+			Status: libsveltosv1beta1.SveltosClusterStatus{
+				Ready:            true,
+				ConnectionStatus: libsveltosv1beta1.ConnectionHealthy,
+			},
+		}
+
+		// Healthy -> Down
+		result := clusterPredicate.Update(event.UpdateEvent{ObjectNew: cluster, ObjectOld: oldCluster})
+		Expect(result).To(BeFalse())
+
+		// Down -> Down
+		oldCluster.Status.ConnectionStatus = libsveltosv1beta1.ConnectionDown
+		result = clusterPredicate.Update(event.UpdateEvent{ObjectNew: cluster, ObjectOld: oldCluster})
+		Expect(result).To(BeFalse())
+	})
 	It("Update reprocesses when sveltos Cluster starts being deleted", func() {
 		clusterPredicate := predicates.SveltosClusterPredicates(logger)
 

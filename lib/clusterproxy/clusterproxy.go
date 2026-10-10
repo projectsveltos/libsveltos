@@ -288,7 +288,8 @@ func IsClusterInPullMode(ctx context.Context, c client.Client, clusterNamespace,
 	return false, nil
 }
 
-// IsClusterReadyToBeConfigured returns true if cluster is ready to be configured
+// IsClusterReadyToBeConfigured returns true if cluster is ready to be configured.
+// A SveltosCluster whose connection is down is not ready to be configured.
 func IsClusterReadyToBeConfigured(
 	ctx context.Context, c client.Client, cluster *corev1.ObjectReference,
 	logger logr.Logger,
@@ -301,8 +302,10 @@ func IsClusterReadyToBeConfigured(
 	return isCAPIClusterReadyToBeConfigured(ctx, c, cluster, logger)
 }
 
-// isSveltosClusterReadyToBeConfigured  returns true if SveltosCluster
-// Status.Ready is set to true
+// isSveltosClusterReadyToBeConfigured returns true if SveltosCluster Status.Ready is set to true
+// and the connection from the management cluster to it is not down.
+// Status.Ready stays true when the connection goes down, so ConnectionStatus must be checked as well:
+// a cluster which cannot be reached cannot be configured.
 func isSveltosClusterReadyToBeConfigured(
 	ctx context.Context, c client.Client,
 	cluster *corev1.ObjectReference, logger logr.Logger,
@@ -315,11 +318,28 @@ func isSveltosClusterReadyToBeConfigured(
 		return false, err
 	}
 
-	return isSveltosClusterStatusReady(sveltosCluster), nil
+	return isSveltosClusterStatusReady(sveltosCluster) && !isSveltosClusterConnectionDown(sveltosCluster), nil
 }
 
+// isSveltosClusterStatusReady returns true if SveltosCluster Status.Ready is set to true.
+// It is what makes a SveltosCluster eligible to match (Cluster)Profiles. It intentionally ignores
+// ConnectionStatus: a cluster that cannot be reached for a while must keep matching its profiles,
+// otherwise its ClusterSummaries would be deleted and what was deployed withdrawn.
 func isSveltosClusterStatusReady(sveltosCluster *libsveltosv1beta1.SveltosCluster) bool {
 	return sveltosCluster.Status.Ready
+}
+
+// isSveltosClusterConnectionDown returns true if the connection from the management cluster to
+// the SveltosCluster is down.
+// It is always false for a SveltosCluster in pull mode: the management cluster does not connect to
+// it, ConnectionStatus only mirrors the agent heartbeat, and callers already verify that
+// (see pullmode.IsAgentTimeoutError).
+func isSveltosClusterConnectionDown(sveltosCluster *libsveltosv1beta1.SveltosCluster) bool {
+	if sveltosCluster.Spec.PullMode {
+		return false
+	}
+
+	return sveltosCluster.Status.ConnectionStatus == libsveltosv1beta1.ConnectionDown
 }
 
 // isCAPIClusterReadyToBeConfigured checks whether Cluster:

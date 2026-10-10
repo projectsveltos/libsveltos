@@ -512,6 +512,40 @@ var _ = Describe("Cluster utils", func() {
 				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
 	})
 
+	It("GetMatchingClusters still matches a SveltosCluster whose connection is down", func() {
+		key := randomString()
+		value := randomString()
+
+		selector := libsveltosv1beta1.Selector{
+			LabelSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{key: value},
+			},
+		}
+
+		// A cluster which is unreachable for a while must keep matching its (Cluster)Profiles,
+		// otherwise its ClusterSummaries would be deleted and what was deployed withdrawn.
+		sveltosCluster := &libsveltosv1beta1.SveltosCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      randomString(),
+				Namespace: randomString(),
+				Labels:    map[string]string{key: value},
+			},
+			Status: libsveltosv1beta1.SveltosClusterStatus{
+				Ready:            true,
+				ConnectionStatus: libsveltosv1beta1.ConnectionDown,
+			},
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sveltosCluster).Build()
+
+		matches, err := clusterproxy.GetMatchingClusters(context.TODO(), c, &selector.LabelSelector, "", "",
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))))
+		Expect(err).To(BeNil())
+		Expect(matches).To(ContainElement(
+			corev1.ObjectReference{Namespace: sveltosCluster.Namespace, Name: sveltosCluster.Name,
+				Kind: libsveltosv1beta1.SveltosClusterKind, APIVersion: libsveltosv1beta1.GroupVersion.String()}))
+	})
+
 	It("getMatchingClusters skips CAPI Cluster with no matching onboard annotation", func() {
 		key1 := randomString()
 		value1 := randomString()
