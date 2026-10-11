@@ -119,6 +119,9 @@ const (
 	// LicenseInvalid is used, with a Warning event, when a feature needs a license and the
 	// license is missing, invalid, or expired.
 	LicenseInvalid = "LicenseInvalid"
+	// ClusterRecovered is used, with a Normal event, when a cluster that was reported as
+	// unreachable (ClusterUnreachable) or with an unhealthy agent (AgentUnhealthy) is healthy again.
+	ClusterRecovered = "ClusterRecovered"
 )
 
 // Reasons for events about access and role requests.
