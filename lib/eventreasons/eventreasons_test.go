@@ -52,6 +52,7 @@ func allReasons() []string {
 		eventreasons.ClusterUnreachable,
 		eventreasons.KubeconfigInvalid,
 		eventreasons.LicenseInvalid,
+		eventreasons.ClusterRecovered,
 		eventreasons.AccessRequestFailed,
 		eventreasons.RoleRequestFailed,
 		eventreasons.StageStarted,
