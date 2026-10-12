@@ -144,6 +144,9 @@ const (
 const (
 	// StageStarted is used, with a Normal event, when a stage of a promotion started.
 	StageStarted = "StageStarted"
+	// StageProvisioned is used, with a Normal event, when a stage of a promotion is deployed to
+	// all its clusters.
+	StageProvisioned = "StageProvisioned"
 	// PromotionCompleted is used, with a Normal event, when all the stages of a promotion
 	// completed.
 	PromotionCompleted = "PromotionCompleted"
