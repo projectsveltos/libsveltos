@@ -86,6 +86,12 @@ const (
 	// LivenessCheckFailed is used, with a Warning event, when the liveness checks of a
 	// ClusterHealthCheck are not passing.
 	LivenessCheckFailed = "LivenessCheckFailed"
+	// ClusterHealthCheckFailed is used, with a Warning event, when a ClusterHealthCheck could not be
+	// deployed to a cluster, removed from it, or its liveness checks could not be evaluated.
+	ClusterHealthCheckFailed = "ClusterHealthCheckFailed"
+	// NotificationFailed is used, with a Warning event, when a notification of a ClusterHealthCheck
+	// could not be delivered.
+	NotificationFailed = "NotificationFailed"
 )
 
 // Reasons for events about event driven deployments.
@@ -158,6 +164,7 @@ const (
 	ActionReconciling = "Reconciling"
 	ActionPromoting   = "Promoting"
 	ActionConnecting  = "Connecting"
+	ActionNotifying   = "Notifying"
 )
 
 const (

@@ -45,6 +45,8 @@ func allReasons() []string {
 		eventreasons.DriftCorrected,
 		eventreasons.HealthCheckDegraded,
 		eventreasons.LivenessCheckFailed,
+		eventreasons.ClusterHealthCheckFailed,
+		eventreasons.NotificationFailed,
 		eventreasons.EventTriggerFailed,
 		eventreasons.EventSourceInvalid,
 		eventreasons.ClassifierFailed,
@@ -70,6 +72,7 @@ func allActions() []string {
 		eventreasons.ActionReconciling,
 		eventreasons.ActionPromoting,
 		eventreasons.ActionConnecting,
+		eventreasons.ActionNotifying,
 	}
 }
 
