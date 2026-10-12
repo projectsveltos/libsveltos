@@ -58,6 +58,7 @@ func allReasons() []string {
 		eventreasons.AccessRequestFailed,
 		eventreasons.RoleRequestFailed,
 		eventreasons.StageStarted,
+		eventreasons.StageProvisioned,
 		eventreasons.PromotionCompleted,
 		eventreasons.StageFailed,
 		eventreasons.ApprovalRequired,
