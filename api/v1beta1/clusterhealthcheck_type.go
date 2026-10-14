@@ -293,6 +293,11 @@ type ClusterHealthCheckSpec struct {
 	// +optional
 	ClusterSelector Selector `json:"clusterSelector,omitempty"`
 
+	// ClusterRefs identifies clusters to associate to.
+	// These are added to the clusters matched by ClusterSelector.
+	// +optional
+	ClusterRefs []corev1.ObjectReference `json:"clusterRefs,omitempty"`
+
 	// LivenessChecks is a list of source of liveness checks to evaluate.
 	// Anytime one of those changes, notifications will be sent
 	// +patchMergeKey=name

@@ -560,6 +560,11 @@ func (in *ClusterHealthCheckList) DeepCopyObject() runtime.Object {
 func (in *ClusterHealthCheckSpec) DeepCopyInto(out *ClusterHealthCheckSpec) {
 	*out = *in
 	in.ClusterSelector.DeepCopyInto(&out.ClusterSelector)
+	if in.ClusterRefs != nil {
+		in, out := &in.ClusterRefs, &out.ClusterRefs
+		*out = make([]v1.ObjectReference, len(*in))
+		copy(*out, *in)
+	}
 	if in.LivenessChecks != nil {
 		in, out := &in.LivenessChecks, &out.LivenessChecks
 		*out = make([]LivenessCheck, len(*in))
