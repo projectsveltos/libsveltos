@@ -34,6 +34,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
@@ -103,12 +104,7 @@ func isCAPIClusterPaused(ctx context.Context, c client.Client,
 		return false, err
 	}
 
-	paused := false
-	if cluster.Spec.Paused != nil {
-		paused = *cluster.Spec.Paused
-	}
-
-	return paused, nil
+	return annotations.IsPaused(cluster, cluster), nil
 }
 
 // isSveltosClusterPaused returns true if Cluster is paused

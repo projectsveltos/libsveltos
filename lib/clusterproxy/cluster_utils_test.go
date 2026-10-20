@@ -113,6 +113,22 @@ var _ = Describe("Cluster utils", func() {
 		Expect(paused).To(BeFalse())
 	})
 
+	It("IsClusterPaused returns true for a CAPI Cluster with the paused annotation and Spec.Paused set to false", func() {
+		paused := false
+		cluster.Spec.Paused = &paused
+		cluster.Annotations = map[string]string{clusterv1.PausedAnnotation: ""}
+		initObjects := []client.Object{
+			cluster,
+		}
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(initObjects...).Build()
+
+		isPaused, err := clusterproxy.IsClusterPaused(context.TODO(), c, cluster.Namespace,
+			cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
+		Expect(err).To(BeNil())
+		Expect(isPaused).To(BeTrue())
+	})
+
 	It("GetSecretData returns kubeconfig data", func() {
 		randomData := []byte(randomString())
 		sveltosSecret := corev1.Secret{
