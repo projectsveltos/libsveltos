@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -29,16 +30,40 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2/textlogger"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/clustercache"
+	"github.com/projectsveltos/libsveltos/lib/k8s_utils"
 )
 
 const (
 	sveltosKubeconfigPostfix = "-sveltos-kubeconfig"
 	kubeconfigSecretDataKey  = "value"
+
+	widgetCRDTemplate = `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: widgets.%s
+spec:
+  group: %s
+  scope: Cluster
+  names:
+    kind: Widget
+    listKind: WidgetList
+    plural: widgets
+    singular: widget
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
+`
 )
 
 var _ = Describe("Clustercache", func() {
@@ -269,6 +294,51 @@ var _ = Describe("Clustercache", func() {
 			APIVersion: libsveltosv1beta1.GroupVersion.String(),
 		}
 		Expect(cacheMgr.GetConfigFromMap(clusterObj)).ToNot(BeNil())
+	})
+
+	It("GetKubernetesClient returns the cached client until the cluster is removed", func() {
+		createClusterResources(cluster)
+
+		cacheMgr := clustercache.GetManager()
+		first, err := cacheMgr.GetKubernetesClient(context.TODO(), testEnv.Client, cluster.Namespace,
+			cluster.Name, "", "", libsveltosv1beta1.ClusterTypeSveltos, logger)
+		Expect(err).To(BeNil())
+		Expect(first).ToNot(BeNil())
+
+		second, err := cacheMgr.GetKubernetesClient(context.TODO(), testEnv.Client, cluster.Namespace,
+			cluster.Name, "", "", libsveltosv1beta1.ClusterTypeSveltos, logger)
+		Expect(err).To(BeNil())
+		Expect(second).To(BeIdenticalTo(first))
+
+		cacheMgr.RemoveCluster(cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeSveltos)
+
+		third, err := cacheMgr.GetKubernetesClient(context.TODO(), testEnv.Client, cluster.Namespace,
+			cluster.Name, "", "", libsveltosv1beta1.ClusterTypeSveltos, logger)
+		Expect(err).To(BeNil())
+		Expect(third).ToNot(BeIdenticalTo(first))
+	})
+
+	It("GetKubernetesClient cached client resolves a kind whose CRD was installed after its first use", func() {
+		createClusterResources(cluster)
+
+		cacheMgr := clustercache.GetManager()
+		remoteClient, err := cacheMgr.GetKubernetesClient(context.TODO(), testEnv.Client, cluster.Namespace,
+			cluster.Name, "", "", libsveltosv1beta1.ClusterTypeSveltos, logger)
+		Expect(err).To(BeNil())
+		Expect(remoteClient.List(context.TODO(), &corev1.NamespaceList{})).To(Succeed())
+
+		group := randomString() + ".example.com"
+		crd, err := k8s_utils.GetUnstructured([]byte(fmt.Sprintf(widgetCRDTemplate, group, group)))
+		Expect(err).To(BeNil())
+		Expect(testEnv.Create(context.TODO(), crd)).To(Succeed())
+
+		widget := &unstructured.Unstructured{}
+		widget.SetAPIVersion(group + "/v1")
+		widget.SetKind("Widget")
+		widget.SetName(randomString())
+		Eventually(func() error {
+			return remoteClient.Create(context.TODO(), widget)
+		}, 20*time.Second, time.Second).Should(Succeed())
 	})
 })
 
