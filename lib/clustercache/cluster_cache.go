@@ -49,6 +49,8 @@ type clusterCache struct {
 	rwMux sync.RWMutex
 	// Keeps cache of rest.Config for existing clusters
 	configs map[corev1.ObjectReference]*rest.Config
+	// Keeps cache of clients built from configs
+	clients map[corev1.ObjectReference]client.Client
 
 	mappers               map[corev1.ObjectReference]*restmapper.DeferredDiscoveryRESTMapper
 	cachedDiscoveryClient map[corev1.ObjectReference]discovery.CachedDiscoveryInterface
@@ -69,6 +71,7 @@ func GetManager() *clusterCache {
 		if managerInstance == nil {
 			managerInstance = &clusterCache{
 				configs:               make(map[corev1.ObjectReference]*rest.Config),
+				clients:               make(map[corev1.ObjectReference]client.Client),
 				clusters:              make(map[corev1.ObjectReference]*corev1.ObjectReference),
 				mappers:               make(map[corev1.ObjectReference]*restmapper.DeferredDiscoveryRESTMapper),
 				cachedDiscoveryClient: make(map[corev1.ObjectReference]discovery.CachedDiscoveryInterface),
@@ -92,6 +95,7 @@ func (m *clusterCache) RemoveCluster(clusterNamespace, clusterName string,
 
 	// Remove from cache the restConfig for this cluster
 	delete(m.configs, *cluster)
+	delete(m.clients, *cluster)
 
 	if sec, ok := m.clusters[*cluster]; ok {
 		m.updateSecretMap(sec, cluster)
@@ -117,6 +121,7 @@ func (m *clusterCache) RemoveSecret(sec *corev1.ObjectReference) {
 	clusters := v.Items()
 	for i := range clusters {
 		delete(m.configs, clusters[i])
+		delete(m.clients, clusters[i])
 		delete(m.clusters, clusters[i])
 		delete(m.cachedDiscoveryClient, clusters[i])
 		delete(m.mappers, clusters[i])
@@ -397,8 +402,28 @@ func (m *clusterCache) GetKubernetesClient(ctx context.Context, mgmtClient clien
 		return nil, nil
 	}
 
-	logger.V(logs.LogVerbose).Info("return new client")
-	return client.New(config, client.Options{Scheme: mgmtClient.Scheme()})
+	cluster := getClusterObjectReference(clusterNamespace, clusterName, clusterType)
+
+	m.rwMux.Lock()
+	defer m.rwMux.Unlock()
+
+	if c, ok := m.clients[*cluster]; ok {
+		logger.V(logs.LogVerbose).Info("remote client cache hit")
+		return c, nil
+	}
+
+	logger.V(logs.LogDebug).Info("remote client cache miss")
+	c, err := client.New(config, client.Options{Scheme: mgmtClient.Scheme()})
+	if err != nil {
+		return nil, err
+	}
+
+	// config may have been evicted or replaced since GetKubernetesRestConfig returned it
+	if m.configs[*cluster] == config {
+		m.clients[*cluster] = c
+	}
+
+	return c, nil
 }
 
 func (m *clusterCache) StoreRestConfig(clusterNamespace, clusterName string,
@@ -410,6 +435,7 @@ func (m *clusterCache) StoreRestConfig(clusterNamespace, clusterName string,
 	defer m.rwMux.Unlock()
 
 	m.configs[*cluster] = config
+	delete(m.clients, *cluster)
 }
 
 func (m *clusterCache) updateSecretMap(sec, cluster *corev1.ObjectReference) {
