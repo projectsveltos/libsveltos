@@ -121,6 +121,18 @@ func (d *deployer) Deploy(
 		}
 	}
 
+	// Search if request is already in jobQueue. Drop it if already there.
+	// A key is in jobQueue and not in dirty when a request arrived while the key was in progress and the worker
+	// completed since. Queuing the key again would let two workers process the same key concurrently.
+	for i := range d.jobQueue {
+		if d.jobQueue[i].key == key {
+			d.log.V(logs.LogVerbose).Info("request is already present in jobQueue")
+			// Update JobQueue has options might have changed
+			d.updateJobQueue(key, f, m, o)
+			return nil
+		}
+	}
+
 	// Since we got a new request, if a result was saved, clear it.
 	d.log.V(logs.LogVerbose).Info("removing result from previous request if any")
 	delete(d.results, key)
