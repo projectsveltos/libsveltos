@@ -299,11 +299,11 @@ data:
     #   quay.io/piraeusdatastore/piraeus-server:v1.24.2
     components:
       linstor-controller:
-        tag: v1.27.1
+        tag: v1.27.3
         image: piraeus-server
       linstor-satellite:
         # Pin with digest to ensure we pull the version with downgraded thin-send-recv
-        tag: v1.27.1@sha256:26037f77d30d5487024e02a808d4ef913b93b745f2bb850cabc7f43a5359adff
+        tag: v1.27.3@sha256:26037f77d30d5487024e02a808d4ef913b93b745f2bb850cabc7f43a5359adff
         image: piraeus-server
       linstor-csi:
         tag: v1.6.0

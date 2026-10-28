@@ -269,6 +269,77 @@ var _ = Describe("Client", func() {
 		Expect(len(d.GetJobQueue())).To(Equal(0))
 	})
 
+	It("Deploy does nothing if already in jobQueue", func() {
+		ns := namespacePrefix + randomString()
+		name := namespacePrefix + randomString()
+		applicant := randomString()
+		featureID := randomString()
+		cleanup := false
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi, cleanup)
+
+		c := fake.NewClientBuilder().WithObjects(nil...).Build()
+		ctx, cancel := context.WithCancel(context.TODO())
+		defer cancel()
+		d := deployer.GetClient(context.TODO(),
+			textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1))), c, 10)
+		defer d.ClearInternalStruct()
+
+		err := d.RegisterFeatureID(featureID)
+		Expect(err).To(BeNil())
+
+		// The key is waiting to be picked up by a worker and it is not in dirty
+		d.SetJobQueue(key, nil, nil)
+		Expect(len(d.GetJobQueue())).To(Equal(1))
+		Expect(len(d.GetDirty())).To(Equal(0))
+
+		err = d.Deploy(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeCapi,
+			cleanup, nil, nil, deployer.Options{})
+		Expect(err).To(BeNil())
+		Expect(len(d.GetDirty())).To(Equal(0))
+		Expect(len(d.GetInProgress())).To(Equal(0))
+		Expect(len(d.GetJobQueue())).To(Equal(1))
+	})
+
+	It("Deploy does not queue a key twice when a request arrives while it is in progress and again after it completes", func() {
+		ns := namespacePrefix + randomString()
+		name := namespacePrefix + randomString()
+		applicant := randomString()
+		featureID := randomString()
+		cleanup := true
+		key := deployer.GetKey(ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos, cleanup)
+		logger := textlogger.NewLogger(textlogger.NewConfig(textlogger.Verbosity(1)))
+
+		c := fake.NewClientBuilder().WithObjects(nil...).Build()
+		ctx, cancel := context.WithCancel(context.TODO())
+		defer cancel()
+		d := deployer.GetClient(context.TODO(), logger, c, 10)
+		defer d.ClearInternalStruct()
+
+		err := d.RegisterFeatureID(featureID)
+		Expect(err).To(BeNil())
+
+		// A worker is processing the key
+		d.SetInProgress([]string{key})
+
+		// A new request arrives: the key is marked dirty and not queued as it is in progress
+		Expect(d.Deploy(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos,
+			cleanup, nil, nil, deployer.Options{})).To(Succeed())
+		Expect(len(d.GetDirty())).To(Equal(1))
+		Expect(len(d.GetJobQueue())).To(Equal(0))
+
+		// The worker completes. The result is ignored as the key is dirty: the key is moved from dirty to jobQueue
+		deployer.StoreResult(d, key, nil, deployer.Options{}, doNothingHandler, metricHandler, logger)
+		Expect(len(d.GetInProgress())).To(Equal(0))
+		Expect(len(d.GetDirty())).To(Equal(0))
+		Expect(len(d.GetJobQueue())).To(Equal(1))
+
+		// Another request arrives before a worker picked up the key. It is already queued, so it must not be queued
+		// again. Otherwise two workers would process the same key concurrently.
+		Expect(d.Deploy(ctx, ns, name, applicant, featureID, libsveltosv1beta1.ClusterTypeSveltos,
+			cleanup, nil, nil, deployer.Options{})).To(Succeed())
+		Expect(len(d.GetJobQueue())).To(Equal(1))
+	})
+
 	It("Deploy removes existing result", func() {
 		ns := namespacePrefix + randomString()
 		name := namespacePrefix + randomString()
