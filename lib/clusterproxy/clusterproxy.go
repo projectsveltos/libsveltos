@@ -68,6 +68,8 @@ func GetCAPIKubernetesRestConfig(ctx context.Context, logger logr.Logger, c clie
 		return nil, errors.Wrap(err, "BuildConfigFromFlags")
 	}
 
+	applyRestConfigLimits(config)
+
 	return config, nil
 }
 
@@ -152,6 +154,8 @@ func GetSveltosKubernetesRestConfig(ctx context.Context, logger logr.Logger, c c
 		logger.Error(err, "BuildConfigFromFlags")
 		return nil, errors.Wrap(err, "BuildConfigFromFlags")
 	}
+
+	applyRestConfigLimits(config)
 
 	return config, nil
 }

@@ -162,6 +162,8 @@ func getKubernetesRestConfigForAdmin(ctx context.Context, c client.Client,
 		return nil, errors.Wrap(err, "BuildConfigFromFlags")
 	}
 
+	applyRestConfigLimits(config)
+
 	return config, nil
 }
 

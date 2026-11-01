@@ -281,6 +281,38 @@ var _ = Describe("WorkloadIdentity OIDC", func() {
 		Expect(got.Host).To(Equal(wiTestEndpoint))
 	})
 
+	It("applies the limits set with SetRestConfigLimits to the workload identity rest.Config", func() {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"test-access-token","token_type":"Bearer","expires_in":3600}`))
+		}))
+		defer server.Close()
+
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: oidcNS,
+				Name:      oidcSecretName,
+			},
+			Data: map[string][]byte{
+				oidcClientIDKey:   []byte(oidcClientID),
+				oidcSecretDataKey: []byte(oidcClientSecret),
+			},
+		}
+
+		sveltosCluster := buildOIDCCluster(
+			corev1.SecretReference{Name: oidcSecretName, Namespace: oidcNS}, server.URL)
+
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sveltosCluster, secret).Build()
+
+		clusterproxy.SetRestConfigLimits(20, 60)
+		defer clusterproxy.SetRestConfigLimits(0, 0)
+
+		got, err := clusterproxy.GetSveltosKubernetesRestConfig(ctx, logr.Discard(), c, oidcNS, oidcClusterName)
+		Expect(err).To(BeNil())
+		Expect(got.QPS).To(Equal(float32(20)))
+		Expect(got.Burst).To(Equal(60))
+	})
+
 	It("defaults the credentials Secret namespace to the cluster's namespace when SecretRef.Namespace is empty", func() {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
