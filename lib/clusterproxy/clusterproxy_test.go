@@ -519,4 +519,51 @@ var _ = Describe("clusterproxy ", func() {
 		Expect(err).To(BeNil())
 		Expect(remoteConfig).To(BeNil())
 	})
+
+	It("GetCAPIKubernetesRestConfig applies the limits set with SetRestConfigLimits", func() {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: cluster.Namespace,
+				Name:      cluster.Name + clusterproxy.CapiKubeconfigSecretNamePostfix,
+			},
+			Data: map[string][]byte{secretDataKey: testEnv.Kubeconfig},
+		}
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(cluster, secret).Build()
+
+		remoteConfig, err := clusterproxy.GetCAPIKubernetesRestConfig(context.TODO(), logger, c,
+			cluster.Namespace, cluster.Name)
+		Expect(err).To(BeNil())
+		Expect(remoteConfig.QPS).To(BeZero())
+		Expect(remoteConfig.Burst).To(BeZero())
+
+		clusterproxy.SetRestConfigLimits(20, 60)
+		defer clusterproxy.SetRestConfigLimits(0, 0)
+
+		remoteConfig, err = clusterproxy.GetCAPIKubernetesRestConfig(context.TODO(), logger, c,
+			cluster.Namespace, cluster.Name)
+		Expect(err).To(BeNil())
+		Expect(remoteConfig.QPS).To(Equal(float32(20)))
+		Expect(remoteConfig.Burst).To(Equal(60))
+	})
+
+	It("GetSveltosKubernetesRestConfig applies the limits set with SetRestConfigLimits", func() {
+		sveltosCluster.Spec.KubeconfigKeyName = secretDataKey
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: sveltosCluster.Namespace,
+				Name:      sveltosCluster.Name + clusterproxy.SveltosKubeconfigSecretNamePostfix,
+			},
+			Data: map[string][]byte{secretDataKey: testEnv.Kubeconfig},
+		}
+		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sveltosCluster, secret).Build()
+
+		clusterproxy.SetRestConfigLimits(20, 60)
+		defer clusterproxy.SetRestConfigLimits(0, 0)
+
+		remoteConfig, err := clusterproxy.GetSveltosKubernetesRestConfig(context.TODO(), logger, c,
+			sveltosCluster.Namespace, sveltosCluster.Name)
+		Expect(err).To(BeNil())
+		Expect(remoteConfig.QPS).To(Equal(float32(20)))
+		Expect(remoteConfig.Burst).To(Equal(60))
+	})
 })

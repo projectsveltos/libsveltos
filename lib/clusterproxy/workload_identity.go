@@ -261,6 +261,7 @@ func buildRestConfig(endpoint, bearerToken string, caData []byte) *rest.Config {
 		BearerToken: bearerToken,
 	}
 	cfg.CAData = caData
+	applyRestConfigLimits(cfg)
 	return cfg
 }
 
