@@ -61,7 +61,7 @@ const (
 )
 
 // Features is all features requiring a license
-// +kubebuilder:validation:Enum:=PullMode;MCP;Promotion;JobHealthCheck;NamespaceScopedAgents
+// +kubebuilder:validation:Enum:=PullMode;MCP;Promotion;JobHealthCheck;NamespaceScopedAgents;AgentGrouping
 type Features string
 
 const (
@@ -81,6 +81,11 @@ const (
 	// sveltos-agent (agentless mode) restricted to watching a configured set of namespaces,
 	// instead of cluster-wide.
 	FeatureNamespaceScopedAgents = Features("NamespaceScopedAgents")
+
+	// FeatureAgentGrouping is the ability to run a single drift-detection-manager or
+	// sveltos-agent (agentless mode) instance for a group of clusters, instead of one
+	// instance per cluster.
+	FeatureAgentGrouping = Features("AgentGrouping")
 )
 
 // +kubebuilder:validation:Enum:=Enterprise;EnterprisePlus
