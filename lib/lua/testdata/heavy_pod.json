@@ -1,0 +1,1034 @@
+{
+ "apiVersion": "v1",
+ "kind": "Pod",
+ "metadata": {
+  "annotations": {
+   "argocd.argoproj.io/tracking-id": "checkout-platform:apps/Deployment:production/app-00000",
+   "checksum/config": "2e9b0bf7b477c337b449d7dc0ac17589880d5ed54ab8f48f2ec1c6b0fdd47cc6",
+   "cluster-autoscaler.kubernetes.io/safe-to-evict": "true",
+   "kubectl.kubernetes.io/default-container": "app",
+   "meta.helm.sh/release-name": "app-00000",
+   "meta.helm.sh/release-namespace": "production",
+   "owner.example.com/contact": "payments-oncall@example.com",
+   "prometheus.io/path": "/metrics",
+   "prometheus.io/port": "9090",
+   "prometheus.io/scrape": "true",
+   "sidecar.istio.io/inject": "false"
+  },
+  "creationTimestamp": "2026-11-05T09:48:21Z",
+  "generateName": "app-00000-7b9cd96b68-",
+  "generation": 1,
+  "labels": {
+   "app": "app-00000",
+   "app.kubernetes.io/component": "backend",
+   "app.kubernetes.io/instance": "app-00000-prod",
+   "app.kubernetes.io/managed-by": "Helm",
+   "app.kubernetes.io/name": "app-00000",
+   "app.kubernetes.io/part-of": "checkout-platform",
+   "app.kubernetes.io/version": "2.14.7",
+   "environment": "production",
+   "helm.sh/chart": "service-3.2.1",
+   "pod-template-hash": "7b9cd96b68",
+   "scale.ciroos.ai/objgen": "true",
+   "team": "payments",
+   "tier": "backend"
+  },
+  "name": "app-00000-7b9cd96b68-65ccp",
+  "namespace": "scale-hold",
+  "ownerReferences": [
+   {
+    "apiVersion": "apps/v1",
+    "blockOwnerDeletion": true,
+    "controller": true,
+    "kind": "ReplicaSet",
+    "name": "app-00000-7b9cd96b68",
+    "uid": "8abb7427-77c2-4430-b7ac-0d5e312d0f6e"
+   }
+  ],
+  "resourceVersion": "5921",
+  "uid": "b1a4dce2-03df-4f29-a6d6-8c914e463c9a"
+ },
+ "spec": {
+  "containers": [
+   {
+    "env": [
+     {
+      "name": "APP_SETTING_00",
+      "value": "https://app-00.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_01",
+      "value": "https://app-01.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_02",
+      "value": "https://app-02.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_03",
+      "value": "https://app-03.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_04",
+      "value": "https://app-04.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_05",
+      "value": "https://app-05.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_06",
+      "value": "https://app-06.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_07",
+      "value": "https://app-07.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_08",
+      "value": "https://app-08.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_09",
+      "value": "https://app-09.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_10",
+      "value": "https://app-10.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_11",
+      "value": "https://app-11.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_12",
+      "value": "https://app-12.internal.example.com:8443/v1"
+     },
+     {
+      "name": "APP_SETTING_13",
+      "value": "https://app-13.internal.example.com:8443/v1"
+     },
+     {
+      "name": "POD_NAME",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "metadata.name"
+       }
+      }
+     },
+     {
+      "name": "POD_NAMESPACE",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "metadata.namespace"
+       }
+      }
+     },
+     {
+      "name": "NODE_NAME",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "spec.nodeName"
+       }
+      }
+     },
+     {
+      "name": "LOG_LEVEL",
+      "valueFrom": {
+       "configMapKeyRef": {
+        "key": "log-level",
+        "name": "shared-config"
+       }
+      }
+     },
+     {
+      "name": "REGION",
+      "valueFrom": {
+       "configMapKeyRef": {
+        "key": "region",
+        "name": "shared-config"
+       }
+      }
+     },
+     {
+      "name": "DB_PASSWORD",
+      "valueFrom": {
+       "secretKeyRef": {
+        "key": "password",
+        "name": "db-credentials"
+       }
+      }
+     }
+    ],
+    "image": "registry.k8s.io/pause:3.9",
+    "imagePullPolicy": "IfNotPresent",
+    "livenessProbe": {
+     "failureThreshold": 3,
+     "httpGet": {
+      "path": "/healthz",
+      "port": "http",
+      "scheme": "HTTP"
+     },
+     "initialDelaySeconds": 5,
+     "periodSeconds": 10,
+     "successThreshold": 1,
+     "timeoutSeconds": 3
+    },
+    "name": "app",
+    "ports": [
+     {
+      "containerPort": 8080,
+      "name": "http",
+      "protocol": "TCP"
+     },
+     {
+      "containerPort": 9090,
+      "name": "metrics",
+      "protocol": "TCP"
+     }
+    ],
+    "readinessProbe": {
+     "failureThreshold": 3,
+     "httpGet": {
+      "path": "/ready",
+      "port": "http",
+      "scheme": "HTTP"
+     },
+     "initialDelaySeconds": 5,
+     "periodSeconds": 5,
+     "successThreshold": 1,
+     "timeoutSeconds": 3
+    },
+    "resources": {
+     "limits": {
+      "cpu": "500m",
+      "memory": "256Mi"
+     },
+     "requests": {
+      "cpu": "10m",
+      "memory": "16Mi"
+     }
+    },
+    "securityContext": {
+     "allowPrivilegeEscalation": false,
+     "capabilities": {
+      "drop": [
+       "ALL"
+      ]
+     },
+     "readOnlyRootFilesystem": true,
+     "runAsNonRoot": true,
+     "runAsUser": 10001,
+     "seccompProfile": {
+      "type": "RuntimeDefault"
+     }
+    },
+    "startupProbe": {
+     "failureThreshold": 3,
+     "httpGet": {
+      "path": "/startup",
+      "port": "http",
+      "scheme": "HTTP"
+     },
+     "initialDelaySeconds": 5,
+     "periodSeconds": 2,
+     "successThreshold": 1,
+     "timeoutSeconds": 3
+    },
+    "terminationMessagePath": "/dev/termination-log",
+    "terminationMessagePolicy": "File",
+    "volumeMounts": [
+     {
+      "mountPath": "/etc/app",
+      "name": "config",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/etc/secrets",
+      "name": "secrets",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/tmp",
+      "name": "tmp"
+     },
+     {
+      "mountPath": "/var/run/secrets/tokens",
+      "name": "token",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+      "name": "kube-api-access-n6j4t",
+      "readOnly": true
+     }
+    ]
+   },
+   {
+    "env": [
+     {
+      "name": "PROXY_SETTING_00",
+      "value": "https://proxy-00.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_01",
+      "value": "https://proxy-01.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_02",
+      "value": "https://proxy-02.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_03",
+      "value": "https://proxy-03.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_04",
+      "value": "https://proxy-04.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_05",
+      "value": "https://proxy-05.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_06",
+      "value": "https://proxy-06.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_07",
+      "value": "https://proxy-07.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_08",
+      "value": "https://proxy-08.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_09",
+      "value": "https://proxy-09.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_10",
+      "value": "https://proxy-10.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_11",
+      "value": "https://proxy-11.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_12",
+      "value": "https://proxy-12.internal.example.com:8443/v1"
+     },
+     {
+      "name": "PROXY_SETTING_13",
+      "value": "https://proxy-13.internal.example.com:8443/v1"
+     },
+     {
+      "name": "POD_NAME",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "metadata.name"
+       }
+      }
+     },
+     {
+      "name": "POD_NAMESPACE",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "metadata.namespace"
+       }
+      }
+     },
+     {
+      "name": "NODE_NAME",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "spec.nodeName"
+       }
+      }
+     },
+     {
+      "name": "LOG_LEVEL",
+      "valueFrom": {
+       "configMapKeyRef": {
+        "key": "log-level",
+        "name": "shared-config"
+       }
+      }
+     },
+     {
+      "name": "REGION",
+      "valueFrom": {
+       "configMapKeyRef": {
+        "key": "region",
+        "name": "shared-config"
+       }
+      }
+     },
+     {
+      "name": "DB_PASSWORD",
+      "valueFrom": {
+       "secretKeyRef": {
+        "key": "password",
+        "name": "db-credentials"
+       }
+      }
+     }
+    ],
+    "image": "registry.k8s.io/pause:3.9",
+    "imagePullPolicy": "IfNotPresent",
+    "livenessProbe": {
+     "failureThreshold": 3,
+     "httpGet": {
+      "path": "/healthz",
+      "port": "pr-http",
+      "scheme": "HTTP"
+     },
+     "initialDelaySeconds": 5,
+     "periodSeconds": 10,
+     "successThreshold": 1,
+     "timeoutSeconds": 3
+    },
+    "name": "proxy",
+    "ports": [
+     {
+      "containerPort": 8086,
+      "name": "pr-http",
+      "protocol": "TCP"
+     },
+     {
+      "containerPort": 9096,
+      "name": "pr-metrics",
+      "protocol": "TCP"
+     }
+    ],
+    "readinessProbe": {
+     "failureThreshold": 3,
+     "httpGet": {
+      "path": "/ready",
+      "port": "pr-http",
+      "scheme": "HTTP"
+     },
+     "initialDelaySeconds": 5,
+     "periodSeconds": 5,
+     "successThreshold": 1,
+     "timeoutSeconds": 3
+    },
+    "resources": {
+     "limits": {
+      "cpu": "500m",
+      "memory": "256Mi"
+     },
+     "requests": {
+      "cpu": "10m",
+      "memory": "16Mi"
+     }
+    },
+    "securityContext": {
+     "allowPrivilegeEscalation": false,
+     "capabilities": {
+      "drop": [
+       "ALL"
+      ]
+     },
+     "readOnlyRootFilesystem": true,
+     "runAsNonRoot": true,
+     "runAsUser": 10001,
+     "seccompProfile": {
+      "type": "RuntimeDefault"
+     }
+    },
+    "startupProbe": {
+     "failureThreshold": 3,
+     "httpGet": {
+      "path": "/startup",
+      "port": "pr-http",
+      "scheme": "HTTP"
+     },
+     "initialDelaySeconds": 5,
+     "periodSeconds": 2,
+     "successThreshold": 1,
+     "timeoutSeconds": 3
+    },
+    "terminationMessagePath": "/dev/termination-log",
+    "terminationMessagePolicy": "File",
+    "volumeMounts": [
+     {
+      "mountPath": "/etc/app",
+      "name": "config",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/etc/secrets",
+      "name": "secrets",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/tmp",
+      "name": "tmp"
+     },
+     {
+      "mountPath": "/var/run/secrets/tokens",
+      "name": "token",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+      "name": "kube-api-access-n6j4t",
+      "readOnly": true
+     }
+    ]
+   },
+   {
+    "env": [
+     {
+      "name": "LOG_SHIPPER_SETTING_00",
+      "value": "https://log-shipper-00.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_01",
+      "value": "https://log-shipper-01.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_02",
+      "value": "https://log-shipper-02.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_03",
+      "value": "https://log-shipper-03.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_04",
+      "value": "https://log-shipper-04.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_05",
+      "value": "https://log-shipper-05.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_06",
+      "value": "https://log-shipper-06.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_07",
+      "value": "https://log-shipper-07.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_08",
+      "value": "https://log-shipper-08.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_09",
+      "value": "https://log-shipper-09.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_10",
+      "value": "https://log-shipper-10.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_11",
+      "value": "https://log-shipper-11.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_12",
+      "value": "https://log-shipper-12.internal.example.com:8443/v1"
+     },
+     {
+      "name": "LOG_SHIPPER_SETTING_13",
+      "value": "https://log-shipper-13.internal.example.com:8443/v1"
+     },
+     {
+      "name": "POD_NAME",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "metadata.name"
+       }
+      }
+     },
+     {
+      "name": "POD_NAMESPACE",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "metadata.namespace"
+       }
+      }
+     },
+     {
+      "name": "NODE_NAME",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "spec.nodeName"
+       }
+      }
+     },
+     {
+      "name": "LOG_LEVEL",
+      "valueFrom": {
+       "configMapKeyRef": {
+        "key": "log-level",
+        "name": "shared-config"
+       }
+      }
+     },
+     {
+      "name": "REGION",
+      "valueFrom": {
+       "configMapKeyRef": {
+        "key": "region",
+        "name": "shared-config"
+       }
+      }
+     },
+     {
+      "name": "DB_PASSWORD",
+      "valueFrom": {
+       "secretKeyRef": {
+        "key": "password",
+        "name": "db-credentials"
+       }
+      }
+     }
+    ],
+    "image": "registry.k8s.io/pause:3.9",
+    "imagePullPolicy": "IfNotPresent",
+    "livenessProbe": {
+     "failureThreshold": 3,
+     "httpGet": {
+      "path": "/healthz",
+      "port": "lo-http",
+      "scheme": "HTTP"
+     },
+     "initialDelaySeconds": 5,
+     "periodSeconds": 10,
+     "successThreshold": 1,
+     "timeoutSeconds": 3
+    },
+    "name": "log-shipper",
+    "ports": [
+     {
+      "containerPort": 8085,
+      "name": "lo-http",
+      "protocol": "TCP"
+     },
+     {
+      "containerPort": 9095,
+      "name": "lo-metrics",
+      "protocol": "TCP"
+     }
+    ],
+    "readinessProbe": {
+     "failureThreshold": 3,
+     "httpGet": {
+      "path": "/ready",
+      "port": "lo-http",
+      "scheme": "HTTP"
+     },
+     "initialDelaySeconds": 5,
+     "periodSeconds": 5,
+     "successThreshold": 1,
+     "timeoutSeconds": 3
+    },
+    "resources": {
+     "limits": {
+      "cpu": "500m",
+      "memory": "256Mi"
+     },
+     "requests": {
+      "cpu": "10m",
+      "memory": "16Mi"
+     }
+    },
+    "securityContext": {
+     "allowPrivilegeEscalation": false,
+     "capabilities": {
+      "drop": [
+       "ALL"
+      ]
+     },
+     "readOnlyRootFilesystem": true,
+     "runAsNonRoot": true,
+     "runAsUser": 10001,
+     "seccompProfile": {
+      "type": "RuntimeDefault"
+     }
+    },
+    "startupProbe": {
+     "failureThreshold": 3,
+     "httpGet": {
+      "path": "/startup",
+      "port": "lo-http",
+      "scheme": "HTTP"
+     },
+     "initialDelaySeconds": 5,
+     "periodSeconds": 2,
+     "successThreshold": 1,
+     "timeoutSeconds": 3
+    },
+    "terminationMessagePath": "/dev/termination-log",
+    "terminationMessagePolicy": "File",
+    "volumeMounts": [
+     {
+      "mountPath": "/etc/app",
+      "name": "config",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/etc/secrets",
+      "name": "secrets",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/tmp",
+      "name": "tmp"
+     },
+     {
+      "mountPath": "/var/run/secrets/tokens",
+      "name": "token",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+      "name": "kube-api-access-n6j4t",
+      "readOnly": true
+     }
+    ]
+   }
+  ],
+  "dnsConfig": {
+   "options": [
+    {
+     "name": "ndots",
+     "value": "2"
+    }
+   ]
+  },
+  "dnsPolicy": "ClusterFirst",
+  "enableServiceLinks": true,
+  "imagePullSecrets": [
+   {
+    "name": "registry-credentials"
+   }
+  ],
+  "initContainers": [
+   {
+    "env": [
+     {
+      "name": "POD_NAME",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "metadata.name"
+       }
+      }
+     },
+     {
+      "name": "POD_NAMESPACE",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "metadata.namespace"
+       }
+      }
+     },
+     {
+      "name": "NODE_NAME",
+      "valueFrom": {
+       "fieldRef": {
+        "apiVersion": "v1",
+        "fieldPath": "spec.nodeName"
+       }
+      }
+     },
+     {
+      "name": "LOG_LEVEL",
+      "valueFrom": {
+       "configMapKeyRef": {
+        "key": "log-level",
+        "name": "shared-config"
+       }
+      }
+     },
+     {
+      "name": "REGION",
+      "valueFrom": {
+       "configMapKeyRef": {
+        "key": "region",
+        "name": "shared-config"
+       }
+      }
+     }
+    ],
+    "image": "registry.k8s.io/pause:3.9",
+    "imagePullPolicy": "IfNotPresent",
+    "name": "init-config",
+    "resources": {
+     "limits": {
+      "cpu": "500m",
+      "memory": "256Mi"
+     },
+     "requests": {
+      "cpu": "10m",
+      "memory": "16Mi"
+     }
+    },
+    "securityContext": {
+     "allowPrivilegeEscalation": false,
+     "capabilities": {
+      "drop": [
+       "ALL"
+      ]
+     },
+     "readOnlyRootFilesystem": true,
+     "runAsNonRoot": true,
+     "runAsUser": 10001,
+     "seccompProfile": {
+      "type": "RuntimeDefault"
+     }
+    },
+    "terminationMessagePath": "/dev/termination-log",
+    "terminationMessagePolicy": "File",
+    "volumeMounts": [
+     {
+      "mountPath": "/etc/app",
+      "name": "config",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/etc/secrets",
+      "name": "secrets",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/tmp",
+      "name": "tmp"
+     },
+     {
+      "mountPath": "/var/run/secrets/tokens",
+      "name": "token",
+      "readOnly": true
+     },
+     {
+      "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+      "name": "kube-api-access-n6j4t",
+      "readOnly": true
+     }
+    ]
+   }
+  ],
+  "nodeName": "kwok-node-27",
+  "nodeSelector": {
+   "type": "kwok"
+  },
+  "preemptionPolicy": "PreemptLowerPriority",
+  "priority": 0,
+  "restartPolicy": "Always",
+  "schedulerName": "default-scheduler",
+  "securityContext": {
+   "fsGroup": 10001,
+   "runAsNonRoot": true,
+   "seccompProfile": {
+    "type": "RuntimeDefault"
+   }
+  },
+  "serviceAccount": "default",
+  "serviceAccountName": "default",
+  "terminationGracePeriodSeconds": 60,
+  "tolerations": [
+   {
+    "effect": "NoSchedule",
+    "key": "kwok.x-k8s.io/node",
+    "operator": "Exists"
+   },
+   {
+    "effect": "NoExecute",
+    "key": "node.kubernetes.io/not-ready",
+    "operator": "Exists",
+    "tolerationSeconds": 300
+   },
+   {
+    "effect": "NoExecute",
+    "key": "node.kubernetes.io/unreachable",
+    "operator": "Exists",
+    "tolerationSeconds": 300
+   }
+  ],
+  "volumes": [
+   {
+    "configMap": {
+     "defaultMode": 420,
+     "name": "app-00000-config"
+    },
+    "name": "config"
+   },
+   {
+    "name": "secrets",
+    "secret": {
+     "defaultMode": 420,
+     "secretName": "app-00000-secrets"
+    }
+   },
+   {
+    "emptyDir": {},
+    "name": "tmp"
+   },
+   {
+    "name": "token",
+    "projected": {
+     "defaultMode": 420,
+     "sources": [
+      {
+       "serviceAccountToken": {
+        "expirationSeconds": 3600,
+        "path": "token"
+       }
+      },
+      {
+       "configMap": {
+        "items": [
+         {
+          "key": "ca.crt",
+          "path": "ca.crt"
+         }
+        ],
+        "name": "kube-root-ca.crt"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "name": "kube-api-access-n6j4t",
+    "projected": {
+     "defaultMode": 420,
+     "sources": [
+      {
+       "serviceAccountToken": {
+        "expirationSeconds": 3607,
+        "path": "token"
+       }
+      },
+      {
+       "configMap": {
+        "items": [
+         {
+          "key": "ca.crt",
+          "path": "ca.crt"
+         }
+        ],
+        "name": "kube-root-ca.crt"
+       }
+      },
+      {
+       "downwardAPI": {
+        "items": [
+         {
+          "fieldRef": {
+           "apiVersion": "v1",
+           "fieldPath": "metadata.namespace"
+          },
+          "path": "namespace"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "status": {
+  "conditions": [
+   {
+    "lastProbeTime": null,
+    "lastTransitionTime": "2026-11-05T09:48:21Z",
+    "status": "True",
+    "type": "Initialized"
+   },
+   {
+    "lastProbeTime": null,
+    "lastTransitionTime": "2026-11-05T09:48:21Z",
+    "status": "True",
+    "type": "Ready"
+   },
+   {
+    "lastProbeTime": null,
+    "lastTransitionTime": "2026-11-05T09:48:21Z",
+    "status": "True",
+    "type": "ContainersReady"
+   },
+   {
+    "lastProbeTime": null,
+    "lastTransitionTime": "2026-11-05T09:48:21Z",
+    "status": "True",
+    "type": "PodScheduled"
+   }
+  ],
+  "containerStatuses": [
+   {
+    "image": "registry.k8s.io/pause:3.9",
+    "imageID": "",
+    "lastState": {},
+    "name": "app",
+    "ready": true,
+    "restartCount": 0,
+    "started": true,
+    "state": {
+     "running": {
+      "startedAt": "2026-11-05T09:48:21Z"
+     }
+    }
+   },
+   {
+    "image": "registry.k8s.io/pause:3.9",
+    "imageID": "",
+    "lastState": {},
+    "name": "proxy",
+    "ready": true,
+    "restartCount": 0,
+    "started": true,
+    "state": {
+     "running": {
+      "startedAt": "2026-11-05T09:48:21Z"
+     }
+    }
+   },
+   {
+    "image": "registry.k8s.io/pause:3.9",
+    "imageID": "",
+    "lastState": {},
+    "name": "log-shipper",
+    "ready": true,
+    "restartCount": 0,
+    "started": true,
+    "state": {
+     "running": {
+      "startedAt": "2026-11-05T09:48:21Z"
+     }
+    }
+   }
+  ],
+  "hostIP": "10.244.2.2",
+  "hostIPs": [
+   {
+    "ip": "10.244.2.2"
+   }
+  ],
+  "phase": "Running",
+  "podIP": "10.244.31.2",
+  "podIPs": [
+   {
+    "ip": "10.244.31.2"
+   }
+  ],
+  "qosClass": "Burstable",
+  "startTime": "2026-11-05T09:48:21Z"
+ }
+}

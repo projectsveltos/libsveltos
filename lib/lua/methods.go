@@ -50,8 +50,8 @@ func LoadModulesAndRegisterMethods(l *lua.LState) {
 // MapToTable converts a Go map to a lua table
 // credit to: https://github.com/yuin/gopher-lua/issues/160#issuecomment-447608033
 func MapToTable(m map[string]any) *lua.LTable {
-	// Main table pointer
-	resultTable := &lua.LTable{}
+	// Pre-size the hash part: growing it key by key reallocates it several times.
+	resultTable := newTable(0, len(m))
 
 	// Loop map
 	for key, element := range m {
@@ -79,7 +79,7 @@ func MapToTable(m map[string]any) *lua.LTable {
 		case []map[string]any:
 
 			// Create slice table
-			sliceTable := &lua.LTable{}
+			sliceTable := newTable(len(element), 0)
 
 			// Loop element
 			for _, s := range element {
@@ -95,7 +95,7 @@ func MapToTable(m map[string]any) *lua.LTable {
 		case []any:
 
 			// Create slice table
-			sliceTable := &lua.LTable{}
+			sliceTable := newTable(len(element), 0)
 
 			// Loop interface slice
 			for _, s := range element {
@@ -132,6 +132,15 @@ func MapToTable(m map[string]any) *lua.LTable {
 	}
 
 	return resultTable
+}
+
+// newTable returns an empty table with room for narr array entries and nrec hash entries.
+// gopher-lua only exposes the constructor through (*LState).CreateTable, which does not use its
+// receiver; a nil state avoids needing one here (MapToTable has no LState). The unit tests
+// exercise this path, so a future gopher-lua that dereferences the receiver is caught.
+func newTable(narr, nrec int) *lua.LTable {
+	var l *lua.LState
+	return l.CreateTable(narr, nrec)
 }
 
 // ToGoValue converts the given LValue to a Go object.
