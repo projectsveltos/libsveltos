@@ -19,7 +19,6 @@ package cel
 import (
 	"fmt"
 
-	"cel.dev/cel-go/cel"
 	"cel.dev/cel-go/common/types"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -52,41 +51,18 @@ func EvaluateRules(resource *unstructured.Unstructured,
 	return false, nil
 }
 
-// evaluateRule evaluates a single CEL expression against an object
+// evaluateRule evaluates a single CEL expression against an object. The expression is compiled the
+// first time it is seen and the compiled program is reused for every following evaluation.
 func evaluateRule(expression string, resource *unstructured.Unstructured,
 	logger logr.Logger) (bool, error) {
 
-	env, err := cel.NewEnv(
-		cel.Variable("resource", cel.DynType),
-	)
-	if err != nil {
-		err = fmt.Errorf("failed to create CEL environment: %w", err)
-		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
-		return false, err
+	rule := sharedCache.get(expression)
+	if rule.err != nil {
+		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", rule.err))
+		return false, rule.err
 	}
 
-	ast, issues := env.Parse(expression)
-	if issues != nil && issues.Err() != nil {
-		err = fmt.Errorf("failed to parse CEL expression: %w", issues.Err())
-		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
-		return false, err
-	}
-
-	checked, issues := env.Check(ast)
-	if issues != nil && issues.Err() != nil {
-		err = fmt.Errorf("failed to check CEL expression: %w", issues.Err())
-		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
-		return false, err
-	}
-
-	program, err := env.Program(checked)
-	if err != nil {
-		err = fmt.Errorf("failed to create CEL program: %w", err)
-		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))
-		return false, err
-	}
-
-	result, _, err := program.Eval(map[string]interface{}{
+	result, _, err := rule.program.Eval(map[string]interface{}{
 		"resource": resource.Object,
 	})
 	if err != nil {

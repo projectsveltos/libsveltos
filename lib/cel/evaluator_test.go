@@ -50,7 +50,7 @@ var _ = Describe("utils ", func() {
 		obj.SetName("test-deployment")
 		obj.SetNamespace("default")
 		obj.SetLabels(map[string]string{
-			"env": "prod",
+			envLabel: prodValue,
 		})
 
 		// Rule that should match (label "env" == "prod")
