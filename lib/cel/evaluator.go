@@ -32,11 +32,16 @@ import (
 func EvaluateRules(resource *unstructured.Unstructured,
 	rules []libsveltosv1beta1.CELRule, logger logr.Logger) (matched bool, err error) {
 
+	// The same activation is used for every rule: CEL only reads it, so build it once per object
+	activation := map[string]interface{}{
+		"resource": resource.Object,
+	}
+
 	// Evaluate each match rule
 	for i := range rules {
 		rule := &rules[i]
 		logger.V(logs.LogDebug).Info(fmt.Sprintf("evaluate match rule %s", rule.Name))
-		matched, err = evaluateRule(rule.Rule, resource, logger)
+		matched, err = evaluateRule(rule.Rule, activation, logger)
 		if err != nil {
 			logger.V(logs.LogInfo).Info(fmt.Sprintf("Failed to evaluate rule %s %s/%s for %s: %v",
 				rule.Name, resource.GetKind(), resource.GetNamespace(), resource.GetName(), err))
@@ -51,9 +56,10 @@ func EvaluateRules(resource *unstructured.Unstructured,
 	return false, nil
 }
 
-// evaluateRule evaluates a single CEL expression against an object. The expression is compiled the
-// first time it is seen and the compiled program is reused for every following evaluation.
-func evaluateRule(expression string, resource *unstructured.Unstructured,
+// evaluateRule evaluates a single CEL expression against an object, passed as the "resource" variable
+// of activation. The expression is compiled the first time it is seen and the compiled program is
+// reused for every following evaluation.
+func evaluateRule(expression string, activation map[string]interface{},
 	logger logr.Logger) (bool, error) {
 
 	rule := sharedCache.get(expression)
@@ -62,9 +68,7 @@ func evaluateRule(expression string, resource *unstructured.Unstructured,
 		return false, rule.err
 	}
 
-	result, _, err := rule.program.Eval(map[string]interface{}{
-		"resource": resource.Object,
-	})
+	result, _, err := rule.program.Eval(activation)
 	if err != nil {
 		err = fmt.Errorf("failed to evaluate CEL expression: %w", err)
 		logger.V(logs.LogInfo).Info(fmt.Sprintf("evaluateMatchRule failed: %v", err))

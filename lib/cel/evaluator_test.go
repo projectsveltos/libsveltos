@@ -30,7 +30,9 @@ import (
 )
 
 const (
-	v1Version = "v1"
+	v1Version     = "v1"
+	configMapKind = "ConfigMap"
+	goldTier      = "gold"
 )
 
 var _ = Describe("utils ", func() {
@@ -78,7 +80,7 @@ var _ = Describe("utils ", func() {
 		obj.SetGroupVersionKind(schema.GroupVersionKind{
 			Group:   "",
 			Version: v1Version,
-			Kind:    "ConfigMap",
+			Kind:    configMapKind,
 		})
 		obj.SetName("my-config")
 		obj.SetNamespace("kube-system")
@@ -111,5 +113,40 @@ var _ = Describe("utils ", func() {
 			[]libsveltosv1beta1.CELRule{rule1, rule2, rule3}, logger)
 		Expect(err).To(BeNil())
 		Expect(matched).To(BeTrue())
+	})
+
+	It("CEL Rule still matches when an earlier rule fails on the same object", func() {
+		obj := &unstructured.Unstructured{}
+		obj.SetGroupVersionKind(schema.GroupVersionKind{
+			Group:   "",
+			Version: v1Version,
+			Kind:    configMapKind,
+		})
+		obj.SetName("no-labels")
+		obj.SetNamespace("default")
+		obj.Object["data"] = map[string]interface{}{
+			"tier": goldTier,
+		}
+		original := obj.DeepCopy()
+
+		// Rule 1: the object has no labels, so evaluation fails with "no such key"
+		failingRule := libsveltosv1beta1.CELRule{
+			Name: "needs-labels",
+			Rule: envProdRule,
+		}
+
+		// Rule 2: evaluates cleanly against the same object and matches
+		matchingRule := libsveltosv1beta1.CELRule{
+			Name: "gold-tier",
+			Rule: `resource.data.tier == "gold"`,
+		}
+
+		matched, err := cel.EvaluateRules(obj,
+			[]libsveltosv1beta1.CELRule{failingRule, matchingRule}, logger)
+		Expect(err).To(BeNil())
+		Expect(matched).To(BeTrue())
+
+		// The object has not been modified by the evaluation
+		Expect(obj).To(Equal(original))
 	})
 })
