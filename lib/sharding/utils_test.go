@@ -2,13 +2,17 @@ package sharding_test
 
 import (
 	"context"
+	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 
 	libsveltosv1beta1 "github.com/projectsveltos/libsveltos/api/v1beta1"
 	"github.com/projectsveltos/libsveltos/lib/sharding"
@@ -67,6 +71,34 @@ var _ = Describe("Sharding", func() {
 			sveltosNamespace, "helm", randomString(), cluster.Namespace, cluster.Name, libsveltosv1beta1.ClusterTypeCapi)
 		Expect(err).To(BeNil())
 		Expect(shardChanged).To(BeTrue())
+	})
+
+	It("RegisterClusterShard propagates non-NotFound errors when reading the tracking ConfigMap", func() {
+		// A NotFound error means the ConfigMap does not exist yet and must be created.
+		// Any other error (for instance a transient API server error or a Forbidden) must
+		// be returned to the caller instead of being swallowed, otherwise sharding changes
+		// would be silently lost and an empty ConfigMap acted upon.
+		forbiddenErr := apierrors.NewForbidden(corev1.Resource("configmaps"), "clustersharding",
+			errors.New("denied by test"))
+
+		c := interceptor.NewClient(fake.NewClientBuilder().WithScheme(scheme).Build(),
+			interceptor.Funcs{
+				Get: func(_ context.Context, _ client.WithWatch, _ client.ObjectKey,
+					_ client.Object, _ ...client.GetOption) error {
+					return forbiddenErr
+				},
+			})
+
+		shardChanged, err := sharding.RegisterClusterShard(context.TODO(), c, libsveltosv1beta1.ComponentAddonManager,
+			randomString(), "helm", randomString(), randomString(), randomString(), libsveltosv1beta1.ClusterTypeSveltos)
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsForbidden(err)).To(BeTrue())
+		Expect(shardChanged).To(BeFalse())
+
+		err = sharding.UnregisterClusterShard(context.TODO(), c, libsveltosv1beta1.ComponentAddonManager,
+			randomString(), "helm", randomString(), randomString(), libsveltosv1beta1.ClusterTypeSveltos)
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsForbidden(err)).To(BeTrue())
 	})
 
 	It("IsShardAMatch returns false when shard is not a match", func() {
