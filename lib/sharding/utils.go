@@ -150,6 +150,7 @@ func getConfigMap(ctx context.Context, c client.Client, component libsveltosv1be
 		if apierrors.IsNotFound(err) {
 			return createConfigMap(ctx, c, component, sveltosNamespace, feature)
 		}
+		return nil, err
 	}
 
 	return cm, nil
